@@ -10,10 +10,10 @@ Cocos广告试玩多渠道导出插件，详情请看[这里](./packages/playabl
 大版本区分2.x和3.x，目前已通过测试的版本是2.4.9、2.4.10、3.6.0
 #### 下载地址
 2.4.x下载：
-[https://github.com/ppgee/cocos-pnp/releases/download/playable-ads-adapter-1.0.0/2.4.x.zip](https://github.com/ppgee/cocos-pnp/releases/download/playable-ads-adapter-1.0.0/2.4.x.zip)
+[https://github.com/ppgee/cocos-pnp/releases/download/playable-adapter-1.0.0/playable-24x.zip](https://github.com/ppgee/cocos-pnp/releases/download/playable-adapter-1.0.0/playable-24x.zip)
 
 3.6.x下载：
-[https://github.com/ppgee/cocos-pnp/releases/download/playable-ads-adapter-1.0.0/3.6.x.zip](https://github.com/ppgee/cocos-pnp/releases/download/playable-ads-adapter-1.0.0/3.6.x.zip)
+[https://github.com/ppgee/cocos-pnp/releases/download/playable-adapter-1.0.0/playable-36x.zip](https://github.com/ppgee/cocos-pnp/releases/download/playable-adapter-1.0.0/playable-36x.zip)
 
 ### 安装插件
 
@@ -51,7 +51,7 @@ Cocos广告试玩多渠道导出插件，详情请看[这里](./packages/playabl
 
 #### 下载地址
 1.0.0下载：
-[https://github.com/ppgee/cocos-pnp/releases/download/cocos-taobao-adapter-1.0.0/cocos-taobao-adapter.zip](https://github.com/ppgee/cocos-pnp/releases/download/cocos-taobao-adapter-1.0.0/cocos-taobao-adapter.zip)
+[https://github.com/ppgee/cocos-pnp/releases/download/taobao-adapter-1.0.0/taobao-builder.zip](https://github.com/ppgee/cocos-pnp/releases/download/taobao-adapter-1.0.0/taobao-builder.zip)
 
 ### 使用说明
 
