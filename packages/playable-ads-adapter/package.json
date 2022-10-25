@@ -1,0 +1,34 @@
+{
+  "version": "1.0.0",
+  "name": "playable-ads-adapter",
+  "main": "./main.js",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^23.0.0",
+    "@rollup/plugin-json": "^5.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.0",
+    "@rollup/plugin-replace": "^5.0.0",
+    "@types/mime-types": "^2.1.1",
+    "@types/node": "^18.8.4",
+    "is-builtin-module": "^3.2.0",
+    "rollup": "^3.0.0",
+    "rollup-plugin-copy": "^3.4.0",
+    "rollup-plugin-esbuild": "^4.10.1",
+    "typescript": "^4.8.4",
+    "uglify-js": "^3.17.4"
+  },
+  "author": "ppgee",
+  "scripts": {
+    "watch": "rm -rf dist/ && rollup -c -w",
+    "build": "rm -rf dist/ && rollup -c",
+    "build:2x": "pnpm build --environment BUILD_VERSION:2x",
+    "watch:2x": "pnpm watch --environment BUILD_VERSION:2x",
+    "build:3x": "pnpm build --environment BUILD_VERSION:3x",
+    "watch:3x": "pnpm watch --environment BUILD_VERSION:3x"
+  },
+  "dependencies": {
+    "cheerio": "1.0.0-rc.12",
+    "jszip": "^3.10.1",
+    "mime-types": "^2.1.35",
+    "node-cmd": "^5.0.0"
+  }
+}

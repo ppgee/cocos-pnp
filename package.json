@@ -1,0 +1,35 @@
+{
+  "name": "cocos-pnp",
+  "version": "1.0.0",
+  "description": "Cocos相关插件",
+  "main": "index.js",
+  "scripts": {
+    "commit": "cz",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:ppgee/cocos-pnp.git"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-customizable"
+    },
+    "cz-customizable": {
+      "config": "./.cz-config.js"
+    }
+  },
+  "keywords": [
+    "cocos",
+    "adapter"
+  ],
+  "author": "ppgee",
+  "license": "ISC",
+  "devDependencies": {
+    "@commitlint/cli": "^17.0.3",
+    "@commitlint/config-conventional": "^17.0.3",
+    "commitizen": "^4.2.5",
+    "cz-conventional-changelog": "^3.3.0",
+    "cz-customizable": "^6.9.1"
+  }
+}

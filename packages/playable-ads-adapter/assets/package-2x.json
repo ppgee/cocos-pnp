@@ -1,0 +1,13 @@
+{
+  "package_version": 2,
+  "name": "playable-ads-adapter",
+  "description": "i18n:playable-ads-adapter.description",
+  "main": "./main.js",
+  "author": "ppgee",
+  "editor": ">=2.4.6",
+  "main-menu": {
+    "i18n:MAIN_MENU.package.title/playable-adapter/build": {
+      "message": "playable-ads-adapter:adapter-build"
+    }
+  }
+}

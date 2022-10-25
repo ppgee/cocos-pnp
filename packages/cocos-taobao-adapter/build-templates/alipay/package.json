@@ -1,0 +1,9 @@
+{
+  "name": "alipay",
+  "version": "1.0.0",
+  "main": "",
+  "license": "MIT",
+  "dependencies": {
+    "@tbmp/mp-cloud-sdk": "*"
+  }
+}

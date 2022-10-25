@@ -1,0 +1,1 @@
+"use strict";module.exports={description:"A adapter builder"};

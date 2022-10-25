@@ -1,0 +1,20 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/web/index"
+  ],
+  "window": {
+    "defaultTitle": " ",
+    "allowsBounceVertical": "NO",
+    "enableMultiAudio": true,
+    "enableSkia": true,
+    "transparentTitle": "none"
+  },
+  "plugins": {},
+  "subPackages": [
+    {
+      "root": "assets"
+    }
+  ],
+  "subPackageBuildType": "shared"
+}

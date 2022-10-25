@@ -1,0 +1,48 @@
+export const COCOS_EDITOR_EVENT: { [key: string]: Editor.ListenEvent } = {
+  BEFORE_CHANGE_FILES: 'before-change-files',
+  BUILD_FINISHED: 'build-finished',
+  BUILD_START: 'build-start',
+}
+export const COCOS_IPC_EVENT: { [key: string]: TIpcMsgEvent } = {
+  QUERY_BUILD_OPTIONS: 'builder:query-build-options',
+}
+
+export const BUILDER_NAME = 'playable-ads-adapter'
+
+export const SETTINGS_PROJECT_PATH = '/settings/project.json'
+export const PROJECT_JSON_PATH = '/project.json'
+export const ADAPTER_RC_PATH = '/.adapterrc'
+
+// 游戏配置json
+export const PLAYABLE_DEFAULT_CONFIG: TPlayableConfig = {
+  playable_orientation: 0,
+  playable_languages: ["ja", "zh", "ar", "es", "en", "ko", "pt", "ru", "vi"]
+}
+
+export const REPLACE_SYMBOL = '{{__adv_channels_adapter__}}'
+export const ADAPTER_FETCH = 'adapterFetch'
+// 每个zip包最大体积
+export const MAX_ZIP_SIZE = 2 * 1024 * 1024
+
+export const TO_STRING_EXTNAME = [
+  '.txt',
+  '.xml',
+  '.vsh',
+  '.fsh',
+  '.atlas',
+  '.tmx',
+  '.tsx',
+  '.json',
+  '.ExportJson',
+  '.plist',
+  '.fnt',
+  '.js',
+  ".zip"
+]
+
+export const TO_SKIP_EXTNAME = [
+  '.ico',
+  '.html',
+  '.css',
+  '.wasm'
+]

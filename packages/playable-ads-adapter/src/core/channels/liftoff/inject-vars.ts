@@ -1,0 +1,1 @@
+export const AD_SDK_SCRIPT = `<script src="mraid.js"></script>`
