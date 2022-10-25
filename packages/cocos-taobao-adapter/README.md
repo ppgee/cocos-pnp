@@ -9,7 +9,7 @@
 
 #### 下载地址
 1.0.0下载：
-[https://github.com/ppgee/cocos-pnp/releases/download/cocos-taobao-adapter-1.0.0/cocos-taobao-adapter.zip](https://github.com/ppgee/cocos-pnp/releases/download/cocos-taobao-adapter-1.0.0/cocos-taobao-adapter.zip)
+[https://github.com/ppgee/cocos-pnp/releases/download/taobao-adapter-1.0.0/taobao-builder.zip](https://github.com/ppgee/cocos-pnp/releases/download/taobao-adapter-1.0.0/taobao-builder.zip)
 
 ### build-templates 中 main、sub 文件夹有什么作用？
 
