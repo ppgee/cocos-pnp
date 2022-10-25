@@ -79,10 +79,10 @@ pnpm build:3x
 
 #### 额外支持功能
 
-1. 支持全局动态替换渠道名称，方便对某个渠道进行特殊逻辑，该占位符为 `'{{__adv_channels_adapter}}'` ，例：
+1. 支持全局动态替换渠道名称，方便对某个渠道进行特殊逻辑，该占位符为 `'{{__adv_channels_adapter__}}'` ，例：
 ```typescript
 // 源代码为
-let test = '{{__adv_channels_adapter}}'
+let test = '{{__adv_channels_adapter__}}'
 
 // 在Facebook渠道下代码会被替换为
 let test = 'Facebook'
