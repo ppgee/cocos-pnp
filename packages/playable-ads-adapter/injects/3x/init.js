@@ -77,6 +77,10 @@ window.__adapter_init = function () {
   function __adapter_get_resource(url) {
     return window.__adapter_resource__[__adapter_get_res_path(url, window.__adapter_resource__)];
   }
+  function __adapter_get_imports() {
+    const json = JSON.parse(__adapter_get_resource("src/import-map.json"))
+    return json.imports
+  }
   function __adapter_import_map() {
     let script = document.createElement('script');
     script.type = 'systemjs-importmap';
@@ -350,12 +354,17 @@ window.__adapter_init = function () {
 
   __adapter_init_js();
 
-  System.import('cc').then(() => {
+  let prepareLoad = Promise.resolve()
+  const importsKeys = Object.keys(__adapter_get_imports())
+  for (let index = importsKeys.length - 1; index >= 0; index--) {
+    const key = importsKeys[index];
+    prepareLoad = prepareLoad.then(() => System.import(key))
+  }
+
+  prepareLoad.then(() => {
     __adapter_init_cc()
     System.import('./' + __adapter_get_path('index')).catch((err) => {
       console.error(err);
-    });
-  }).catch((err) => {
-    console.error(err);
-  });
+    })
+  })
 };
