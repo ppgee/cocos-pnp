@@ -113,7 +113,9 @@ type TAdapterRC = {
       body: string // 在html的body标签内，且在所有script前追加
       sdkScript: string // 在渠道对应地方注入sdk脚本
     }
-  }
+  },
+  tinify?: boolean // 是否开启 tinypng 压缩
+  tinifyApiKey?: string // tinypng api key
 }
 ```
 ```json

@@ -29,7 +29,7 @@ export const getOriginPkgPath = () => {
     let configJson: Partial<TAdapterRC> = getAdapterRCJson() || {}
     buildPlatform = configJson.buildPlatform || 'web-mobile'
   }
-  
+
   return path.join(getProjectBuildPath(), buildPlatform!)
 }
 export const get2xSingleFilePath = () => {
@@ -68,6 +68,21 @@ export const getChannelRCJson = (channel: TChannel): TChannelRC | null => {
   return adapterRCJson.injectOptions[channel]
 }
 
+export const getRCTinify = (): { tinify: boolean, tinifyApiKey: string, } => {
+  const adapterRCJson = getAdapterRCJson()
+  if (!adapterRCJson) {
+    return {
+      tinify: false,
+      tinifyApiKey: '',
+    }
+  }
+
+  return {
+    tinify: !!adapterRCJson.tinify,
+    tinifyApiKey: adapterRCJson.tinifyApiKey || '',
+  }
+}
+
 export const getChannelRCSdkScript = (channel: TChannel): string => {
   const channelRCJson = getChannelRCJson(channel)
   return (!channelRCJson || !channelRCJson.sdkScript) ? '' : channelRCJson.sdkScript
@@ -98,6 +113,15 @@ export const replaceGlobalSymbol = (dirPath: string, replaceText: string) => {
       }
     }
   })
+}
+
+//判断图片类型是否支持上传，支持true,不支持false
+export const checkImgType = (name: string) => {
+  let extname = lookup(name)
+  if (typeof extname === 'boolean') {
+    return false
+  }
+  return /(gif|jpg|jpeg|png|webp|image)/i.test(extname)
 }
 
 export const getBase64FromFile = (filePath: string) => {
@@ -137,9 +161,6 @@ export const getResCompressRatio = async (storePath: string, value: string): Pro
   return {
     key: storePath,
     ratio,
-    org_size: value.length,
-    zip_size: strBase64.length,
-    cut_size: value.length - strBase64.length,
   }
 }
 

@@ -4,6 +4,7 @@ import { destroyBuildGlobalVars, mountBuildGlobalVars } from '../plugins/editor'
 import { gen2xSingleFile } from '../plugins/single-html-2x'
 import { genChannelsPkg } from './packager'
 import { shell } from 'electron'
+import { execTinify } from '../plugins/tinify'
 
 export * from './builder'
 
@@ -19,6 +20,17 @@ export const initBuildStartEvent = (options: TBuildOptions, callback?: () => voi
 export const initBuildFinishedEvent = async (options: TBuildOptions, callback?: () => void) => {
   Editor.info(`${BUILDER_NAME} 开始适配`)
   const start = new Date().getTime();
+
+  try {
+    // 执行压缩
+    const { success, msg } = await execTinify()
+    if (!success) {
+      Editor.warn(`${msg}，跳出压缩图片流程`)
+    }
+  } catch (error) {
+    console.error(error)
+  }
+
   await gen2xSingleFile()
   // 适配文件
   await genChannelsPkg({

@@ -1,5 +1,5 @@
 import { IBuildResult, IBuildTaskOption, Platform } from "../../../@types/packages/builder/@types";
-import { BUILDER_NAME,  } from "../../constants";
+import { BUILDER_NAME, } from "../../constants";
 import { run } from "node-cmd"
 import { getAdapterRCJson, getProjectBuildPath, getRealPath } from "../../utils";
 import { gen3xSingleFile } from "../plugins/single-html-3x";
@@ -7,6 +7,7 @@ import { genChannelsPkg } from './packager'
 import { checkOSPlatform } from "../../utils/os";
 import { destroyBuildGlobalVars, mountBuildGlobalVars } from "../plugins/editor";
 import { shell } from 'electron'
+import { execTinify } from "../plugins/tinify";
 
 export * from './builder'
 
@@ -44,6 +45,17 @@ export const initBuildStartEvent = async (options: Partial<IBuildTaskOption>) =>
 export const initBuildFinishedEvent = async (options: Partial<IBuildTaskOption>, result?: IBuildResult) => {
   console.info(`${BUILDER_NAME} 开始适配，导出平台 ${options.platform}`)
   const start = new Date().getTime();
+
+  try {
+    // 执行压缩
+    const { success, msg } = await execTinify()
+    if (!success) {
+      console.warn(`${msg}，跳出压缩图片流程`)
+    }
+  } catch (error) {
+    console.error(error)
+  }
+
   const { zipRes, notZipRes } = await gen3xSingleFile()
   // 适配文件
   const { orientation = 'auto' } = getAdapterRCJson() || {}

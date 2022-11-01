@@ -444,6 +444,8 @@ type TAdapterRC = {
   injectOptions: {
     [key in TChannel]: TChannelRC
   }
+  tinify?: boolean
+  tinifyApiKey?: string
 }
 
 type TResourceData = { [key: string]: string }
@@ -451,9 +453,6 @@ type TResourceData = { [key: string]: string }
 type TResZipInfo = {
   key: string,
   ratio: number,
-  org_size: number,
-  zip_size: number,
-  cut_size: number,
 }
 
 type TBuilderOptions = {
