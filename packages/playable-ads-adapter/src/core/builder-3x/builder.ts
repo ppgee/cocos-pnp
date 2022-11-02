@@ -16,8 +16,8 @@ const globalReplacer = async (options: Pick<TBuilderOptions, 'channel' | 'zipRes
   let zip = new JSZip();
 
   for (const key in zipRes) {
-    const data = zipRes[key];
-    zipRes[key] = data.replaceAll(REPLACE_SYMBOL, channel)
+    let data = zipRes[key];
+    data = data.replaceAll(REPLACE_SYMBOL, channel)
     zip.file(key, data, { compression: 'DEFLATE' })
   }
 
@@ -58,8 +58,8 @@ export const exportSingleFile = async (options: TBuilderOptions) => {
   let $ = load(singleHtml)
   await globalReplacer({
     channel,
-    zipRes,
-    notZipRes,
+    zipRes: zipRes ? { ...zipRes } : {},
+    notZipRes: notZipRes ? { ...notZipRes } : {},
     $
   })
 
@@ -144,8 +144,8 @@ export const exportDirZipFormSingleFile = async (options: TZipFromSingleFileOpti
   // 替换全局变量
   await globalReplacer({
     channel,
-    zipRes,
-    notZipRes,
+    zipRes: zipRes ? { ...zipRes } : {},
+    notZipRes: notZipRes ? { ...notZipRes } : {},
     $
   })
 
