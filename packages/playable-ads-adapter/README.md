@@ -135,3 +135,21 @@ type TAdapterRC = {
   }
 }
 ```
+
+3. 支持指定选定渠道，使用配置如下：
+```json
+// .adapterrc
+{
+  "exportChannels": ["Google", "Facebook"] // 需要指定导出渠道，空或者不填则导出所有渠道
+}
+```
+
+4. 支持 `Tinypng` 压缩图片，让包体进一步缩小，使用配置如下：
+```json
+// .adapterrc
+{
+  ...,
+  "tinify": true // 是否开启 tinypng 压缩
+  "tinifyApiKey": "填写你的 Tinypng 的 api key" // tinypng api key
+}
+```
