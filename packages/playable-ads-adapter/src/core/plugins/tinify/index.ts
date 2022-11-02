@@ -6,6 +6,7 @@ import { checkImgType, getAllFilesFormDir, getOriginPkgPath, getRCTinify, writeT
 export const postFileToRemote = (filePath: string, data: Buffer): Promise<void> => {
   const { tinifyApiKey } = getRCTinify()
   return new Promise((resolve, reject) => {
+    console.log('【准备上传图片到TinyPng】 ', filePath)
     Axios.request({
       method: 'post',
       url: 'https://api.tinify.com/shrink',
@@ -15,12 +16,13 @@ export const postFileToRemote = (filePath: string, data: Buffer): Promise<void> 
       },
       data
     }).then((response) => {
+      console.log('【准备下载压缩图片】 ', filePath)
       Axios.request({
         method: 'get',
         url: response.data.output.url,
         responseType: 'arraybuffer'
       }).then((fileResponse) => {
-        writeToPath(filePath, fileResponse.data)
+        writeToPath(filePath, Buffer.from(fileResponse.data))
         console.log('【压缩图片完成】 ', filePath)
         resolve()
       }).catch((fileErr) => {
