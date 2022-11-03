@@ -1,10 +1,10 @@
 import { getChannelRCSdkScript } from "../../../utils"
-import { exportZipFromPkg } from "../../builder-2x"
+import { exportSingleFile } from "../../builder-2x"
 import { AD_SDK_SCRIPT } from "./inject-vars"
 
 export const export2xLiftoff = async (options: TChannelPkgOptions) => {
   const channel: TChannel = 'Liftoff'
-  await exportZipFromPkg({
+  await exportSingleFile({
     ...options,
     channel,
     transformHTML: async ($) => {

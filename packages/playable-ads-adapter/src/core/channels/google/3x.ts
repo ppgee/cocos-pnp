@@ -22,9 +22,9 @@ export const export3xGoogle = async (options: TChannelPkgOptions) => {
       // 3D引擎需要补充在body里
       // $(SDK_EXIT_A_TAG).appendTo('body')
     },
-    transform: async (destPath) => {
-      await zipToPath(destPath)
-      unlinkSync(destPath)
-    }
+    // transform: async (destPath) => {
+    //   await zipToPath(destPath)
+    //   unlinkSync(destPath)
+    // }
   })
 }

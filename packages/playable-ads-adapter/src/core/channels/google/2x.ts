@@ -19,9 +19,9 @@ export const export2xGoogle = async (options: TChannelPkgOptions) => {
       const sdkInjectScript = getChannelRCSdkScript(channel) || AD_SDK_SCRIPT
       $(sdkInjectScript).appendTo('head')
     },
-    transform: async (destPath) => {
-      await zipToPath(destPath)
-      unlinkSync(destPath)
-    }
+    // transform: async (destPath) => {
+    //   await zipToPath(destPath)
+    //   unlinkSync(destPath)
+    // }
   })
 }

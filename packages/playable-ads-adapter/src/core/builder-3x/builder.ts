@@ -110,10 +110,10 @@ export const exportZipFromPkg = async (options: TBuilderOptions) => {
     await transform(destPath)
   }
 
-  // 压缩文件
-  await zipDirToPath(destPath)
-  // 删除多余文件夹
-  rmSync(destPath)
+  // // 压缩文件
+  // await zipDirToPath(destPath)
+  // // 删除多余文件夹
+  // rmSync(destPath)
 
 
   console.info(`【${channel}】完成适配`)
@@ -177,9 +177,9 @@ export const exportDirZipFormSingleFile = async (options: TZipFromSingleFileOpti
     await transform(destPath)
   }
 
-  // 压缩文件
-  await zipDirToPath(destPath)
-  // 删除多余文件夹
-  rmSync(destPath)
+  // // 压缩文件
+  // await zipDirToPath(destPath)
+  // // 删除多余文件夹
+  // rmSync(destPath)
   console.info(`【${channel}】完成适配`)
 }

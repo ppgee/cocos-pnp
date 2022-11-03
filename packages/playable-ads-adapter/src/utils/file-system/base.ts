@@ -59,7 +59,7 @@ export const rmSync = (dest: string) => {
  * @param {string} source 源文件夹
  * @param {string} destination 目标文件夹
  */
- export const cpSync = (source: string, destination: string) => {
+export const cpSync = (source: string, destination: string) => {
   // 如果存在文件夹 先递归删除该文件夹
   if (existsSync(destination)) rmSync(destination)
   // 新建文件夹 递归新建
@@ -122,7 +122,7 @@ export const zipToPath = (filePath: string): Promise<void> => {
   })
 }
 
-export const zipDirToPath = (destPath: string): Promise<void> => {
+export const zipDirToPath = (destPath: string): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     const zipPath = `${destPath}.zip`
 
@@ -147,8 +147,8 @@ export const zipDirToPath = (destPath: string): Promise<void> => {
         level: 9
       }
     }).then((content) => {
-      writeFileSync(zipPath, content, 'utf-8');//将打包的内容写入 当前目录下的 result.zip中
-      resolve()
+      writeFileSync(zipPath, content);//将打包的内容写入 当前目录下的 result.zip中
+      resolve(true)
     }).catch((err) => {
       reject(err)
     });
