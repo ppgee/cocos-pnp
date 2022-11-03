@@ -153,7 +153,7 @@ export const exportDirZipFormSingleFile = async (options: TZipFromSingleFileOpti
   await injectFromRCJson($, channel)
 
   // 抽离所有script并生成js文件
-  const scriptNodes = $('body script')
+  const scriptNodes = $('body script[type!="systemjs-importmap"]')
   for (let index = 0; index < scriptNodes.length; index++) {
     const scriptNode = $(scriptNodes[index]);
     if (transformScript) {

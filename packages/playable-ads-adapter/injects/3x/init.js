@@ -81,12 +81,12 @@ window.__adapter_init = function () {
     const json = JSON.parse(__adapter_get_resource("src/import-map.json"))
     return json.imports
   }
-  function __adapter_import_map() {
-    let script = document.createElement('script');
-    script.type = 'systemjs-importmap';
-    script.text = __adapter_get_resource("src/import-map.json");
-    document.body.appendChild(script);
-  }
+  // function __adapter_import_map() {
+  //   let script = document.createElement('script');
+  //   script.type = 'systemjs-importmap';
+  //   script.text = __adapter_get_resource("src/import-map.json");
+  //   document.body.appendChild(script);
+  // }
   function __adapter_get_script(url) {
     if (url.indexOf('bullet.wasm') !== -1) {
       for (let k2 in window.__adapter_js__) {
@@ -345,7 +345,7 @@ window.__adapter_init = function () {
     throw Error("no find " + key);
   }
 
-  __adapter_import_map();
+  // __adapter_import_map();
 
   __adapter_init_http();
 

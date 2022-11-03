@@ -1,7 +1,7 @@
-import { exportZipFromPkg } from "../../builder-3x"
+import { exportDirZipFormSingleFile } from "../../builder-3x"
 
 export const export3xMintegral = async (options: TChannelPkgOptions) => {
-  await exportZipFromPkg({
+  await exportDirZipFormSingleFile({
     ...options,
     channel: 'Mintegral',
   })

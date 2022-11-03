@@ -19,6 +19,26 @@ export const paddingStyleTags = ($: CheerioAPI) => {
   $('link[type="text/css"]').remove()
 }
 
+export const paddingScriptTags = ($: CheerioAPI) => {
+  // 原始包路径
+  const originPkgPath = getOriginPkgPath()
+
+  let scriptTags = ''
+  $('script[type="systemjs-importmap"]').toArray().forEach((item) => {
+    const href = $(item).attr('src')
+    if (!href) {
+      return
+    }
+    let scriptStr = readToPath(join(originPkgPath, href), 'utf-8')
+    // 增加部分tag
+    scriptTags += `<script type="systemjs-importmap">${scriptStr}</script>`
+  })
+
+  // 清空html中的script tag
+  $('body script').remove()
+  $(scriptTags).appendTo('body')
+}
+
 export const paddingAllResToMapped = async ($: CheerioAPI) => {
   // 原始包路径
   const originPkgPath = getOriginPkgPath()
@@ -68,7 +88,7 @@ export const gen3xSingleFile = async () => {
   paddingStyleTags($)
 
   // 清空html中的script tag
-  $('body script').remove()
+  paddingScriptTags($)
 
   // 将资源打入html中
   const { zipRes, notZipRes } = await paddingAllResToMapped($)
