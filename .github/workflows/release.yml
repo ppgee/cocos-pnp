@@ -44,7 +44,7 @@ jobs:
 
       - name: Build plugins
         run: |
-          ./scripts/package-playable.sh
+          sh ./scripts/package-playable.sh
 
       - name: Release plugins
         uses: marvinpinto/action-automatic-releases@latest
