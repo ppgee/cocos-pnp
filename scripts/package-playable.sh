@@ -3,7 +3,7 @@ set -e
 
 pwd=$(pwd)
 
-echo ls -a
+echo "$(ls)"
 
 PLUGIN_ROOT="/packages/playable-ads-adpter"
 
