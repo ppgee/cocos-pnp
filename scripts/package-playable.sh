@@ -9,7 +9,7 @@ PLUGIN_DIST="./dist"
 
 cd $PLUGIN_ROOT
 
-echo "Package 3.x Plugin..."
+echo "Packaging the plugin of 3.x..."
 
 npm run build -- --environment BUILD_VERSION:3x
 
@@ -17,13 +17,17 @@ cd $PLUGIN_DIST
 
 zip -r -v -9 playable-36x.zip ./playable-ads-adapter
 
-echo "Package 3.x Plugin Finished."
+echo "Packaged the plugin of 3.x finished."
+
+echo "Remove build folder of 3.x..."
+
+rm -rf "$PLUGIN_NAME"
+
+echo "Remove finished."
 
 cd ..
 
-rm -rf "$PLUGIN_DIST/$PLUGIN_NAME"
-
-echo "Package 2.4.x Plugin..."
+echo "Package the plugin of 2.4.x..."
 
 npm run build -- --environment BUILD_VERSION:2x
 
@@ -31,4 +35,4 @@ cd $PLUGIN_DIST
 
 zip -r -v -9 playable-24x.zip ./playable-ads-adapter
 
-echo "Package 2.4.x Plugin Finished."
+echo "Package the plugin of 2.4.x finished."
