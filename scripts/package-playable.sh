@@ -5,10 +5,6 @@ PLUGIN_ROOT="./packages/playable-ads-adpter"
 
 PLUGIN_DIST="./dist"
 
-echo "$(ls)"
-
-cd ".."
-
 cd $PLUGIN_ROOT
 
 echo "$(ls)"
