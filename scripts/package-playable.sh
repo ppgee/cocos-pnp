@@ -9,6 +9,8 @@ PLUGIN_ROOT="${pwd}/packages/playable-ads-adpter"
 
 PLUGIN_DIST="${PLUGIN_ROOT}/dist"
 
+cd PLUGIN_ROOT
+
 echo "Package 3.x Plugin..."
 
 npm run build -- --environment BUILD_VERSION:3x
