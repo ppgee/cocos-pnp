@@ -7,5 +7,8 @@
     "rubeex",
     "tiktok",
     "tinify"
-  ]
+  ],
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow.json": "file:///Users/pgeepeng/Projects/others/cocos-pnp/packages/playable-ads-adapter/.github/workflows/release.yml"
+  }
 }
