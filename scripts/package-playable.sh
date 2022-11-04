@@ -1,11 +1,15 @@
 #!/bin/bash
 set -e
 
-pwd=$(pwd)
+cd "$(dirname ${0})"
+
+echo "$(ls)"
 
 PLUGIN_DIST="./dist"
 
 cd ./packages/playable-ads-adpter
+
+echo "$(ls)"
 
 echo "Package 3.x Plugin..."
 
