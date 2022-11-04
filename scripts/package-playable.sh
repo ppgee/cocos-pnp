@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PLUGIN_ROOT="packages/playable-ads-adpter"
+PLUGIN_ROOT="packages/playable-ads-adapter"
 
 PLUGIN_DIST="./dist"
 
