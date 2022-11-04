@@ -5,9 +5,9 @@ pwd=$(pwd)
 
 echo "$(ls)"
 
-PLUGIN_ROOT="/packages/playable-ads-adpter"
+PLUGIN_ROOT="./packages/playable-ads-adpter"
 
-PLUGIN_DIST="${PLUGIN_ROOT}/dist"
+PLUGIN_DIST="./dist"
 
 cd PLUGIN_ROOT
 
