@@ -3,9 +3,9 @@ set -e
 
 cd "$(dirname ${0})"
 
-echo "$(ls)"
+cd ".."
 
-PLUGIN_DIST="./dist"
+echo "$(ls)"
 
 cd "./packages/playable-ads-adpter"
 
