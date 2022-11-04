@@ -7,7 +7,7 @@ echo "$(ls)"
 
 PLUGIN_DIST="./dist"
 
-cd ./packages/playable-ads-adpter
+cd "./packages/playable-ads-adpter"
 
 echo "$(ls)"
 
@@ -15,19 +15,19 @@ echo "Package 3.x Plugin..."
 
 npm run build -- --environment BUILD_VERSION:3x
 
-cd ./dist
+cd "./dist"
 
 zip -r -v -9 playable-36x.zip ./playable-ads-adapter
 
 echo "Package 3.x Plugin Finished."
 
-cd ..
+cd ".."
 
 echo "Package 2.4.x Plugin..."
 
 npm run build -- --environment BUILD_VERSION:2x
 
-cd ./dist
+cd "./dist"
 
 zip -r -v -9 playable-24x.zip ./playable-ads-adapter
 
