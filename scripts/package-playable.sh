@@ -5,7 +5,7 @@ PLUGIN_ROOT="./packages/playable-ads-adpter"
 
 PLUGIN_DIST="./dist"
 
-cd PLUGIN_ROOT
+cd "../$(PLUGIN_ROOT)"
 
 echo "Package 3.x Plugin..."
 
