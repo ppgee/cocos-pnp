@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e
 
-PLUGIN_ROOT="packages/playable-ads-adapter"
+PLUGIN_NAME="playable-ads-adapter"
+
+PLUGIN_ROOT="packages/$PLUGIN_NAME"
 
 PLUGIN_DIST="./dist"
 
@@ -19,7 +21,7 @@ echo "Package 3.x Plugin Finished."
 
 cd ..
 
-rm -rf $PLUGIN_DIST
+rm -rf "$PLUGIN_DIST/$PLUGIN_NAME"
 
 echo "Package 2.4.x Plugin..."
 
