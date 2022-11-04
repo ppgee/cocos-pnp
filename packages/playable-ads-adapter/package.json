@@ -18,12 +18,14 @@
   },
   "author": "ppgee",
   "scripts": {
-    "watch": "rm -rf dist/ && rollup -c -w",
-    "build": "rm -rf dist/ && rollup -c",
-    "build:2x": "pnpm build --environment BUILD_VERSION:2x",
-    "watch:2x": "pnpm watch --environment BUILD_VERSION:2x",
-    "build:3x": "pnpm build --environment BUILD_VERSION:3x",
-    "watch:3x": "pnpm watch --environment BUILD_VERSION:3x"
+    "clear": "rm -rf dist/",
+    "watch": "rollup -c -w",
+    "build": "rollup -c",
+    "build:2x": "pnpm clear && pnpm build --environment BUILD_VERSION:2x",
+    "watch:2x": "pnpm clear && pnpm watch --environment BUILD_VERSION:2x",
+    "build:3x": "pnpm clear && pnpm build --environment BUILD_VERSION:3x",
+    "watch:3x": "pnpm clear && pnpm watch --environment BUILD_VERSION:3x",
+    "package": "sh ./scripts/package.sh"
   },
   "dependencies": {
     "axios": "^1.1.3",
