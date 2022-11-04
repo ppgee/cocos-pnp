@@ -1,13 +1,19 @@
 #!/bin/bash
 set -e
 
-PLUGIN_ROOT="./packages/playable-ads-adpter"
+PLUGIN_ROOT="packages/playable-ads-adpter"
 
 PLUGIN_DIST="./dist"
+
+echo "$(ls)"
+
+echo "test 1"
 
 cd $PLUGIN_ROOT
 
 echo "$(ls)"
+
+echo "test 2"
 
 echo "Package 3.x Plugin..."
 
