@@ -5,15 +5,7 @@ PLUGIN_ROOT="packages/playable-ads-adapter"
 
 PLUGIN_DIST="./dist"
 
-echo "$(ls)"
-
-echo "test 1"
-
 cd $PLUGIN_ROOT
-
-echo "$(ls)"
-
-echo "test 2"
 
 echo "Package 3.x Plugin..."
 
@@ -26,6 +18,8 @@ zip -r -v -9 playable-36x.zip ./playable-ads-adapter
 echo "Package 3.x Plugin Finished."
 
 cd ..
+
+rm -rf $PLUGIN_DIST
 
 echo "Package 2.4.x Plugin..."
 
