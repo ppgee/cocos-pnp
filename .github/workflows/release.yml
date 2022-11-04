@@ -43,7 +43,7 @@ jobs:
         run: pnpm install
 
       - name: Build plugins
-        run: ./scripts/package-playable.sh
+        run: chmod +x ./scripts/package-playable.sh
         shell: bash
 
       - name: Release plugins
