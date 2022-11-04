@@ -1,33 +1,29 @@
 #!/bin/bash
 set -e
 
-cd "$(dirname ${0})"
+PLUGIN_ROOT="./packages/playable-ads-adpter"
 
-cd ".."
+PLUGIN_DIST="./dist"
 
-echo "$(ls)"
-
-cd "./packages/playable-ads-adpter"
-
-echo "$(ls)"
+cd PLUGIN_ROOT
 
 echo "Package 3.x Plugin..."
 
 npm run build -- --environment BUILD_VERSION:3x
 
-cd "./dist"
+cd $PLUGIN_DIST
 
 zip -r -v -9 playable-36x.zip ./playable-ads-adapter
 
 echo "Package 3.x Plugin Finished."
 
-cd ".."
+cd ..
 
 echo "Package 2.4.x Plugin..."
 
 npm run build -- --environment BUILD_VERSION:2x
 
-cd "./dist"
+cd $PLUGIN_DIST
 
 zip -r -v -9 playable-24x.zip ./playable-ads-adapter
 

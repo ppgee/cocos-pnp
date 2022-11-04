@@ -43,12 +43,12 @@ jobs:
         run: pnpm install
 
       - name: Build plugins
-        run: |
-          sh ./scripts/package-playable.sh
+        run: ./scripts/package-playable.sh
+        shell: bash
 
       - name: Release plugins
         uses: marvinpinto/action-automatic-releases@latest
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: false
-          files: dist/*.zip
+          files: ./packages/playable-ads-adapter/dist/*.zip
