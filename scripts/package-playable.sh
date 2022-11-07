@@ -29,7 +29,7 @@ cd ..
 
 echo "Package the plugin of 2.4.x..."
 
-npm run build -- --environment BUILD_VERSION:2x
+pnpm build -- --environment BUILD_VERSION:2x
 
 cd $PLUGIN_DIST
 
