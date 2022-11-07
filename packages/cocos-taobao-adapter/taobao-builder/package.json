@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "name": "taobao-builder",
   "description": "i18n:taobao-builder.description",
-  "main": "./dist/main.js",
+  "main": "./main.js",
   "devDependencies": {
     "@types/node": "^16.11.41",
     "rimraf": "^3.0.2",
