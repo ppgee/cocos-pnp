@@ -1,8 +1,8 @@
-import { existsSync, readdirSync, statSync } from "fs"
+import { readdirSync, statSync } from "fs"
 import JSZip from "jszip"
 import { lookup } from "mime-types"
 import path, { extname } from "path"
-import { PROJECT_JSON_PATH, ADAPTER_RC_PATH, SETTINGS_PROJECT_PATH, REPLACE_SYMBOL, TO_STRING_EXTNAME, TO_SKIP_EXTNAME, ADAPTER_FETCH } from "../../constants"
+import { PROJECT_JSON_PATH, SETTINGS_PROJECT_PATH, REPLACE_SYMBOL, TO_STRING_EXTNAME, TO_SKIP_EXTNAME, ADAPTER_FETCH } from "../../constants"
 import { getAllFilesFormDir, readToPath, writeToPath } from "./base"
 
 export const getRealPath = (pathStr: string) => {
@@ -23,15 +23,6 @@ export const getProjectBuildPath = () => {
   return path.join(getProjectRootPath(), '/build')
 }
 
-export const getOriginPkgPath = () => {
-  let buildPlatform = global.__adapter_build_platform__
-  if (!buildPlatform) {
-    let configJson: Partial<TAdapterRC> = getAdapterRCJson() || {}
-    buildPlatform = configJson.buildPlatform || 'web-mobile'
-  }
-
-  return path.join(getProjectBuildPath(), buildPlatform!)
-}
 export const get2xSingleFilePath = () => {
   return path.join(getProjectBuildPath(), '/single-file-2x.html')
 }
@@ -44,57 +35,6 @@ export const getProjectJson = (): TProjectJson => {
   const projectJsonPath = `${projectRootPath}${PROJECT_JSON_PATH}`
   const projectJson = JSON.parse(readToPath(projectJsonPath))
   return projectJson['excluded-modules']
-}
-
-export const getAdapterRCJson = (): TAdapterRC | null => {
-  if (global.__adapter_build_config__) {
-    return global.__adapter_build_config__
-  }
-  const projectRootPath = getProjectRootPath()
-  const adapterRCJsonPath = `${projectRootPath}${ADAPTER_RC_PATH}`
-  if (existsSync(adapterRCJsonPath)) {
-    return <TAdapterRC>JSON.parse(readToPath(adapterRCJsonPath))
-  }
-
-  return null
-}
-
-export const getChannelRCJson = (channel: TChannel): TChannelRC | null => {
-  const adapterRCJson = getAdapterRCJson()
-  if (!adapterRCJson || !adapterRCJson.injectOptions || !adapterRCJson.injectOptions[channel]) {
-    return null
-  }
-
-  return adapterRCJson.injectOptions[channel]
-}
-
-export const getRCSkipBuild = (): boolean => {
-  const adapterRCJson = getAdapterRCJson()
-  if (!adapterRCJson) {
-    return false
-  }
-
-  return adapterRCJson.skipBuild ?? false
-}
-
-export const getRCTinify = (): { tinify: boolean, tinifyApiKey: string, } => {
-  const adapterRCJson = getAdapterRCJson()
-  if (!adapterRCJson) {
-    return {
-      tinify: false,
-      tinifyApiKey: '',
-    }
-  }
-
-  return {
-    tinify: !!adapterRCJson.tinify,
-    tinifyApiKey: adapterRCJson.tinifyApiKey || '',
-  }
-}
-
-export const getChannelRCSdkScript = (channel: TChannel): string => {
-  const channelRCJson = getChannelRCJson(channel)
-  return (!channelRCJson || !channelRCJson.sdkScript) ? '' : channelRCJson.sdkScript
 }
 
 export const getExcludedModules = (): string[] => {
