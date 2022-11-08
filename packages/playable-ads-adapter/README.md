@@ -104,6 +104,7 @@ type TChannel =
   | 'Unity'
 
 type TAdapterRC = {
+  skipBuild: boolean // 是否跳过构建流程，默认为false
   buildPlatform: Platform // Cocos构建平台值
   orientation: TWebOrientations // Cocos构建设备方向值
   exportChannels: TChannel[] // 需要指定导出渠道，空或者不填则导出所有渠道

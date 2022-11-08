@@ -1,131 +1,77 @@
-import { join } from "path"
-import { load } from 'cheerio'
-import { mkdirSync } from "fs"
-import { REPLACE_SYMBOL } from "../../constants"
-import { writeToPath, readToPath, get2xSingleFilePath, getProjectBuildPath, getOriginPkgPath, copyDirToPath, replaceGlobalSymbol, zipDirToPath, rmSync } from "../../utils"
-import { injectFromRCJson } from "../plugins/dom"
+import { BUILDER_NAME } from '../../constants'
+import { getAdapterRCJson, getExcludedModules, getOriginPkgPath, getProjectBuildPath, getRCSkipBuild } from '../../utils'
+import { destroyBuildGlobalVars, mountBuildGlobalVars } from '../plugins/editor'
+import { gen2xSingleFile } from '../plugins/single-html-2x'
+import { genChannelsPkg } from './packager'
+import { execTinify } from '../plugins/tinify'
+import { shell } from 'electron'
 
-export const exportSingleFile = async (options: TBuilderOptions) => {
-  const { channel, transformHTML, transform } = options
-
-  Editor.info(`【${channel}】开始适配`)
-  const singleHtml = readToPath(get2xSingleFilePath(), 'utf-8')
-  const targetPath = join(getProjectBuildPath(), `${channel}.html`)
-
-  // 替换全局变量
-  let $ = load(singleHtml)
-  const htmlStr = $.html().replaceAll(REPLACE_SYMBOL, channel)
-  $ = load(htmlStr)
-
-  // 注入额外配置
-  await injectFromRCJson($, channel)
-  writeToPath(targetPath, $.html(htmlStr))
-
-  if (transformHTML) {
-    await transformHTML($)
-    writeToPath(targetPath, $.html())
-  }
-
-  if (transform) {
-    await transform(targetPath)
-  }
-
-  Editor.success(`【${channel}】完成适配`)
+export const initBuildStartEvent = (options: TBuildOptions, callback?: () => void) => {
+  Editor.log(`${BUILDER_NAME} 进行预构建处理`)
+  mountBuildGlobalVars({
+    platform: options.platform
+  })
+  Editor.log(`${BUILDER_NAME} 跳过预构建处理`)
+  callback && callback()
 }
 
-export const exportZipFromPkg = async (options: TBuilderOptions) => {
-  const { channel, transformHTML, transform } = options
+export const initBuildFinishedEvent = async (options: TBuildOptions, callback?: () => void) => {
+  Editor.info(`${BUILDER_NAME} 开始适配`)
+  const start = new Date().getTime();
 
-  Editor.info(`【${channel}】开始适配`)
-  // 复制文件夹
-  const originPkgPath = getOriginPkgPath()
-  const projectBuildPath = getProjectBuildPath()
-  const destPath = join(projectBuildPath, channel)
-  copyDirToPath(originPkgPath, destPath)
-
-  // 替换全局变量
-  replaceGlobalSymbol(destPath, channel)
-
-  // 注入额外配置
-  const singleHtmlPath = join(destPath, '/index.html')
-  const singleHtml = readToPath(singleHtmlPath, 'utf-8')
-  const $ = load(singleHtml)
-  await injectFromRCJson($, channel)
-
-  // 增加sdk脚本
-  if (transformHTML) {
-    await transformHTML($)
-  }
-
-  // 更新html文件
-  writeToPath(singleHtmlPath, $.html())
-
-  if (transform) {
-    await transform(destPath)
-  }
-
-  // // 压缩文件
-  // await zipDirToPath(destPath)
-  // // 删除多余文件夹
-  // rmSync(destPath)
-
-
-  Editor.success(`【${channel}】完成适配`)
-}
-
-export const exportDirZipFormSingleFile = async (options: TZipFromSingleFileOptions) => {
-  const { channel, transformHTML, transform, transformScript } = options
-
-  Editor.info(`【${channel}】开始适配`)
-  // 复制文件夹
-  const singleHtmlPath = get2xSingleFilePath()
-  const projectBuildPath = getProjectBuildPath()
-  const destPath = join(projectBuildPath, channel)
-
-  // 先清空文件夹内容
-  rmSync(destPath)
-
-  // 创建js目录
-  const jsDirname = '/js'
-  const jsDirPath = join(destPath, jsDirname)
-  mkdirSync(jsDirPath, { recursive: true })
-
-  let $ = load(readToPath(singleHtmlPath, 'utf-8'))
-
-  // 替换全局变量
-  const htmlPath = join(destPath, '/index.html')
-  const htmlStr = $.html().replaceAll(REPLACE_SYMBOL, channel)
-  $ = load(htmlStr)
-  await injectFromRCJson($, channel)
-
-  // 抽离所有script并生成js文件
-  const scriptNodes = $('body script')
-  for (let index = 0; index < scriptNodes.length; index++) {
-    const scriptNode = $(scriptNodes[index]);
-    if (transformScript) {
-      await transformScript(scriptNode)
+  try {
+    // 执行压缩
+    const { success, msg } = await execTinify()
+    if (!success) {
+      Editor.warn(`${msg}，跳出压缩图片流程`)
     }
-    let jsStr = scriptNode.text()
-    const jsFileName = `index${index}.js`
-    const jsPath = join(jsDirPath, jsFileName)
-    scriptNode.replaceWith(`<script src=".${jsDirname}/${jsFileName}"></script>`)
-    writeToPath(jsPath, jsStr)
-  }
-  writeToPath(htmlPath, $.html())
-
-  if (transformHTML) {
-    await transformHTML($)
-    const htmlPath = join(destPath, '/index.html')
-    writeToPath(htmlPath, $.html())
+  } catch (error) {
+    console.error(error)
   }
 
-  if (transform) {
-    await transform(destPath)
-  }
+  await gen2xSingleFile()
+  // 适配文件
+  await genChannelsPkg({
+    orientation: options.webOrientation
+  })
+  const end = new Date().getTime();
+  destroyBuildGlobalVars()
+  Editor.success(`${BUILDER_NAME} 适配完成，共耗时${((end - start) / 1000).toFixed(0)}秒`)
+  shell.openPath(getProjectBuildPath())
+  callback && callback()
+}
 
-  // // 压缩文件
-  // await zipDirToPath(destPath)
-  // // 删除多余文件夹
-  // rmSync(destPath)
-  Editor.success(`【${channel}】完成适配`)
+export const builder2x = () => {
+  const { buildPlatform = 'web-mobile' } = getAdapterRCJson() || {}
+  Editor.log(`开始构建项目，导出${buildPlatform}包`)
+
+  Editor.Ipc.sendToMain('builder:query-build-options', (err: any, options: TBuildOptions) => {
+    const scenes = options.scenes || []
+    if (scenes.length === 0) {
+      scenes.push(options.startScene)
+    }
+    const excludedModules = getExcludedModules()
+    let buildOptions: TBuildOptions = {
+      ...options,
+      md5Cache: false,
+      inlineSpriteFrames: false,
+      inlineSpriteFrames_native: false,
+      debug: false,
+      platform: buildPlatform,
+      actualPlatform: buildPlatform,
+      sourceMaps: false,
+      scenes,
+      excludedModules,
+      dest: getOriginPkgPath()
+    }
+
+    const isSkipBuild = getRCSkipBuild()
+    if (isSkipBuild) {
+      initBuildStartEvent(buildOptions, () => {
+        initBuildFinishedEvent(buildOptions)
+      })
+      return
+    }
+    Editor.Ipc.sendToMain('builder:start-task', 'build', buildOptions)
+  })
 }

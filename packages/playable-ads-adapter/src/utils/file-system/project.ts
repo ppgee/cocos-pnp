@@ -68,6 +68,15 @@ export const getChannelRCJson = (channel: TChannel): TChannelRC | null => {
   return adapterRCJson.injectOptions[channel]
 }
 
+export const getRCSkipBuild = (): boolean => {
+  const adapterRCJson = getAdapterRCJson()
+  if (!adapterRCJson) {
+    return false
+  }
+
+  return adapterRCJson.skipBuild ?? false
+}
+
 export const getRCTinify = (): { tinify: boolean, tinifyApiKey: string, } => {
   const adapterRCJson = getAdapterRCJson()
   if (!adapterRCJson) {

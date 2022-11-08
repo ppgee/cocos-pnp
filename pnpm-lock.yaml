@@ -26,6 +26,16 @@ importers:
       rimraf: 3.0.2
       typescript: 4.8.4
 
+  packages/cocos-taobao-adapter/taobao-builder/dist/taobao-builder:
+    specifiers:
+      '@types/node': ^16.11.41
+      rimraf: ^3.0.2
+      typescript: ^4.3.4
+    devDependencies:
+      '@types/node': 16.18.0
+      rimraf: 3.0.2
+      typescript: 4.8.4
+
   packages/playable-ads-adapter:
     specifiers:
       '@rollup/plugin-commonjs': ^23.0.0
@@ -64,6 +74,9 @@ importers:
       rollup-plugin-esbuild: 4.10.1_lecm7whau5ub3cwxpurr6hs4em
       typescript: 4.8.4
       uglify-js: 3.17.4
+
+  packages/playable-ads-adapter/dist/playable-ads-adapter:
+    specifiers: {}
 
 packages:
 
