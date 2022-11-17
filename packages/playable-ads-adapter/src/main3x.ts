@@ -1,5 +1,5 @@
-import { builder3x } from './core/builder-3x'
-import { BUILDER_NAME } from './constants'
+import { builder3x } from '@/core/builder-3x'
+import { BUILDER_NAME } from '@/constants'
 
 export const methods: { [key: string]: (...opts: unknown[]) => unknown } = {
   builder3x

@@ -65,10 +65,18 @@
         window.__adapter_js__[filePath] = window.__adapter_resource__[filePath];
       }
     }
-    const jitExecList = ['src/settings.js', 'main.js', 'cocos2d-js.js', 'cocos2d-js-min.js', 'physics.js', 'physics-min.js'];
+    const jitExecList = ['src/settings.js', 'cocos2d-js.js', 'cocos2d-js-min.js', 'physics.js', 'physics-min.js', 'main.js'];
     for (let i = 0; i < jitExecList.length; i++) {
-      __adapter_eval(window.__adapter_js__[jitExecList[i]]);
-      console.log(`script ${jitExecList[i]} is loaded`)
+      try {
+        if (!window.__adapter_js__[jitExecList[i]]) {
+          console.warn(`${jitExecList[i]} is not existed`)
+          continue
+        }
+        __adapter_eval(window.__adapter_js__[jitExecList[i]]);
+        delete window.__adapter_js__[jitExecList[i]]
+      } catch (error) {
+        console.error(error)
+      }
     }
     __adapter_success();
   }

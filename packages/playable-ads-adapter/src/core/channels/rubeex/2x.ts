@@ -1,6 +1,6 @@
 import { APPEND_TO_HEAD, INSERT_BEFORE_SCRIPT } from './inject-vars'
-import { exportZipFromPkg } from "../../builder-2x"
-import { exportConfigJson, getChannelRCSdkScript } from '../../../utils'
+import { exportZipFromPkg } from "@/core/builder-2x"
+import { exportConfigJson, getChannelRCSdkScript } from '@/utils'
 
 export const export2xRubeex = async (options: TChannelPkgOptions) => {
   const { orientation } = options

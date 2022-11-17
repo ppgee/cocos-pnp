@@ -2,7 +2,7 @@ import { readdirSync, statSync } from "fs"
 import JSZip from "jszip"
 import { lookup } from "mime-types"
 import path, { extname } from "path"
-import { PROJECT_JSON_PATH, SETTINGS_PROJECT_PATH, REPLACE_SYMBOL, TO_STRING_EXTNAME, TO_SKIP_EXTNAME, ADAPTER_FETCH } from "../../constants"
+import { PROJECT_JSON_PATH, SETTINGS_PROJECT_PATH, REPLACE_SYMBOL, TO_STRING_EXTNAME, TO_SKIP_EXTNAME, ADAPTER_FETCH } from "@/constants"
 import { getAllFilesFormDir, readToPath, writeToPath } from "./base"
 
 export const getRealPath = (pathStr: string) => {

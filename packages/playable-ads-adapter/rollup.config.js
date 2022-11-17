@@ -1,12 +1,14 @@
 import pkgJson from './package.json'
 import commonjs from '@rollup/plugin-commonjs'
-import esbuild from 'rollup-plugin-esbuild'
 import copy from 'rollup-plugin-copy'
 import cocosPluginUpdater from './plugins/cocos-plugin-updater'
 import { nodeResolve } from '@rollup/plugin-node-resolve'
 import isBuiltin from 'is-builtin-module';
 import json from '@rollup/plugin-json'
 import replace from '@rollup/plugin-replace'
+import typescript from '@rollup/plugin-typescript';
+import terser from '@rollup/plugin-terser';
+import alias from '@rollup/plugin-alias'
 import { minify } from 'uglify-js'
 
 const appName = pkgJson.name
@@ -25,6 +27,15 @@ export default {
     format: 'commonjs'
   },
   plugins: [
+    typescript(),
+    commonjs(),
+    terser(),
+    alias({
+      entries: [
+        { find: '@', replacement: __dirname + '/src' },
+        { find: '~types', replacement: __dirname + '@types' }
+      ]
+    }),
     replace({
       preventAssignment: true,
       values: {
@@ -38,10 +49,6 @@ export default {
         resolveOnly: (module) => module === 'string_decoder' || !isBuiltin(module),
         exportConditions: ['node'],
       })
-    }),
-    commonjs(),
-    esbuild({
-      minify: true,
     }),
     copy({
       targets: [

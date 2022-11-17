@@ -1,9 +1,9 @@
-import { BUILDER_NAME } from '../../constants'
-import { getAdapterRCJson, getExcludedModules, getOriginPkgPath, getProjectBuildPath, getRCSkipBuild } from '../../utils'
-import { destroyBuildGlobalVars, mountBuildGlobalVars } from '../plugins/editor'
-import { gen2xSingleFile } from '../plugins/single-html-2x'
+import { BUILDER_NAME } from '@/constants'
+import { getAdapterRCJson, getExcludedModules, getOriginPkgPath, getProjectBuildPath, getRCSkipBuild } from '@/utils'
+import { destroyBuildGlobalVars, mountBuildGlobalVars } from '@/core/plugins/editor'
+import { gen2xSingleFile } from '@/core/plugins/single-html-2x'
 import { genChannelsPkg } from './packager'
-import { execTinify } from '../plugins/tinify'
+import { execTinify } from '@/core/plugins/tinify'
 import { shell } from 'electron'
 
 export const initBuildStartEvent = (options: TBuildOptions, callback?: () => void) => {

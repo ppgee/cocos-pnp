@@ -1,5 +1,5 @@
-import { IBuildResult, IBuildTaskOption } from "../@types/packages/builder/@types";
-import { initBuildFinishedEvent, initBuildStartEvent } from "./core/builder-3x";
+import { IBuildResult, IBuildTaskOption } from "~types/packages/builder/@types";
+import { initBuildFinishedEvent, initBuildStartEvent } from "@/core/builder-3x";
 
 export function onBeforeBuild(options: IBuildTaskOption) {
   console.log(options)

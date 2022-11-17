@@ -1,9 +1,10 @@
-import { ADAPTER_FETCH, PLAYABLE_DEFAULT_CONFIG } from "../constants"
+import { ADAPTER_FETCH, PLAYABLE_DEFAULT_CONFIG } from "@/constants"
 import { getProjectJson, writeToPath } from './file-system';
 import https from 'https'
 import { join } from "path";
 
 export * from './file-system'
+export * from './os'
 
 // 查看cocos引擎主版本
 export const checkCocosVersion = (): '2' | '3' => {

@@ -1,5 +1,5 @@
-import { getChannelRCSdkScript } from "../../../utils"
-import { exportSingleFile } from "../../builder-2x"
+import { getChannelRCSdkScript } from "@/utils"
+import { exportSingleFile } from "@/core/builder-2x"
 import { AD_SDK_SCRIPT } from "./inject-vars"
 
 export const export2xLiftoff = async (options: TChannelPkgOptions) => {

@@ -1,6 +1,6 @@
 import path, { join } from 'path'
 import { load, CheerioAPI } from 'cheerio'
-import { writeToPath, get2xSingleFilePath, getOriginPkgPath, getFileSize, getZipResourceMapper, readToPath, getGameMainInjectScript, getGameInitInjectScript } from '../../../utils'
+import { writeToPath, get2xSingleFilePath, getOriginPkgPath, getFileSize, getZipResourceMapper, readToPath, getGameMainInjectScript, getGameInitInjectScript } from '@/utils'
 
 const appendScriptNode = ($: CheerioAPI, contentStr: string, tag?: string) => {
   const nodeStr = `

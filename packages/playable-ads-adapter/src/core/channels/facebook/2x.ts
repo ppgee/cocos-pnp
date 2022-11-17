@@ -1,5 +1,5 @@
-import { removeXMLHttpRequest } from "../../../utils"
-import { exportDirZipFormSingleFile } from "../../builder-2x"
+import { removeXMLHttpRequest } from "@/utils"
+import { exportDirZipFormSingleFile } from "@/core/builder-2x"
 
 export const export2xFacebook = async (options: TChannelPkgOptions) => {
   await exportDirZipFormSingleFile({

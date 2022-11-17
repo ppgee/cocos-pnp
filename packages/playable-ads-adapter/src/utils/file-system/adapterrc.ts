@@ -1,6 +1,6 @@
 import { existsSync } from "fs"
 import path from "path"
-import { ADAPTER_RC_PATH } from "../../constants"
+import { ADAPTER_RC_PATH } from "@/constants"
 import { readToPath } from "./base"
 import { getProjectBuildPath, getProjectRootPath } from "./project"
 

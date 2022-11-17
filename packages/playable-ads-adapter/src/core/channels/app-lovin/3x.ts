@@ -1,5 +1,5 @@
-import { getChannelRCSdkScript } from '../../../utils'
-import { exportSingleFile } from '../../builder-3x'
+import { getChannelRCSdkScript } from '@/utils'
+import { exportSingleFile } from '@/core/builder-3x'
 import { AD_SDK_SCRIPT } from './inject-vars'
 
 export const export3xAppLovin = async (options: TChannelPkgOptions) => {

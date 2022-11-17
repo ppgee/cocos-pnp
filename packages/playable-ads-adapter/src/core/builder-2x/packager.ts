@@ -1,4 +1,4 @@
-import { getAdapterRCJson } from '../../utils'
+import { getAdapterRCJson } from '@/utils'
 import {
   export2xAppLovin,
   export2xFacebook,
@@ -11,7 +11,7 @@ import {
   export2xRubeex,
   export2xTiktok,
   export2xUnity,
-} from '../channels'
+} from '@/core/channels'
 
 const channelExports: { [key in TChannel]: (options: TChannelPkgOptions) => Promise<void> } = {
   AppLovin: export2xAppLovin,

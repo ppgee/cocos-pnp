@@ -1,7 +1,6 @@
 import { AD_SDK_SCRIPT, LANDSCAPE_META, PORTRAIT_META } from './inject-vars'
-import { exportSingleFile } from "../../builder-3x"
-import { getChannelRCSdkScript, zipToPath } from '../../../utils'
-import { unlinkSync } from 'fs'
+import { exportSingleFile } from "@/core/builder-3x"
+import { getChannelRCSdkScript } from '@/utils'
 
 export const export3xGoogle = async (options: TChannelPkgOptions) => {
   const { orientation } = options

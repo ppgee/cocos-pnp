@@ -1,6 +1,6 @@
 import { join } from "path"
 import { CheerioAPI, load } from "cheerio"
-import { get3xSingleFilePath, getOriginPkgPath, getZipResourceMapper, readToPath, writeToPath, getGameMainInjectScript, getGameInitInjectScript, getJSZipInjectScript } from "../../../utils"
+import { get3xSingleFilePath, getOriginPkgPath, getZipResourceMapper, readToPath, writeToPath, getGameMainInjectScript, getGameInitInjectScript, getJSZipInjectScript } from "@/utils"
 import JSZip from "jszip"
 
 export const paddingStyleTags = ($: CheerioAPI) => {

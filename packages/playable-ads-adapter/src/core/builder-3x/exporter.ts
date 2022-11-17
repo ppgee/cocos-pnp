@@ -2,9 +2,9 @@ import { CheerioAPI, load } from "cheerio"
 import { mkdirSync } from "fs"
 import JSZip from "jszip"
 import { join } from "path"
-import { MAX_ZIP_SIZE, REPLACE_SYMBOL } from "../../constants"
-import { readToPath, get3xSingleFilePath, getProjectBuildPath, writeToPath, copyDirToPath, getOriginPkgPath, replaceGlobalSymbol, rmSync, zipDirToPath } from "../../utils"
-import { injectFromRCJson } from "../plugins/dom"
+import { MAX_ZIP_SIZE, REPLACE_SYMBOL } from "@/constants"
+import { readToPath, get3xSingleFilePath, getProjectBuildPath, writeToPath, copyDirToPath, getOriginPkgPath, replaceGlobalSymbol, rmSync } from "@/utils"
+import { injectFromRCJson } from "@/core/plugins/dom"
 
 const globalReplacer = async (options: Pick<TBuilderOptions, 'channel' | 'zipRes' | 'notZipRes'> & { $: CheerioAPI }) => {
   const { channel, zipRes, notZipRes, $ } = options

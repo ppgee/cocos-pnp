@@ -1,12 +1,12 @@
-import { IBuildResult, IBuildTaskOption, Platform } from "../../../@types/packages/builder/@types";
-import { BUILDER_NAME, } from "../../constants";
+import { IBuildResult, IBuildTaskOption, Platform } from "~types/packages/builder/@types";
+import { BUILDER_NAME, } from "@/constants";
 import { run } from "node-cmd"
-import { getAdapterRCJson, getProjectBuildPath, getRCSkipBuild, getRealPath } from "../../utils";
-import { gen3xSingleFile } from "../plugins/single-html-3x";
+import { getAdapterRCJson, getProjectBuildPath, getRCSkipBuild, getRealPath } from "@/utils";
+import { gen3xSingleFile } from "@/core/plugins/single-html-3x";
 import { genChannelsPkg } from './packager'
-import { checkOSPlatform } from "../../utils/os";
-import { destroyBuildGlobalVars, mountBuildGlobalVars } from "../plugins/editor";
-import { execTinify } from "../plugins/tinify";
+import { checkOSPlatform } from "@/utils";
+import { destroyBuildGlobalVars, mountBuildGlobalVars } from "@/core/plugins/editor";
+import { execTinify } from "@/core/plugins/tinify";
 import { shell } from 'electron'
 
 const runBuilder = (buildPlatform: Platform) => {
