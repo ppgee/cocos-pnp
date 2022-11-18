@@ -61,5 +61,5 @@ export const genSingleFile = async () => {
 
   writeToPath(singleFile2xPath, $.html())
 
-  Editor.success(`【单文件模板成功生成】文件大小为：${getFileSize(singleFile2xPath) / 1024}kb`)
+  console.info(`【单文件模板成功生成】文件大小为：${getFileSize(singleFile2xPath) / 1024}kb`)
 }

@@ -8,7 +8,7 @@ import { injectFromRCJson } from "@/core/helpers/dom"
 export const exportSingleFile = async (options: TBuilderOptions) => {
   const { channel, transformHTML, transform } = options
 
-  Editor.info(`【${channel}】开始适配`)
+  console.info(`【${channel}】开始适配`)
   const singleHtml = readToPath(get2xSingleFilePath(), 'utf-8')
   const targetPath = join(getProjectBuildPath(), `${channel}.html`)
 
@@ -30,13 +30,13 @@ export const exportSingleFile = async (options: TBuilderOptions) => {
     await transform(targetPath)
   }
 
-  Editor.success(`【${channel}】完成适配`)
+  console.info(`【${channel}】完成适配`)
 }
 
 export const exportZipFromPkg = async (options: TBuilderOptions) => {
   const { channel, transformHTML, transform } = options
 
-  Editor.info(`【${channel}】开始适配`)
+  console.info(`【${channel}】开始适配`)
   // 复制文件夹
   const originPkgPath = getOriginPkgPath()
   const projectBuildPath = getProjectBuildPath()
@@ -70,13 +70,13 @@ export const exportZipFromPkg = async (options: TBuilderOptions) => {
   // rmSync(destPath)
 
 
-  Editor.success(`【${channel}】完成适配`)
+  console.info(`【${channel}】完成适配`)
 }
 
 export const exportDirZipFormSingleFile = async (options: TZipFromSingleFileOptions) => {
   const { channel, transformHTML, transform, transformScript } = options
 
-  Editor.info(`【${channel}】开始适配`)
+  console.info(`【${channel}】开始适配`)
   // 复制文件夹
   const singleHtmlPath = get2xSingleFilePath()
   const projectBuildPath = getProjectBuildPath()
@@ -127,5 +127,5 @@ export const exportDirZipFormSingleFile = async (options: TZipFromSingleFileOpti
   // await zipDirToPath(destPath)
   // // 删除多余文件夹
   // rmSync(destPath)
-  Editor.success(`【${channel}】完成适配`)
+  console.info(`【${channel}】完成适配`)
 }
