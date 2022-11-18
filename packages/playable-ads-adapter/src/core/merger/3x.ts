@@ -1,6 +1,19 @@
 import { join } from "path"
 import { CheerioAPI, load } from "cheerio"
-import { get3xSingleFilePath, getOriginPkgPath, getZipResourceMapper, readToPath, writeToPath, getGameMainInjectScript, getGameInitInjectScript, getJSZipInjectScript } from "@/core/utils"
+import {
+  get3xSingleFilePath,
+  getOriginPkgPath,
+  getZipResourceMapper,
+  readToPath,
+  writeToPath,
+  getGameMainInjectScript,
+  getGameInitInjectScript,
+  getJSZipInjectScript
+} from "@/core/utils"
+import {
+  injects3xCode,
+  jszipCode
+} from '@/core/injects'
 import JSZip from "jszip"
 
 export const paddingStyleTags = ($: CheerioAPI) => {
@@ -53,7 +66,8 @@ export const paddingAllResToMapped = async ($: CheerioAPI) => {
   })
 
   // 注入解压库
-  $(`<script data-id="jszip">${getJSZipInjectScript()}</script>`).appendTo('body')
+  // $(`<script data-id="jszip">${getJSZipInjectScript()}</script>`).appendTo('body')
+  $(`<script data-id="jszip">${jszipCode}</script>`).appendTo('body')
 
   // 注入压缩文件
   const content = await zip.generateAsync({ type: 'nodebuffer' })
@@ -63,8 +77,10 @@ export const paddingAllResToMapped = async ($: CheerioAPI) => {
   // 不需压缩的文件
   $(`<script data-id="adapter-resource">window.__adapter_resource__=${JSON.stringify(notZipRes)}</script>`).appendTo('body')
   // 注入相关代码
-  $(`<script data-id="adapter-init">${getGameInitInjectScript()}</script>`).appendTo('body')
-  $(`<script data-id="adapter-main">${getGameMainInjectScript()}</script>`).appendTo('body')
+  $(`<script data-id="adapter-init">${injects3xCode.init}</script>`).appendTo('body')
+  // $(`<script data-id="adapter-init">${getGameInitInjectScript()}</script>`).appendTo('body')
+  $(`<script data-id="adapter-main">${injects3xCode.main}</script>`).appendTo('body')
+  // $(`<script data-id="adapter-main">${getGameMainInjectScript()}</script>`).appendTo('body')
 
   return {
     zipRes,

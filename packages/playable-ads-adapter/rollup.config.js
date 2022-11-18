@@ -10,12 +10,17 @@ import typescript from '@rollup/plugin-typescript';
 import terser from '@rollup/plugin-terser';
 import alias from '@rollup/plugin-alias'
 import { minify } from 'uglify-js'
+import { readFileSync } from 'fs'
 
 const appName = pkgJson.name
 const appVersion = pkgJson.version
 const outputDir = `dist/${appName}`
 const builderVersion = process.env.BUILD_VERSION || '2x'
 const is2xBuilder = builderVersion === '2x'
+
+const getJSCode = (jsPath) => {
+  return JSON.stringify(minify(readFileSync(__dirname + jsPath).toString('utf-8')).code)
+}
 
 export default {
   input: {
@@ -39,7 +44,11 @@ export default {
     replace({
       preventAssignment: true,
       values: {
-        'process.env.BUILD_VERSION': JSON.stringify(process.env.BUILD_VERSION),
+        __adapter_init_2x_code__: () => getJSCode('/injects/2x/init.js'),
+        __adapter_main_2x_code__: () => getJSCode('/injects/2x/main.js'),
+        __adapter_init_3x_code__: () => getJSCode('/injects/3x/init.js'),
+        __adapter_main_3x_code__: () => getJSCode('/injects/3x/main.js'),
+        __adapter_jszip_code__: () => getJSCode('/injects/libs/jszip.js'),
       }
     }),
     json(),
@@ -62,23 +71,6 @@ export default {
             return JSON.stringify(tempPkgJson, null, 2)
           }
         },
-        {
-          src: `injects/${builderVersion}/init.js`,
-          dest: outputDir,
-          rename: 'injects/init.js',
-          transform: (contents) => {
-            return minify(contents.toString('utf-8')).code
-          }
-        },
-        {
-          src: `injects/${builderVersion}/main.js`,
-          dest: outputDir,
-          rename: 'injects/main.js',
-          transform: (contents) => {
-            return minify(contents.toString('utf-8')).code
-          }
-        },
-        { src: `injects/libs/jszip.js`, dest: outputDir, rename: 'injects/jszip.js' },
         { src: 'i18n/**/*', dest: `${outputDir}/i18n` }
       ],
       verbose: true
