@@ -1,6 +1,6 @@
 import { join } from "path"
 import { CheerioAPI, load } from "cheerio"
-import { get3xSingleFilePath, getOriginPkgPath, getZipResourceMapper, readToPath, writeToPath, getGameMainInjectScript, getGameInitInjectScript, getJSZipInjectScript } from "@/utils"
+import { get3xSingleFilePath, getOriginPkgPath, getZipResourceMapper, readToPath, writeToPath, getGameMainInjectScript, getGameInitInjectScript, getJSZipInjectScript } from "@/core/utils"
 import JSZip from "jszip"
 
 export const paddingStyleTags = ($: CheerioAPI) => {
@@ -72,7 +72,7 @@ export const paddingAllResToMapped = async ($: CheerioAPI) => {
   }
 }
 
-export const gen3xSingleFile = async () => {
+export const genSingleFile = async () => {
   // 原始包路径
   const originPkgPath = getOriginPkgPath()
   // 3x单文件路径

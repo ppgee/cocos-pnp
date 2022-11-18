@@ -1,9 +1,9 @@
 import { join } from "path"
 import { load } from 'cheerio'
 import { mkdirSync } from "fs"
-import { REPLACE_SYMBOL } from "@/constants"
-import { writeToPath, readToPath, get2xSingleFilePath, getProjectBuildPath, getOriginPkgPath, copyDirToPath, replaceGlobalSymbol, rmSync } from "@/utils"
-import { injectFromRCJson } from "@/core/plugins/dom"
+import { REPLACE_SYMBOL } from "@/core/constants"
+import { writeToPath, readToPath, get2xSingleFilePath, getProjectBuildPath, getOriginPkgPath, copyDirToPath, replaceGlobalSymbol, rmSync } from "@/core/utils"
+import { injectFromRCJson } from "@/core/helpers/dom"
 
 export const exportSingleFile = async (options: TBuilderOptions) => {
   const { channel, transformHTML, transform } = options

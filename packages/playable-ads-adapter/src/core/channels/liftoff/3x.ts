@@ -1,5 +1,5 @@
-import { getChannelRCSdkScript } from "@/utils"
-import { exportSingleFile } from "@/core/builder-3x"
+import { getChannelRCSdkScript } from "@/core/utils"
+import { exportSingleFile } from "@/core/exporter/3x"
 import { AD_SDK_SCRIPT } from "./inject-vars"
 
 export const export3xLiftoff = async (options: TChannelPkgOptions) => {

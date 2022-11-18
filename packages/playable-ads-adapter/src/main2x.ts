@@ -1,5 +1,5 @@
-import { BUILDER_NAME, COCOS_EDITOR_EVENT } from "@/constants";
-import { builder2x, initBuildStartEvent, initBuildFinishedEvent } from "@/core/builder-2x";
+import { BUILDER_NAME, COCOS_EDITOR_EVENT } from "@/extensions/constants";
+import { builder2x, initBuildStartEvent, initBuildFinishedEvent } from "@/extensions/builder/2x";
 
 /**
  * @en Hooks triggered after extension loading is complete

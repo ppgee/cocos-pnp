@@ -1,30 +1,19 @@
-import { existsSync } from "fs"
 import path from "path"
-import { ADAPTER_RC_PATH } from "@/constants"
-import { readToPath } from "./base"
-import { getProjectBuildPath, getProjectRootPath } from "./project"
+import { getGlobalBuildConfig, getGlobalBuildPlatform } from "@/core/global"
+import { getProjectBuildPath } from "./project"
+
+export const getAdapterRCJson = (): TAdapterRC | null => {
+  return getGlobalBuildConfig()
+}
 
 export const getOriginPkgPath = () => {
-  let buildPlatform = global.__adapter_build_platform__
+  let buildPlatform = getGlobalBuildPlatform()
   if (!buildPlatform) {
     let configJson: Partial<TAdapterRC> = getAdapterRCJson() || {}
     buildPlatform = configJson.buildPlatform || 'web-mobile'
   }
 
   return path.join(getProjectBuildPath(), buildPlatform!)
-}
-
-export const getAdapterRCJson = (): TAdapterRC | null => {
-  if (global.__adapter_build_config__) {
-    return global.__adapter_build_config__
-  }
-  const projectRootPath = getProjectRootPath()
-  const adapterRCJsonPath = `${projectRootPath}${ADAPTER_RC_PATH}`
-  if (existsSync(adapterRCJsonPath)) {
-    return <TAdapterRC>JSON.parse(readToPath(adapterRCJsonPath))
-  }
-
-  return null
 }
 
 export const getChannelRCJson = (channel: TChannel): TChannelRC | null => {

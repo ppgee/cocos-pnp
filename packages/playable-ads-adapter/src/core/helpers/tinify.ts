@@ -1,6 +1,6 @@
 import Axios from 'axios';
 import { readFileSync } from 'fs';
-import { checkImgType, getAllFilesFormDir, getOriginPkgPath, getRCTinify, writeToPath } from "@/utils"
+import { checkImgType, getAllFilesFormDir, getOriginPkgPath, getRCTinify, writeToPath } from "@/core/utils"
 
 // 远程上传文件
 export const postFileToRemote = (filePath: string, data: Buffer): Promise<void> => {

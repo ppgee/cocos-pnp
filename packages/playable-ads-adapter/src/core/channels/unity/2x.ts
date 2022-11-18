@@ -1,5 +1,5 @@
-import { getChannelRCSdkScript } from "@/utils"
-import { exportSingleFile } from "@/core/builder-2x"
+import { getChannelRCSdkScript } from "@/core/utils"
+import { exportSingleFile } from "@/core/exporter/2x"
 import { INSERT_BEFORE_SCRIPT } from "./inject-vars"
 
 export const export2xUnity = async (options: TChannelPkgOptions) => {

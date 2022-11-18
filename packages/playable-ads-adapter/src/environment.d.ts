@@ -9,6 +9,15 @@ declare global {
     }
   }
 
-  var __adapter_build_platform__: Platform | null
-  var __adapter_build_config__: TAdapterRC | null
+  var __playable_ads_adapter_global__: {
+    isMount: boolean,
+    buildPlatform: Platform | null,
+    buildConfig: TAdapterRC | null,
+    injectsPath: string,
+  }
+  var __playable_ads_adapter_project__: {
+    isMount: boolean,
+    projectRootPath: string,
+    projectBuildPath: string,
+  }
 }

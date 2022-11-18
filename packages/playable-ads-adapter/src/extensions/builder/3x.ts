@@ -1,13 +1,34 @@
-import { IBuildResult, IBuildTaskOption, Platform } from "~types/packages/builder/@types";
-import { BUILDER_NAME, } from "@/constants";
-import { run } from "node-cmd"
-import { getAdapterRCJson, getProjectBuildPath, getRCSkipBuild, getRealPath } from "@/utils";
-import { gen3xSingleFile } from "@/core/plugins/single-html-3x";
-import { genChannelsPkg } from './packager'
-import { checkOSPlatform } from "@/utils";
-import { destroyBuildGlobalVars, mountBuildGlobalVars } from "@/core/plugins/editor";
-import { execTinify } from "@/core/plugins/tinify";
 import { shell } from 'electron'
+import path from "path";
+import { IBuildResult, IBuildTaskOption, Platform } from "~types/packages/builder/@types";
+import { run } from "node-cmd"
+import { BUILDER_NAME } from "@/extensions/constants";
+import { getAdapterRCJson, getProjectBuildPath, getRCSkipBuild, getRealPath } from "@/core/utils";
+import { checkOSPlatform, readAdapterRCFile } from "@/extensions/utils";
+import { unmountAllGlobalVars, mountBuildGlobalVars, mountProjectGlobalVars } from "@/core/global";
+import { genSingleFile } from "@/core/merger/3x";
+import { genChannelsPkg } from '@/core/packager/3x'
+import { execTinify } from "@/core/helpers/tinify";
+
+const prepareBuildStart = (platform?: Platform): Platform => {
+  mountProjectGlobalVars({
+    projectRootPath: Editor.Project.path,
+    projectBuildPath: '/build',
+  })
+
+  const adapterBuildConfig = readAdapterRCFile()
+  let buildPlatform = platform
+  if (!buildPlatform) {
+    buildPlatform = adapterBuildConfig?.buildPlatform ?? 'web-mobile'
+  }
+  mountBuildGlobalVars({
+    platform: buildPlatform!,
+    injectsPath: path.join(__dirname, './injects'),
+    adapterBuildConfig
+  })
+
+  return buildPlatform!
+}
 
 const runBuilder = (buildPlatform: Platform) => {
   return new Promise<void>((resolve, reject) => {
@@ -34,9 +55,7 @@ const runBuilder = (buildPlatform: Platform) => {
 
 export const initBuildStartEvent = async (options: Partial<IBuildTaskOption>) => {
   console.log(`${BUILDER_NAME} 进行预构建处理`)
-  mountBuildGlobalVars({
-    platform: options.platform!
-  })
+  prepareBuildStart(options.platform!)
   console.log(`${BUILDER_NAME} 跳过预构建处理`)
 }
 
@@ -54,7 +73,7 @@ export const initBuildFinishedEvent = async (options: Partial<IBuildTaskOption>,
     console.error(error)
   }
 
-  const { zipRes, notZipRes } = await gen3xSingleFile()
+  const { zipRes, notZipRes } = await genSingleFile()
   // 适配文件
   const { orientation = 'auto' } = getAdapterRCJson() || {}
   await genChannelsPkg({
@@ -64,15 +83,16 @@ export const initBuildFinishedEvent = async (options: Partial<IBuildTaskOption>,
   })
   const end = new Date().getTime();
 
-  destroyBuildGlobalVars()
+  unmountAllGlobalVars()
   console.log(`${BUILDER_NAME} 适配完成，共耗时${((end - start) / 1000).toFixed(0)}秒`)
 }
 
 export const builder3x = async () => {
   try {
-    const { buildPlatform = 'web-mobile' } = getAdapterRCJson() || {}
+    const buildPlatform = prepareBuildStart()
     console.log(`开始构建项目，导出${buildPlatform}包`)
     const isSkipBuild = getRCSkipBuild()
+    const projectBuildPath = getProjectBuildPath()
 
     await initBuildStartEvent({
       platform: buildPlatform
@@ -83,7 +103,7 @@ export const builder3x = async () => {
     await initBuildFinishedEvent({
       platform: buildPlatform
     })
-    shell.openPath(getProjectBuildPath())
+    shell.openPath(projectBuildPath)
     console.log('构建完成')
   } catch (error) {
     console.error(error)

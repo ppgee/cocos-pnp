@@ -1,5 +1,5 @@
-import { removeXMLHttpRequest } from "@/utils"
-import { exportSingleFile } from '@/core/builder-2x'
+import { removeXMLHttpRequest } from "@/core/utils"
+import { exportSingleFile } from '@/core/exporter/2x'
 
 export const export2xMoloco = async (options: TChannelPkgOptions) => {
   await exportSingleFile({

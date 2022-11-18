@@ -1,6 +1,6 @@
 import path, { join } from 'path'
 import { load, CheerioAPI } from 'cheerio'
-import { writeToPath, get2xSingleFilePath, getOriginPkgPath, getFileSize, getZipResourceMapper, readToPath, getGameMainInjectScript, getGameInitInjectScript } from '@/utils'
+import { writeToPath, get2xSingleFilePath, getOriginPkgPath, getFileSize, getZipResourceMapper, readToPath, getGameMainInjectScript, getGameInitInjectScript } from '@/core/utils'
 
 const appendScriptNode = ($: CheerioAPI, contentStr: string, tag?: string) => {
   const nodeStr = `
@@ -27,7 +27,7 @@ export const paddingStyleTags = ($: CheerioAPI) => {
   $('link[type="text/css"]').remove()
 }
 
-export const gen2xSingleFile = async () => {
+export const genSingleFile = async () => {
   // 原始包路径
   const originPkgPath = getOriginPkgPath()
   // 2x单文件路径

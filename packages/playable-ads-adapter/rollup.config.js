@@ -88,5 +88,5 @@ export default {
       dest: `~/.CocosCreator/${is2xBuilder ? 'packages' : 'extensions'}/${appName}`
     }),
   ],
-  external: ['fs', 'path', 'https', 'os', 'electron']
+  external: ['fs', 'path', 'os', 'electron']
 }

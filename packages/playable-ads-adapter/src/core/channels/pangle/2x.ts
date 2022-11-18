@@ -1,6 +1,6 @@
 import { APPEND_TO_HEAD } from "./inject-vars"
-import { exportZipFromPkg } from "@/core/builder-2x"
-import { exportConfigJson, getChannelRCSdkScript } from "@/utils"
+import { exportZipFromPkg } from "@/core/exporter/2x"
+import { exportConfigJson, getChannelRCSdkScript } from "@/core/utils"
 
 export const export2xPangle = async (options: TChannelPkgOptions) => {
   const { orientation } = options

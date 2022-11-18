@@ -2,7 +2,7 @@ import { readdirSync, statSync } from "fs"
 import JSZip from "jszip"
 import { lookup } from "mime-types"
 import path, { extname } from "path"
-import { PROJECT_JSON_PATH, SETTINGS_PROJECT_PATH, REPLACE_SYMBOL, TO_STRING_EXTNAME, TO_SKIP_EXTNAME, ADAPTER_FETCH } from "@/constants"
+import { REPLACE_SYMBOL, TO_STRING_EXTNAME, TO_SKIP_EXTNAME, ADAPTER_FETCH } from "@/core/constants"
 import { getAllFilesFormDir, readToPath, writeToPath } from "./base"
 
 export const getRealPath = (pathStr: string) => {
@@ -13,36 +13,6 @@ export const getRealPath = (pathStr: string) => {
   }
 
   return realPath
-}
-
-export const getProjectRootPath = () => {
-  return getRealPath(Editor.Project.path)
-}
-
-export const getProjectBuildPath = () => {
-  return path.join(getProjectRootPath(), '/build')
-}
-
-export const get2xSingleFilePath = () => {
-  return path.join(getProjectBuildPath(), '/single-file-2x.html')
-}
-export const get3xSingleFilePath = () => {
-  return path.join(getProjectBuildPath(), '/single-file-3x.html')
-}
-
-export const getProjectJson = (): TProjectJson => {
-  const projectRootPath = getProjectRootPath()
-  const projectJsonPath = `${projectRootPath}${PROJECT_JSON_PATH}`
-  const projectJson = JSON.parse(readToPath(projectJsonPath))
-  return projectJson['excluded-modules']
-}
-
-export const getExcludedModules = (): string[] => {
-  // 获取未使用的模块
-  const projectRootPath = getProjectRootPath()
-  const projectJsonPath = `${projectRootPath}${SETTINGS_PROJECT_PATH}`
-  const projectJson = JSON.parse(readToPath(projectJsonPath))
-  return projectJson['excluded-modules'] || ['3D Physics/Builtin']
 }
 
 // 替换全局变量
@@ -158,16 +128,4 @@ export const getZipResourceMapper = async (options: {
     zipRes,
     notZipRes
   }
-}
-
-export const getGameInitInjectScript = () => {
-  return readToPath(path.join(__dirname, './injects/init.js'))
-}
-
-export const getGameMainInjectScript = () => {
-  return readToPath(path.join(__dirname, './injects/main.js'))
-}
-
-export const getJSZipInjectScript = () => {
-  return readToPath(path.join(__dirname, './injects/jszip.js'))
 }
