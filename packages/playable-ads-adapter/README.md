@@ -82,7 +82,7 @@ pnpm build:3x
 1. 支持全局动态替换渠道名称，方便对某个渠道进行特殊逻辑，该占位符为 `'{{__adv_channels_adapter__}}'` ，例：
 ```typescript
 // 源代码为
-window.advChannels = '{{__adv_channels_adapter__}}' // 防止rollup打包进行tree-shaking省略掉该代码（dead code），建议占位符可挂载在全局
+window.advChannels = '{{__adv_channels_adapter__}}' // 防止rollup打包进行tree-shaking省略掉该代码（dead code），占位符变量可挂载在全局
 
 // 在Facebook渠道下代码会被替换为
 window.advChannels = 'Facebook'
