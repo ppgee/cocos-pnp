@@ -1,6 +1,5 @@
 import path from "path"
-import { getGlobalInjectsPath, getGlobalProjectBuildPath, getGlobalProjectRootPath } from "@/core/global"
-import { readToPath } from "./base"
+import { getGlobalProjectBuildPath, getGlobalProjectRootPath } from "@/core/global"
 import { getRealPath } from "./resource"
 
 export const getProjectRootPath = () => {
@@ -17,16 +16,4 @@ export const get2xSingleFilePath = () => {
 
 export const get3xSingleFilePath = () => {
   return path.join(getProjectBuildPath(), '/single-file-3x.html')
-}
-
-export const getGameInitInjectScript = () => {
-  return readToPath(path.join(getGlobalInjectsPath(), './init.js'))
-}
-
-export const getGameMainInjectScript = () => {
-  return readToPath(path.join(getGlobalInjectsPath(), './main.js'))
-}
-
-export const getJSZipInjectScript = () => {
-  return readToPath(path.join(getGlobalInjectsPath(), './jszip.js'))
 }

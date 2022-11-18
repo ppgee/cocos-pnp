@@ -1,6 +1,16 @@
 import path, { join } from 'path'
 import { load, CheerioAPI } from 'cheerio'
-import { writeToPath, get2xSingleFilePath, getOriginPkgPath, getFileSize, getZipResourceMapper, readToPath, getGameMainInjectScript, getGameInitInjectScript } from '@/core/utils'
+import {
+  writeToPath,
+  get2xSingleFilePath,
+  getOriginPkgPath,
+  getFileSize,
+  getZipResourceMapper,
+  readToPath,
+} from '@/core/utils'
+import {
+  injects2xCode
+} from '@/core/injects'
 
 const appendScriptNode = ($: CheerioAPI, contentStr: string, tag?: string) => {
   const nodeStr = `
@@ -56,8 +66,8 @@ export const genSingleFile = async () => {
   })}`)
 
   // 注入相关代码
-  $(`<script data-id="adapter-init">${getGameInitInjectScript()}</script>`).appendTo('body')
-  $(`<script data-id="adapter-main">${getGameMainInjectScript()}</script>`).appendTo('body')
+  $(`<script data-id="adapter-init">${injects2xCode.init}</script>`).appendTo('body')
+  $(`<script data-id="adapter-main">${injects2xCode.main}</script>`).appendTo('body')
 
   writeToPath(singleFile2xPath, $.html())
 

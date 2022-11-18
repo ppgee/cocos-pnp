@@ -5,10 +5,7 @@ import {
   getOriginPkgPath,
   getZipResourceMapper,
   readToPath,
-  writeToPath,
-  getGameMainInjectScript,
-  getGameInitInjectScript,
-  getJSZipInjectScript
+  writeToPath
 } from "@/core/utils"
 import {
   injects3xCode,
@@ -78,9 +75,7 @@ export const paddingAllResToMapped = async ($: CheerioAPI) => {
   $(`<script data-id="adapter-resource">window.__adapter_resource__=${JSON.stringify(notZipRes)}</script>`).appendTo('body')
   // 注入相关代码
   $(`<script data-id="adapter-init">${injects3xCode.init}</script>`).appendTo('body')
-  // $(`<script data-id="adapter-init">${getGameInitInjectScript()}</script>`).appendTo('body')
   $(`<script data-id="adapter-main">${injects3xCode.main}</script>`).appendTo('body')
-  // $(`<script data-id="adapter-main">${getGameMainInjectScript()}</script>`).appendTo('body')
 
   return {
     zipRes,

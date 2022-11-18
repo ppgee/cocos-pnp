@@ -16,7 +16,6 @@ export const mountProjectGlobalVars = (options: {
 
 export const mountBuildGlobalVars = (options: {
   platform: Platform,
-  injectsPath: string,
   adapterBuildConfig?: TAdapterRC | null
 }) => {
   if (global.__playable_ads_adapter_global__ && global.__playable_ads_adapter_global__.isMount) {
@@ -26,7 +25,6 @@ export const mountBuildGlobalVars = (options: {
     isMount: true,
     buildPlatform: options.platform,
     buildConfig: options.adapterBuildConfig ?? null,
-    injectsPath: options.injectsPath ?? '',
   }
 }
 
@@ -40,7 +38,6 @@ export const unmountAllGlobalVars = () => {
     isMount: false,
     buildPlatform: null,
     buildConfig: null,
-    injectsPath: '',
   }
 }
 
@@ -58,8 +55,4 @@ export const getGlobalProjectRootPath = () => {
 
 export const getGlobalProjectBuildPath = () => {
   return global.__playable_ads_adapter_project__.projectBuildPath
-}
-
-export const getGlobalInjectsPath = () => {
-  return global.__playable_ads_adapter_global__.injectsPath
 }

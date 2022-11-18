@@ -1,5 +1,4 @@
 import { shell } from 'electron'
-import path from "path";
 import { IBuildResult, IBuildTaskOption, Platform } from "~types/packages/builder/@types";
 import { run } from "node-cmd"
 import { BUILDER_NAME } from "@/extensions/constants";
@@ -23,7 +22,6 @@ const prepareBuildStart = (platform?: Platform): Platform => {
   }
   mountBuildGlobalVars({
     platform: buildPlatform!,
-    injectsPath: path.join(__dirname, './injects'),
     adapterBuildConfig
   })
 

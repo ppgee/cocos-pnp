@@ -19,7 +19,6 @@ declare global {
     isMount: boolean,
     buildPlatform: Platform | null,
     buildConfig: TAdapterRC | null,
-    injectsPath: string,
   }
   var __playable_ads_adapter_project__: {
     isMount: boolean,

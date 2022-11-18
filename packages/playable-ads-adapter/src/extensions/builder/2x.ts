@@ -7,7 +7,6 @@ import { genSingleFile } from '@/core/merger/2x'
 import { genChannelsPkg } from '@/core/packager/2x'
 import { execTinify } from '@/core/helpers/tinify'
 import { shell } from 'electron'
-import path from 'path'
 
 const prepareBuildStart = (platform?: Platform): Platform => {
   mountProjectGlobalVars({
@@ -22,7 +21,6 @@ const prepareBuildStart = (platform?: Platform): Platform => {
   }
   mountBuildGlobalVars({
     platform: buildPlatform!,
-    injectsPath: path.join(__dirname, './injects'),
     adapterBuildConfig
   })
 
