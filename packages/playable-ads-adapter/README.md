@@ -82,10 +82,10 @@ pnpm build:3x
 1. 支持全局动态替换渠道名称，方便对某个渠道进行特殊逻辑，该占位符为 `'{{__adv_channels_adapter__}}'` ，例：
 ```typescript
 // 源代码为
-let test = '{{__adv_channels_adapter__}}'
+window.advChannels = '{{__adv_channels_adapter__}}' // 防止rollup打包进行tree-shaking省略掉该代码（dead code），建议占位符可挂载在全局
 
 // 在Facebook渠道下代码会被替换为
-let test = 'Facebook'
+window.advChannels = 'Facebook'
 ```
 
 2. 支持扩展注入脚本功能，可以在此配置每个渠道下特殊的业务代码，需要在根目录下创建 `.adapterrc`，里面以JSON格式进行编辑，其中里面的配置信息和案例如下：
