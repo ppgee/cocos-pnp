@@ -1,3 +1,4 @@
 node_modules/
 !packages/cocos-taobao-adapter/build-templates/alipay/node_modules/
 dist/
+!packages/playable-adapter-core/dist/
