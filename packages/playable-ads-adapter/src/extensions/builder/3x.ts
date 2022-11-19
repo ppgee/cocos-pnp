@@ -1,15 +1,23 @@
 import { shell } from 'electron'
-import { IBuildResult, IBuildTaskOption, Platform } from "~types/packages/builder/@types";
+import { IBuildResult, IBuildTaskOption } from "~types/packages/builder/@types";
 import { run } from "node-cmd"
 import { BUILDER_NAME } from "@/extensions/constants";
-import { getAdapterRCJson, getProjectBuildPath, getRCSkipBuild, getRealPath } from "@/core/utils";
 import { checkOSPlatform, readAdapterRCFile } from "@/extensions/utils";
-import { unmountAllGlobalVars, mountBuildGlobalVars, mountProjectGlobalVars } from "@/core/global";
-import { genSingleFile } from "@/core/merger/3x";
-import { genChannelsPkg } from '@/core/packager/3x'
-import { execTinify } from "@/core/helpers/tinify";
+import {
+  TPlatform,
+  getRealPath,
+  getAdapterRCJson,
+  unmountAllGlobalVars,
+  mountBuildGlobalVars,
+  mountProjectGlobalVars,
+  getGlobalProjectBuildPath,
+  gen3xSingleFile,
+  gen3xChannelsPkg,
+  execTinify,
+  getRCSkipBuild,
+} from 'playable-adapter-core'
 
-const prepareBuildStart = (platform?: Platform): Platform => {
+const prepareBuildStart = (platform?: TPlatform): TPlatform => {
   mountProjectGlobalVars({
     projectRootPath: Editor.Project.path,
     projectBuildPath: '/build',
@@ -28,7 +36,7 @@ const prepareBuildStart = (platform?: Platform): Platform => {
   return buildPlatform!
 }
 
-const runBuilder = (buildPlatform: Platform) => {
+const runBuilder = (buildPlatform: TPlatform) => {
   return new Promise<void>((resolve, reject) => {
     let cocosBuilderPath = Editor.App.path
     const platform = checkOSPlatform()
@@ -71,10 +79,10 @@ export const initBuildFinishedEvent = async (options: Partial<IBuildTaskOption>,
     console.error(error)
   }
 
-  const { zipRes, notZipRes } = await genSingleFile()
+  const { zipRes, notZipRes } = await gen3xSingleFile()
   // 适配文件
   const { orientation = 'auto' } = getAdapterRCJson() || {}
-  await genChannelsPkg({
+  await gen3xChannelsPkg({
     orientation,
     zipRes,
     notZipRes
@@ -90,7 +98,7 @@ export const builder3x = async () => {
     const buildPlatform = prepareBuildStart()
     console.log(`开始构建项目，导出${buildPlatform}包`)
     const isSkipBuild = getRCSkipBuild()
-    const projectBuildPath = getProjectBuildPath()
+    const projectBuildPath = getGlobalProjectBuildPath()
 
     await initBuildStartEvent({
       platform: buildPlatform

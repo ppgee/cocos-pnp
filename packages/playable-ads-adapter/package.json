@@ -1,5 +1,5 @@
 {
-  "version": "1.2.1",
+  "version": "1.2.2",
   "name": "playable-ads-adapter",
   "main": "./main.js",
   "devDependencies": {
@@ -34,6 +34,7 @@
     "cheerio": "1.0.0-rc.12",
     "jszip": "^3.10.1",
     "mime-types": "^2.1.35",
-    "node-cmd": "^5.0.0"
+    "node-cmd": "^5.0.0",
+    "playable-adapter-core": "workspace:*"
   }
 }

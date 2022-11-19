@@ -5,6 +5,38 @@
  */
 type TWebOrientations = 'portrait' | 'landscape' | 'auto'
 
+type TPlatform =
+  | 'web-desktop'
+  | 'web-mobile'
+  | 'wechatgame'
+  | 'oppo-mini-game'
+  | 'vivo-mini-game'
+  | 'huawei-quick-game'
+  | 'alipay-mini-game'
+  | 'mac'
+  | 'ios'
+  | 'linux'
+  // | 'ios-app-clip'
+  | 'android'
+  | 'ohos'
+  | 'open-harmonyos'
+  | 'windows'
+  | 'xiaomi-quick-game'
+  | 'baidu-mini-game'
+  | 'bytedance-mini-game'
+  | 'cocos-play'
+  | 'huawei-agc'
+  | 'link-sure'
+  | 'qtt'
+  | 'cocos-runtime'
+  | 'xr-meta'
+  | 'xr-huaweivr'
+  | 'xr-pico'
+  | 'xr-rokid'
+  | 'xr-monado'
+  | 'ar-android'
+  | 'ar-ios';
+
 type TChannel =
   | 'AppLovin'
   | 'Facebook'

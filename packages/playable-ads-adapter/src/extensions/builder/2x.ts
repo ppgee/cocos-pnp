@@ -1,14 +1,20 @@
 import { BUILDER_NAME } from '@/extensions/constants'
-import { Platform } from '~types/packages/builder/@types'
-import { getOriginPkgPath, getProjectBuildPath, getRCSkipBuild } from '@/core/utils'
 import { getExcludedModules, readAdapterRCFile } from '@/extensions/utils'
-import { unmountAllGlobalVars, mountBuildGlobalVars, mountProjectGlobalVars } from '@/core/global'
-import { genSingleFile } from '@/core/merger/2x'
-import { genChannelsPkg } from '@/core/packager/2x'
-import { execTinify } from '@/core/helpers/tinify'
+import {
+  TPlatform,
+  unmountAllGlobalVars,
+  mountBuildGlobalVars,
+  mountProjectGlobalVars,
+  getGlobalProjectBuildPath,
+  gen2xSingleFile,
+  gen2xChannelsPkg,
+  execTinify,
+  getOriginPkgPath,
+  getRCSkipBuild,
+} from 'playable-adapter-core'
 import { shell } from 'electron'
 
-const prepareBuildStart = (platform?: Platform): Platform => {
+const prepareBuildStart = (platform?: TPlatform): TPlatform => {
   mountProjectGlobalVars({
     projectRootPath: Editor.Project.path,
     projectBuildPath: '/build',
@@ -48,14 +54,14 @@ export const initBuildFinishedEvent = async (options: TBuildOptions, callback?: 
     console.error(error)
   }
 
-  await genSingleFile()
+  await gen2xSingleFile()
   // 适配文件
-  await genChannelsPkg({
+  await gen2xChannelsPkg({
     orientation: options.webOrientation
   })
   const end = new Date().getTime();
   Editor.success(`${BUILDER_NAME} 适配完成，共耗时${((end - start) / 1000).toFixed(0)}秒`)
-  shell.openPath(getProjectBuildPath())
+  shell.openPath(getGlobalProjectBuildPath())
   unmountAllGlobalVars()
   callback && callback()
 }

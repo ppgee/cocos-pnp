@@ -1,0 +1,47 @@
+{
+  "name": "playable-adapter-core",
+  "version": "0.1.2",
+  "description": "A node application for exporting playable ads",
+  "title": "Playable Adapter Core",
+  "main": "dist/playable-adapter-core.js",
+  "typings": "dist/playable-adapter-core.d.ts",
+  "files": [
+    "dist"
+  ],
+  "author": "ppgee",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ppgee/cocos-pnp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ppgee/cocos-pnp/issues"
+  },
+  "homepage": "https://github.com/ppgee/cocos-pnp#readme",
+  "scripts": {
+    "clear": "rm -rf dist/",
+    "watch": "rollup -c -w",
+    "build": "rollup -c"
+  },
+  "devDependencies": {
+    "@rollup/plugin-alias": "^4.0.2",
+    "@rollup/plugin-commonjs": "^23.0.0",
+    "@rollup/plugin-json": "^5.0.1",
+    "@rollup/plugin-node-resolve": "^15.0.0",
+    "@rollup/plugin-replace": "^5.0.0",
+    "@rollup/plugin-terser": "^0.1.0",
+    "@rollup/plugin-typescript": "^9.0.2",
+    "@types/mime-types": "^2.1.1",
+    "@types/node": "^18.8.4",
+    "is-builtin-module": "^3.2.0",
+    "rollup": "^2.79.1",
+    "rollup-plugin-dts": "^5.0.0",
+    "typescript": "^4.8.4",
+    "uglify-js": "^3.17.4"
+  },
+  "dependencies": {
+    "axios": "^1.1.3",
+    "cheerio": "1.0.0-rc.12",
+    "jszip": "^3.10.1",
+    "mime-types": "^2.1.35"
+  }
+}
