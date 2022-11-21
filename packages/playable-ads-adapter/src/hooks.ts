@@ -6,7 +6,7 @@ export function onBeforeBuild(options: IBuildTaskOption) {
   initBuildStartEvent(options)
 }
 
-export function onAfterBuild(options: IBuildTaskOption, result: IBuildResult) {
+export function onAfterBuild(options: IBuildTaskOption, _result: IBuildResult) {
   console.log(options)
-  initBuildFinishedEvent(options, result)
+  initBuildFinishedEvent(options)
 }

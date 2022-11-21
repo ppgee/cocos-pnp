@@ -1,36 +1,33 @@
 import { BUILDER_NAME } from '@/extensions/constants'
-import { getExcludedModules, readAdapterRCFile } from '@/extensions/utils'
+import { getAdapterConfig, getExcludedModules, getRCSkipBuild } from '@/extensions/utils'
 import {
   TPlatform,
   unmountAllGlobalVars,
   mountBuildGlobalVars,
   mountProjectGlobalVars,
-  getGlobalProjectBuildPath,
-  gen2xSingleFile,
-  gen2xChannelsPkg,
-  execTinify,
-  getOriginPkgPath,
-  getRCSkipBuild,
+  exec2xAdapter
 } from 'playable-adapter-core'
 import { shell } from 'electron'
+import { join } from 'path'
 
-const prepareBuildStart = (platform?: TPlatform): TPlatform => {
+const prepareBuildStart = (platform: TPlatform) => {
+  const {
+    projectRootPath,
+    projectBuildPath,
+    buildPlatform,
+    adapterBuildConfig,
+  } = getAdapterConfig(platform)
+  // 加载项目全局变量
   mountProjectGlobalVars({
-    projectRootPath: Editor.Project.path,
-    projectBuildPath: '/build',
+    projectRootPath,
+    projectBuildPath,
   })
 
-  const adapterBuildConfig = readAdapterRCFile()
-  let buildPlatform = platform
-  if (!buildPlatform) {
-    buildPlatform = adapterBuildConfig?.buildPlatform ?? 'web-mobile'
-  }
+  // 加载构建全局变量
   mountBuildGlobalVars({
-    platform: buildPlatform!,
+    platform: buildPlatform,
     adapterBuildConfig
   })
-
-  return buildPlatform!
 }
 
 export const initBuildStartEvent = (options: TBuildOptions, callback?: () => void) => {
@@ -43,31 +40,30 @@ export const initBuildStartEvent = (options: TBuildOptions, callback?: () => voi
 export const initBuildFinishedEvent = async (options: TBuildOptions, callback?: () => void) => {
   Editor.info(`${BUILDER_NAME} 开始适配`)
   const start = new Date().getTime();
-
-  try {
-    // 执行压缩
-    const { success, msg } = await execTinify()
-    if (!success) {
-      Editor.warn(`${msg}，跳出压缩图片流程`)
-    }
-  } catch (error) {
-    console.error(error)
-  }
-
-  await gen2xSingleFile()
-  // 适配文件
-  await gen2xChannelsPkg({
+  await exec2xAdapter({
     orientation: options.webOrientation
   })
   const end = new Date().getTime();
   Editor.success(`${BUILDER_NAME} 适配完成，共耗时${((end - start) / 1000).toFixed(0)}秒`)
-  shell.openPath(getGlobalProjectBuildPath())
+
+  // 打开目录 start
+  const { projectRootPath, projectBuildPath } = getAdapterConfig()
+  shell.openPath(join(projectRootPath, projectBuildPath))
+  // 打开目录 end
+
   unmountAllGlobalVars()
   callback && callback()
 }
 
 export const builder2x = () => {
-  const buildPlatform = prepareBuildStart()
+  // 初始化 start
+  const {
+    buildPlatform,
+    originPkgPath,
+  } = getAdapterConfig()
+  prepareBuildStart(buildPlatform)
+  // 初始化 end
+
   Editor.log(`开始构建项目，导出${buildPlatform}包`)
 
   Editor.Ipc.sendToMain('builder:query-build-options', (err: any, options: TBuildOptions) => {
@@ -87,7 +83,7 @@ export const builder2x = () => {
       sourceMaps: false,
       scenes,
       excludedModules,
-      dest: getOriginPkgPath()
+      dest: originPkgPath
     }
 
     const isSkipBuild = getRCSkipBuild()

@@ -1,33 +1,31 @@
 import { shell } from 'electron'
-import { IBuildResult, IBuildTaskOption } from "~types/packages/builder/@types";
+import { IBuildTaskOption } from "~types/packages/builder/@types";
 import { run } from "node-cmd"
 import { BUILDER_NAME } from "@/extensions/constants";
-import { checkOSPlatform, readAdapterRCFile } from "@/extensions/utils";
+import { checkOSPlatform, getAdapterConfig, getRCSkipBuild, getRealPath } from "@/extensions/utils";
 import {
   TPlatform,
-  getRealPath,
-  getAdapterRCJson,
   unmountAllGlobalVars,
   mountBuildGlobalVars,
   mountProjectGlobalVars,
-  getGlobalProjectBuildPath,
-  gen3xSingleFile,
-  gen3xChannelsPkg,
-  execTinify,
-  getRCSkipBuild,
+  exec3xAdapter,
 } from 'playable-adapter-core'
+import { join } from 'path';
 
-const prepareBuildStart = (platform?: TPlatform): TPlatform => {
+const prepareBuildStart = (platform: TPlatform): TPlatform => {
+  const {
+    projectRootPath,
+    projectBuildPath,
+    buildPlatform,
+    adapterBuildConfig,
+  } = getAdapterConfig(platform)
+  // 加载项目全局变量
   mountProjectGlobalVars({
-    projectRootPath: Editor.Project.path,
-    projectBuildPath: '/build',
+    projectRootPath,
+    projectBuildPath,
   })
 
-  const adapterBuildConfig = readAdapterRCFile()
-  let buildPlatform = platform
-  if (!buildPlatform) {
-    buildPlatform = adapterBuildConfig?.buildPlatform ?? 'web-mobile'
-  }
+  // 加载构建全局变量
   mountBuildGlobalVars({
     platform: buildPlatform!,
     adapterBuildConfig
@@ -65,40 +63,28 @@ export const initBuildStartEvent = async (options: Partial<IBuildTaskOption>) =>
   console.log(`${BUILDER_NAME} 跳过预构建处理`)
 }
 
-export const initBuildFinishedEvent = async (options: Partial<IBuildTaskOption>, result?: IBuildResult) => {
+export const initBuildFinishedEvent = async (options: Partial<IBuildTaskOption>) => {
   console.info(`${BUILDER_NAME} 开始适配，导出平台 ${options.platform}`)
   const start = new Date().getTime();
-
-  try {
-    // 执行压缩
-    const { success, msg } = await execTinify()
-    if (!success) {
-      console.warn(`${msg}，跳出压缩图片流程`)
-    }
-  } catch (error) {
-    console.error(error)
-  }
-
-  const { zipRes, notZipRes } = await gen3xSingleFile()
-  // 适配文件
-  const { orientation = 'auto' } = getAdapterRCJson() || {}
-  await gen3xChannelsPkg({
-    orientation,
-    zipRes,
-    notZipRes
-  })
+  await exec3xAdapter()
   const end = new Date().getTime();
-
   unmountAllGlobalVars()
   console.log(`${BUILDER_NAME} 适配完成，共耗时${((end - start) / 1000).toFixed(0)}秒`)
 }
 
 export const builder3x = async () => {
   try {
-    const buildPlatform = prepareBuildStart()
+    // 初始化 start
+    const {
+      buildPlatform,
+      projectRootPath,
+      projectBuildPath,
+    } = getAdapterConfig()
+    prepareBuildStart(buildPlatform)
+    // 初始化 end
     console.log(`开始构建项目，导出${buildPlatform}包`)
     const isSkipBuild = getRCSkipBuild()
-    const projectBuildPath = getGlobalProjectBuildPath()
+    const buildPath = join(projectRootPath, projectBuildPath)
 
     await initBuildStartEvent({
       platform: buildPlatform
@@ -109,7 +95,7 @@ export const builder3x = async () => {
     await initBuildFinishedEvent({
       platform: buildPlatform
     })
-    shell.openPath(projectBuildPath)
+    shell.openPath(buildPath)
     console.log('构建完成')
   } catch (error) {
     console.error(error)
