@@ -1,7 +1,8 @@
 import { join } from "path"
 import { load } from 'cheerio'
 import { mkdirSync } from "fs"
-import { REPLACE_SYMBOL, TBuilderOptions, TZipFromSingleFileOptions } from "@/constants"
+import { REPLACE_SYMBOL } from '@/constants'
+import { TBuilderOptions, TZipFromSingleFileOptions } from "@/typings"
 import { getGlobalProjectBuildPath } from '@/global'
 import { writeToPath, readToPath, get2xSingleFilePath, getOriginPkgPath, copyDirToPath, replaceGlobalSymbol, rmSync } from "@/utils"
 import { injectFromRCJson } from "@/helpers/dom"

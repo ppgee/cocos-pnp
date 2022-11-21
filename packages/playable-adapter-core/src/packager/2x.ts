@@ -1,3 +1,7 @@
+import {
+  TChannel,
+  TChannelPkgOptions,
+} from '@/typings'
 import { getAdapterRCJson } from '@/utils'
 import {
   export2xAppLovin,
@@ -11,8 +15,6 @@ import {
   export2xRubeex,
   export2xTiktok,
   export2xUnity,
-  TChannel,
-  TChannelPkgOptions,
 } from '@/channels'
 
 const channelExports: { [key in TChannel]: (options: TChannelPkgOptions) => Promise<void> } = {

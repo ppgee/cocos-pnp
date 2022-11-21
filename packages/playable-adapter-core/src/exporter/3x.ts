@@ -2,7 +2,8 @@ import { CheerioAPI, load } from "cheerio"
 import { mkdirSync } from "fs"
 import JSZip from "jszip"
 import { join } from "path"
-import { MAX_ZIP_SIZE, REPLACE_SYMBOL, TBuilderOptions, TZipFromSingleFileOptions } from "@/constants"
+import { REPLACE_SYMBOL, MAX_ZIP_SIZE } from '@/constants'
+import { TBuilderOptions, TZipFromSingleFileOptions } from "@/typings"
 import { getGlobalProjectBuildPath } from '@/global'
 import { readToPath, get3xSingleFilePath, writeToPath, copyDirToPath, getOriginPkgPath, replaceGlobalSymbol, rmSync } from "@/utils"
 import { injectFromRCJson } from "@/helpers/dom"

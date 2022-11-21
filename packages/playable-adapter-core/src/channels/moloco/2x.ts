@@ -1,5 +1,5 @@
 import { removeXMLHttpRequest } from "@/utils"
-import { TChannel, TChannelPkgOptions } from "@/channels/base"
+import { TChannel, TChannelPkgOptions } from "@/typings"
 import { exportSingleFile } from '@/exporter/2x'
 
 export const export2xMoloco = async (options: TChannelPkgOptions) => {

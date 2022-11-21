@@ -1,25 +1,10 @@
 import path from "path"
-import type { TPlatform, TWebOrientations } from '@/global'
+import {
+  TAdapterRC,
+  TChannel,
+  TChannelRC,
+} from '@/typings'
 import { getGlobalBuildConfig, getGlobalBuildPlatform, getGlobalProjectBuildPath } from "@/global"
-import { TChannel } from "@/channels"
-
-export type TChannelRC = {
-  head: string
-  body: string
-  sdkScript: string
-}
-
-export type TAdapterRC = {
-  buildPlatform: TPlatform
-  skipBuild: boolean
-  orientation: TWebOrientations
-  exportChannels: TChannel[]
-  injectOptions: {
-    [key in TChannel]: TChannelRC
-  }
-  tinify?: boolean
-  tinifyApiKey?: string
-}
 
 export const getAdapterRCJson = (): TAdapterRC | null => {
   return getGlobalBuildConfig()

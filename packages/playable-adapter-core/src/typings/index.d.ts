@@ -1,6 +1,8 @@
-type TWebOrientations = 'portrait' | 'landscape' | 'auto'
+import type { Cheerio, CheerioAPI, Element } from "cheerio"
 
-type TPlatform =
+export type TWebOrientations = 'portrait' | 'landscape' | 'auto'
+
+export type TPlatform =
   | 'web-desktop'
   | 'web-mobile'
   | 'wechatgame'
@@ -32,7 +34,25 @@ type TPlatform =
   | 'ar-android'
   | 'ar-ios';
 
-type TChannel =
+export type TPlayableConfig = {
+  /** 0 -> 横竖 1 -> 竖屏 2 -> 横屏 */
+  playable_orientation: 0 | 1 | 2,
+  playable_languages: string[]
+}
+
+export type TBuilderOptions = {
+  channel: TChannel
+  zipRes?: { [key: string]: string }
+  notZipRes?: { [key: string]: string }
+  transformHTML?: ($: CheerioAPI) => Promise<void>
+  transform?: (destPath: string) => Promise<void>
+}
+
+export type TZipFromSingleFileOptions = TBuilderOptions & {
+  transformScript?: (scriptNode: Cheerio<Element>) => Promise<void>
+}
+
+export type TChannel =
   | 'AppLovin'
   | 'Facebook'
   | 'Google'
@@ -45,13 +65,20 @@ type TChannel =
   | 'Tiktok'
   | 'Unity'
 
-type TChannelRC = {
+
+export type TChannelPkgOptions = {
+  orientation: TWebOrientations
+  zipRes?: { [key: string]: string }
+  notZipRes?: { [key: string]: string }
+}
+
+export type TChannelRC = {
   head: string
   body: string
   sdkScript: string
 }
 
-type TAdapterRC = {
+export type TAdapterRC = {
   buildPlatform: TPlatform
   skipBuild: boolean
   orientation: TWebOrientations
@@ -62,21 +89,3 @@ type TAdapterRC = {
   tinify?: boolean
   tinifyApiKey?: string
 }
-
-declare const mountProjectGlobalVars: (options: {
-    projectRootPath: string;
-    projectBuildPath?: string;
-}) => void;
-declare const mountBuildGlobalVars: (options: {
-    platform: TPlatform;
-    adapterBuildConfig?: TAdapterRC | null;
-}) => void;
-declare const unmountAllGlobalVars: () => void;
-
-declare type TOptions = {
-    orientation: TWebOrientations;
-};
-declare const exec2xAdapter: (options: TOptions) => Promise<void>;
-declare const exec3xAdapter: () => Promise<void>;
-
-export { TPlatform, TWebOrientations, exec2xAdapter, exec3xAdapter, mountBuildGlobalVars, mountProjectGlobalVars, unmountAllGlobalVars };

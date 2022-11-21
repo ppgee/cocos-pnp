@@ -1,7 +1,7 @@
-import { ADAPTER_FETCH, PLAYABLE_DEFAULT_CONFIG, TPlayableConfig } from "@/constants"
+import { TPlayableConfig, TWebOrientations } from '@/typings'
+import { ADAPTER_FETCH, PLAYABLE_DEFAULT_CONFIG } from "@/constants"
 import { writeToPath } from './file-system';
 import { join } from "path";
-import { TWebOrientations } from "@/global";
 
 const getPlayableConfig = (options?: { orientation?: TWebOrientations, languages?: string[] }) => {
   const { orientation, languages } = options || {}

@@ -1,39 +1,6 @@
 import { join } from "path";
-import { getRealPath, TAdapterRC } from "./utils";
-
-export type TWebOrientations = 'portrait' | 'landscape' | 'auto'
-
-export type TPlatform =
-  | 'web-desktop'
-  | 'web-mobile'
-  | 'wechatgame'
-  | 'oppo-mini-game'
-  | 'vivo-mini-game'
-  | 'huawei-quick-game'
-  | 'alipay-mini-game'
-  | 'mac'
-  | 'ios'
-  | 'linux'
-  // | 'ios-app-clip'
-  | 'android'
-  | 'ohos'
-  | 'open-harmonyos'
-  | 'windows'
-  | 'xiaomi-quick-game'
-  | 'baidu-mini-game'
-  | 'bytedance-mini-game'
-  | 'cocos-play'
-  | 'huawei-agc'
-  | 'link-sure'
-  | 'qtt'
-  | 'cocos-runtime'
-  | 'xr-meta'
-  | 'xr-huaweivr'
-  | 'xr-pico'
-  | 'xr-rokid'
-  | 'xr-monado'
-  | 'ar-android'
-  | 'ar-ios';
+import { TAdapterRC, TPlatform } from "./typings";
+import { getRealPath } from "./utils/file-system/resource";
 
 export const mountProjectGlobalVars = (options: {
   projectRootPath: string,

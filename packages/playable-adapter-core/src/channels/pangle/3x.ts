@@ -1,6 +1,6 @@
 import { APPEND_TO_HEAD } from "./inject-vars"
 import { exportZipFromPkg } from "@/exporter/3x"
-import { TChannelPkgOptions, TChannel } from "@/channels/base"
+import { TChannelPkgOptions, TChannel } from "@/typings"
 import { exportConfigJson, getChannelRCSdkScript } from "@/utils"
 
 export const export3xPangle = async (options: TChannelPkgOptions) => {

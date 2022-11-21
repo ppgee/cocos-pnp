@@ -1,4 +1,3 @@
-export * from './base'
 export * from './app-lovin'
 export * from './facebook'
 export * from './google'

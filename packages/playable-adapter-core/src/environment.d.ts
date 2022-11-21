@@ -1,3 +1,5 @@
+import { TAdapterRC, TPlatform } from './typings'
+
 export {}
 
 declare global {
