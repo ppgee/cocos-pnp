@@ -12,11 +12,11 @@ module.exports = {
       name:
         '✨ refactor: A code change that neither fixes a bug nor adds a feature',
     },
-    { value: 'revert', name: '🪃 revert:   Revert to a commit' },
+    { value: 'revert', name: '🪃  revert:   Revert to a commit' },
     {
       value: 'chore',
       name:
-        '🖇️ chore:    Changes to the build process or auxiliary tools\n            and libraries such as documentation generation',
+        '🖇️  chore:    Changes to the build process or auxiliary tools\n            and libraries such as documentation generation',
     },
     { value: 'docs', name: '📝 docs:     Documentation only changes' },
     {
