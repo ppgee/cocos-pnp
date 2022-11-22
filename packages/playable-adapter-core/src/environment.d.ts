@@ -17,12 +17,9 @@ declare global {
 
   var __playable_ads_adapter_global__: {
     isMount: boolean,
-    buildPlatform: TPlatform | null,
-    buildConfig: TAdapterRC | null,
-  }
-  var __playable_ads_adapter_project__: {
-    isMount: boolean,
     projectRootPath: string,
     projectBuildPath: string,
+    buildPlatform: TPlatform | null,
+    buildConfig: TAdapterRC | null,
   }
 }

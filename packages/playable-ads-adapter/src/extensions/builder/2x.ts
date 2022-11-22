@@ -2,9 +2,8 @@ import { BUILDER_NAME } from '@/extensions/constants'
 import { getAdapterConfig, getExcludedModules, getRCSkipBuild } from '@/extensions/utils'
 import {
   TPlatform,
-  unmountAllGlobalVars,
-  mountBuildGlobalVars,
-  mountProjectGlobalVars,
+  unmountGlobalVars,
+  mountGlobalVars,
   exec2xAdapter
 } from 'playable-adapter-core'
 import { shell } from 'electron'
@@ -18,14 +17,10 @@ const prepareBuildStart = (platform: TPlatform) => {
     adapterBuildConfig,
   } = getAdapterConfig(platform)
   // 加载项目全局变量
-  mountProjectGlobalVars({
+  mountGlobalVars({
     projectRootPath,
     projectBuildPath,
-  })
-
-  // 加载构建全局变量
-  mountBuildGlobalVars({
-    platform: buildPlatform,
+    platform: buildPlatform!,
     adapterBuildConfig
   })
 }
@@ -51,7 +46,7 @@ export const initBuildFinishedEvent = async (options: TBuildOptions, callback?: 
   shell.openPath(join(projectRootPath, projectBuildPath))
   // 打开目录 end
 
-  unmountAllGlobalVars()
+  unmountGlobalVars()
   callback && callback()
 }
 

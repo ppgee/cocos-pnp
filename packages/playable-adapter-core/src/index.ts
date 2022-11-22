@@ -1,15 +1,16 @@
 export {
-  mountBuildGlobalVars,
-  mountProjectGlobalVars,
-  unmountAllGlobalVars
+  mountGlobalVars,
+  unmountGlobalVars
 } from './global'
 
 export {
   TPlatform,
   TWebOrientations,
+  TAdapterRC,
+  TChannel,
 } from './typings'
 
 export {
   exec2xAdapter,
   exec3xAdapter,
-} from './exector'
+} from './executor'

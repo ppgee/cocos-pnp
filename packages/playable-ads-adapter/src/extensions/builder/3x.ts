@@ -5,9 +5,8 @@ import { BUILDER_NAME } from "@/extensions/constants";
 import { checkOSPlatform, getAdapterConfig, getRCSkipBuild, getRealPath } from "@/extensions/utils";
 import {
   TPlatform,
-  unmountAllGlobalVars,
-  mountBuildGlobalVars,
-  mountProjectGlobalVars,
+  unmountGlobalVars,
+  mountGlobalVars,
   exec3xAdapter,
 } from 'playable-adapter-core'
 import { join } from 'path';
@@ -20,13 +19,9 @@ const prepareBuildStart = (platform: TPlatform): TPlatform => {
     adapterBuildConfig,
   } = getAdapterConfig(platform)
   // 加载项目全局变量
-  mountProjectGlobalVars({
+  mountGlobalVars({
     projectRootPath,
     projectBuildPath,
-  })
-
-  // 加载构建全局变量
-  mountBuildGlobalVars({
     platform: buildPlatform!,
     adapterBuildConfig
   })
@@ -68,7 +63,7 @@ export const initBuildFinishedEvent = async (options: Partial<IBuildTaskOption>)
   const start = new Date().getTime();
   await exec3xAdapter()
   const end = new Date().getTime();
-  unmountAllGlobalVars()
+  unmountGlobalVars()
   console.log(`${BUILDER_NAME} 适配完成，共耗时${((end - start) / 1000).toFixed(0)}秒`)
 }
 

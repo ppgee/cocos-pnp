@@ -113,10 +113,7 @@ importers:
       uglify-js: 3.17.4
 
   packages/playable-ads-adapter/dist/playable-ads-adapter:
-    specifiers:
-      playable-adapter-core: workspace:^0.1.1
-    dependencies:
-      playable-adapter-core: link:../../../playable-adapter-core
+    specifiers: {}
 
 packages:
 
