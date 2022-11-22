@@ -16,7 +16,7 @@
   "bugs": {
     "url": "https://github.com/ppgee/cocos-pnp/issues"
   },
-  "homepage": "https://github.com/ppgee/cocos-pnp#readme",
+  "homepage": "https://github.com/ppgee/cocos-pnp/tree/main/packages/playable-adapter-core#readme",
   "scripts": {
     "clear": "rm -rf dist/",
     "watch": "rollup -c -w",
