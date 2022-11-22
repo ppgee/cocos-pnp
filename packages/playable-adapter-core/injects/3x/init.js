@@ -27,8 +27,38 @@ window.__adapter_init = function () {
       this.onload()
     }
   }
+
+  function base64ToBlob(base64, type) {
+    let oriResBase64 = base64;
+    let base64Arr = oriResBase64.split(',');
+    let mime = type
+
+    // mime-type start
+    if (base64Arr.length === 2) {
+      let mimeStr = base64Arr.shift()
+      let regExp = new RegExp(':(.*?);')
+      let array = mimeStr.match(regExp);
+      mime = (array && array.length > 1 ? array[1] : type) || type;
+    }
+    // mime-type end
+
+    // arraybuffer start
+    let base64Str = base64Arr.shift()
+    let bytes = window.atob(base64Str);
+    let arrBuf = new ArrayBuffer(bytes.length);
+    // arraybuffer end
+
+    const u8arr = new Uint8Array(arrBuf);
+    for (let i = 0; i < bytes.length; i++) {
+      u8arr[i] = bytes.charCodeAt(i);
+    }
+    return new Blob([arrBuf], {
+      type: mime
+    });
+  }
+
   function base64toArrayBuffer(base64) {
-    var bstr = atob(base64.substring(base64.indexOf(',') + 1));
+    var bstr = window.atob(base64.substring(base64.indexOf(',') + 1));
     let index = bstr.length;
     let u8arr = new Uint8Array(index);
     while (index--) {
@@ -36,13 +66,16 @@ window.__adapter_init = function () {
     }
     return u8arr.buffer;
   }
+
   function __adapter_init_http() {
     window.adapterFetch = AdapterFetch
   }
+
   function __adapter_eval(name) {
     eval(window.__adapter_js__[name]);
     delete window.__adapter_js__[name];
   }
+
   function __adapter_get_base_url() {
     const hasDocument = typeof document !== 'undefined';
     let baseUrl;
@@ -61,6 +94,7 @@ window.__adapter_init = function () {
 
     return baseUrl || ''
   }
+
   function __adapter_get_res_path(url, target) {
     if (target[url]) {
       return url
@@ -74,19 +108,16 @@ window.__adapter_init = function () {
     }
     return null;
   }
+
   function __adapter_get_resource(url) {
     return window.__adapter_resource__[__adapter_get_res_path(url, window.__adapter_resource__)];
   }
+
   function __adapter_get_imports() {
     const json = JSON.parse(__adapter_get_resource("src/import-map.json"))
     return json.imports
   }
-  // function __adapter_import_map() {
-  //   let script = document.createElement('script');
-  //   script.type = 'systemjs-importmap';
-  //   script.text = __adapter_get_resource("src/import-map.json");
-  //   document.body.appendChild(script);
-  // }
+
   function __adapter_get_script(url) {
     if (url.indexOf('bullet.wasm') !== -1) {
       for (let k2 in window.__adapter_js__) {
@@ -103,6 +134,7 @@ window.__adapter_init = function () {
     }
     return res;
   }
+
   function __adapter_init_js() {
     const _createScript = System.__proto__.createScript
     System.__proto__.createScript = function (url) {
@@ -126,26 +158,12 @@ window.__adapter_init = function () {
       return script;
     };
   }
+
   function __adapter_init_cc() {
     if (window.__adapter_cc_initialized__) {
       return;
     }
     window.__adapter_cc_initialized__ = true;
-    function base64ToBlob(base64, fileType) {
-      let audioSrc = base64;
-      let arr = audioSrc.split(',');
-      let array = arr[0].match(/:(.*?);/);
-      let mime = (array && array.length > 1 ? array[1] : type) || type;
-      let bytes = window.atob(arr[1]);
-      let ab = new ArrayBuffer(bytes.length);
-      let ia = new Uint8Array(ab);
-      for (let i = 0; i < bytes.length; i++) {
-        ia[i] = bytes.charCodeAt(i);
-      }
-      return new Blob([ab], {
-        type: mime
-      });
-    }
     function loadScript(url, options, onComplete) {
       let scriptStr = __adapter_get_resource(url)
       if (!scriptStr) {
@@ -336,6 +354,7 @@ window.__adapter_init = function () {
       cc.assetManager.downloader.register(extname, downloaderList[extname]);
     })
   }
+
   function __adapter_get_path(key) {
     for (var k in window.__adapter_resource__) {
       if (k.indexOf(key) == 0) {
@@ -344,8 +363,6 @@ window.__adapter_init = function () {
     }
     throw Error("no find " + key);
   }
-
-  // __adapter_import_map();
 
   __adapter_init_http();
 

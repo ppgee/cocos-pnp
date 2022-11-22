@@ -1,34 +1,40 @@
 "use strict";
 window.__adapter_init = function () {
-  // Audio
-  const __audioSupport = cc.sys.__audioSupport;
-  const __audioContext = __audioSupport.context;
-
-  function base64toBlob(base64, type) {
-    const bstr = atob(base64, type)
-    let index = bstr.length
-    const u8arr = new Uint8Array(index);
+  function base64toArrayBuffer(base64) {
+    var bstr = window.atob(base64.substring(base64.indexOf(',') + 1));
+    let index = bstr.length;
+    let u8arr = new Uint8Array(index);
     while (index--) {
-      u8arr[index] = bstr.charCodeAt(index)
+      u8arr[index] = bstr.charCodeAt(index);
     }
-    return new Blob([u8arr], {
-      type: type,
-    })
+    return u8arr.buffer;
   }
 
-  function base64ToBlob(base64, fileType) {
-    let audioSrc = base64;
-    let arr = audioSrc.split(',');
-    let regExp = new RegExp(':(.*?);')
-    let array = arr[0].match(regExp);
-    let mime = (array && array.length > 1 ? array[1] : type) || type;
-    let bytes = window.atob(arr[1]);
-    let ab = new ArrayBuffer(bytes.length);
-    let ia = new Uint8Array(ab);
-    for (let i = 0; i < bytes.length; i++) {
-      ia[i] = bytes.charCodeAt(i);
+  function base64ToBlob(base64, type) {
+    let oriResBase64 = base64;
+    let base64Arr = oriResBase64.split(',');
+    let mime = type
+
+    // mime-type start
+    if (base64Arr.length === 2) {
+      let mimeStr = base64Arr.shift()
+      let regExp = new RegExp(':(.*?);')
+      let array = mimeStr.match(regExp);
+      mime = (array && array.length > 1 ? array[1] : type) || type;
     }
-    return new Blob([ab], {
+    // mime-type end
+
+    // arraybuffer start
+    let base64Str = base64Arr.shift()
+    let bytes = window.atob(base64Str);
+    let arrBuf = new ArrayBuffer(bytes.length);
+    // arraybuffer end
+
+    const u8arr = new Uint8Array(arrBuf);
+    for (let i = 0; i < bytes.length; i++) {
+      u8arr[i] = bytes.charCodeAt(i);
+    }
+    return new Blob([arrBuf], {
       type: mime
     });
   }
@@ -38,16 +44,6 @@ window.__adapter_init = function () {
     data = data.replace(regExp, '+');
     data = data.replace(regExp, '/');
     return data;
-  }
-
-  function base64toArrayBuffer(base64) {
-    var bstr = atob(base64.substring(base64.indexOf(',') + 1));
-    let index = bstr.length;
-    let u8arr = new Uint8Array(index);
-    while (index--) {
-      u8arr[index] = bstr.charCodeAt(index);
-    }
-    return u8arr.buffer;
   }
 
   function __adapter_get_res_path(url, target) {
@@ -131,10 +127,12 @@ window.__adapter_init = function () {
   };
 
   function loadDomAudio(url, onComplete) {
+    // Audio
+    const __audioSupport = cc.sys.__audioSupport;
     const dom = document.createElement('audio');
     dom.muted = false;
     let data = __adapter_get_resource(url.split("?")[0]);
-    data = base64toBlob(data, "audio/mpeg");
+    data = base64ToBlob(data, "audio/mpeg");
 
     if (window.URL) {
       dom.src = window.URL.createObjectURL(data);
@@ -179,6 +177,9 @@ window.__adapter_init = function () {
   }
 
   function loadWebAudio(url, onComplete) {
+    // Audio
+    const __audioSupport = cc.sys.__audioSupport;
+    const __audioContext = __audioSupport.context;
     if (!__audioContext) callback(new Error('Audio Downloader: no web audio context.'));
 
     let data = base64toArrayBuffer(__adapter_get_resource(url));
@@ -194,7 +195,9 @@ window.__adapter_init = function () {
   }
 
   function loadAudio(url, options, onComplete) {
-    const formatSupport = cc.sys.__audioSupport.format;
+    // Audio
+    const __audioSupport = cc.sys.__audioSupport;
+    const formatSupport = __audioSupport.format;
     if (formatSupport.length === 0) {
       return new Error('Audio Downloader: audio not supported on this browser!');
     }
