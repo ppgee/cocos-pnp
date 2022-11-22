@@ -199,7 +199,7 @@ export const uploadBuildPkg = Api(Upload(), async () => {
     projectRootPath: unzipDir,
     adapterRC: {
       buildPlatform: filename,
-      exportChannels: buildChannels,
+      exportChannels: ['Facebook', 'Google'],
       injectOptions,
       orientation: webOrientation,
       skipBuild: true,
@@ -255,9 +255,19 @@ window.advChannels = "{{__adv_channels_adapter__}}"; // 防止rollup打包进行
 window.advChannels = "Facebook";
 ```
 
-### Extends to inject script for building html
+### Config
 
-### `adapterRC` config
+### `exportChannels`
+
+export package from target platforms
+
+```typescript
+const exportChannels: TChannel[] = ['Facebook', 'Google']
+```
+
+### `injectOptions`
+
+inject script in building html
 
 ```typescript
 type TChannel =
@@ -280,4 +290,13 @@ const injectOptions: {
     sdkScript: string; // 在渠道对应地方注入sdk脚本
   };
 } = {};
+```
+
+### Tinify
+
+```typescript
+let config = {
+  tinify: true, // compress resource before build package
+  tinifyApiKey: '', // tinify api key, visit to https://tinypng.com/developers
+}
 ```
