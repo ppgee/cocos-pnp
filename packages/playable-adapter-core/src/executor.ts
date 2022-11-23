@@ -27,10 +27,12 @@ export const exec2xAdapter = async (options: TOptions & {
     console.error(error)
   }
 
-  await gen2xSingleFile()
+  const { zipRes, notZipRes } = await gen2xSingleFile()
   // 适配文件
   await gen2xChannelsPkg({
-    orientation: options.orientation
+    orientation: options.orientation,
+    zipRes,
+    notZipRes
   })
   unmountGlobalVars()
 }

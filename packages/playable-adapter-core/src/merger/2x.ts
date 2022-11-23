@@ -72,4 +72,9 @@ export const genSingleFile = async () => {
   writeToPath(singleFile2xPath, $.html())
 
   console.info(`【单文件模板成功生成】文件大小为：${getFileSize(singleFile2xPath) / 1024}kb`)
+
+  return {
+    zipRes,
+    notZipRes
+  }
 }
