@@ -16,16 +16,17 @@ export const initBuildFinishedEvent = async (options: TBuildOptions, callback?: 
   const {
     projectRootPath,
     projectBuildPath,
-    buildPlatform,
     adapterBuildConfig,
-  } = getAdapterConfig(options.platform)
+  } = getAdapterConfig()
 
   const buildFolderPath = join(projectRootPath, projectBuildPath)
   await exec2xAdapter({
     buildFolderPath,
-    platform: buildPlatform!,
-    adapterBuildConfig,
-    orientation: options.webOrientation
+    adapterBuildConfig: {
+      ...adapterBuildConfig,
+      buildPlatform: options.platform,
+      orientation: options.webOrientation
+    }
   })
   const end = new Date().getTime();
   Editor.success(`${BUILDER_NAME} 适配完成，共耗时${((end - start) / 1000).toFixed(0)}秒`)

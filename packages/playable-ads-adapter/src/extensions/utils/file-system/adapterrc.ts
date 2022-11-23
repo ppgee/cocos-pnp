@@ -13,13 +13,11 @@ export const readAdapterRCFile = (): TAdapterRC | null => {
   return null
 }
 
-export const getAdapterConfig = (platform?: TPlatform) => {
+export const getAdapterConfig = () => {
   const projectRootPath = Editor.Project.path
   const projectBuildPath = '/build'
   const adapterBuildConfig = readAdapterRCFile()
-  let buildPlatform: TPlatform = platform
-    ? platform
-    : adapterBuildConfig?.buildPlatform ?? 'web-mobile'
+  let buildPlatform: TPlatform = adapterBuildConfig?.buildPlatform ?? 'web-mobile'
 
   return {
     projectRootPath,
