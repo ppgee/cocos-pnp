@@ -3,31 +3,8 @@ import { IBuildTaskOption } from "~types/packages/builder/@types";
 import { run } from "node-cmd"
 import { BUILDER_NAME } from "@/extensions/constants";
 import { checkOSPlatform, getAdapterConfig, getRCSkipBuild, getRealPath } from "@/extensions/utils";
-import {
-  TPlatform,
-  unmountGlobalVars,
-  mountGlobalVars,
-  exec3xAdapter,
-} from 'playable-adapter-core'
+import { exec3xAdapter } from 'playable-adapter-core'
 import { join } from 'path';
-
-const prepareBuildStart = (platform: TPlatform): TPlatform => {
-  const {
-    projectRootPath,
-    projectBuildPath,
-    buildPlatform,
-    adapterBuildConfig,
-  } = getAdapterConfig(platform)
-  // 加载项目全局变量
-  mountGlobalVars({
-    projectRootPath,
-    projectBuildPath,
-    platform: buildPlatform!,
-    adapterBuildConfig
-  })
-
-  return buildPlatform!
-}
 
 const runBuilder = (buildPlatform: TPlatform) => {
   return new Promise<void>((resolve, reject) => {
@@ -54,16 +31,26 @@ const runBuilder = (buildPlatform: TPlatform) => {
 
 export const initBuildStartEvent = async (options: Partial<IBuildTaskOption>) => {
   console.log(`${BUILDER_NAME} 进行预构建处理`)
-  prepareBuildStart(options.platform!)
   console.log(`${BUILDER_NAME} 跳过预构建处理`)
 }
 
 export const initBuildFinishedEvent = async (options: Partial<IBuildTaskOption>) => {
   console.info(`${BUILDER_NAME} 开始适配，导出平台 ${options.platform}`)
   const start = new Date().getTime();
-  await exec3xAdapter()
+
+  const {
+    projectRootPath,
+    projectBuildPath,
+    buildPlatform,
+    adapterBuildConfig,
+  } = getAdapterConfig(options.platform!)
+  await exec3xAdapter({
+    projectRootPath,
+    projectBuildPath,
+    platform: buildPlatform!,
+    adapterBuildConfig,
+  })
   const end = new Date().getTime();
-  unmountGlobalVars()
   console.log(`${BUILDER_NAME} 适配完成，共耗时${((end - start) / 1000).toFixed(0)}秒`)
 }
 
@@ -75,7 +62,6 @@ export const builder3x = async () => {
       projectRootPath,
       projectBuildPath,
     } = getAdapterConfig()
-    prepareBuildStart(buildPlatform)
     // 初始化 end
     console.log(`开始构建项目，导出${buildPlatform}包`)
     const isSkipBuild = getRCSkipBuild()
