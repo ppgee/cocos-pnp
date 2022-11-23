@@ -79,11 +79,11 @@ export type TChannelRC = {
 }
 
 export type TAdapterRC = {
-  buildPlatform: TPlatform
-  skipBuild: boolean
-  orientation: TWebOrientations
-  exportChannels: TChannel[]
-  injectOptions: {
+  buildPlatform?: TPlatform
+  orientation?: TWebOrientations
+  skipBuild?: boolean
+  exportChannels?: TChannel[]
+  injectOptions?: {
     [key in TChannel]: TChannelRC
   }
   tinify?: boolean

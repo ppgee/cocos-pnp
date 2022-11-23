@@ -75,7 +75,6 @@ import {
 const main = async () => {
   const config = {
     buildFolderPath: "/your/build/folder/path",
-    platform: "web-mobile",
     adapterRC: {
       buildPlatform: "web-mobile",
       exportChannels: "Facebook",
@@ -92,10 +91,7 @@ const main = async () => {
   // required
   const version = "2"; // '2' | '3'
   version === "2"
-    ? await exec2xAdapter({
-        ...config,
-        orientation: "auto",
-      })
+    ? await exec2xAdapter(config)
     : await exec3xAdapter(config);
 };
 
@@ -154,7 +150,6 @@ export const uploadBuildPkg = Api(Upload(), async () => {
 
   const config = {
     buildFolderPath: unzipDir,
-    platform: filename,
     adapterBuildConfig: {
       buildPlatform: filename,
       exportChannels: buildChannels,
@@ -175,10 +170,7 @@ export const uploadBuildPkg = Api(Upload(), async () => {
   await safeVm.run(
     `
       version === '2'
-        ? await exec2xAdapter({
-          ...config,
-          orientation
-        })
+        ? await exec2xAdapter(config)
         : await exec3xAdapter(config)
     `,
     {

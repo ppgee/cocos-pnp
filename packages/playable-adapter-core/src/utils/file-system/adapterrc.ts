@@ -4,18 +4,15 @@ import {
   TChannel,
   TChannelRC,
 } from '@/typings'
-import { getGlobalBuildConfig, getGlobalBuildPlatform, getGlobalProjectBuildPath } from "@/global"
+import { getGlobalBuildConfig, getGlobalProjectBuildPath } from "@/global"
 
 export const getAdapterRCJson = (): TAdapterRC | null => {
   return getGlobalBuildConfig()
 }
 
 export const getOriginPkgPath = () => {
-  let buildPlatform = getGlobalBuildPlatform()
-  if (!buildPlatform) {
-    let configJson: Partial<TAdapterRC> = getAdapterRCJson() || {}
-    buildPlatform = configJson.buildPlatform || 'web-mobile'
-  }
+  let configJson: Partial<TAdapterRC> = getAdapterRCJson() || {}
+  const buildPlatform = configJson.buildPlatform || 'web-mobile'
 
   return path.join(getGlobalProjectBuildPath(), buildPlatform!)
 }

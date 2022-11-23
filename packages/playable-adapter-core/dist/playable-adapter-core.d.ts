@@ -52,11 +52,11 @@ type TChannelRC = {
 }
 
 type TAdapterRC = {
-  buildPlatform: TPlatform
-  skipBuild: boolean
-  orientation: TWebOrientations
-  exportChannels: TChannel[]
-  injectOptions: {
+  buildPlatform?: TPlatform
+  orientation?: TWebOrientations
+  skipBuild?: boolean
+  exportChannels?: TChannel[]
+  injectOptions?: {
     [key in TChannel]: TChannelRC
   }
   tinify?: boolean
@@ -65,12 +65,9 @@ type TAdapterRC = {
 
 declare type TOptions = {
     buildFolderPath: string;
-    platform: TPlatform;
     adapterBuildConfig?: TAdapterRC | null;
 };
-declare const exec2xAdapter: (options: TOptions & {
-    orientation: TWebOrientations;
-}) => Promise<void>;
+declare const exec2xAdapter: (options: TOptions) => Promise<void>;
 declare const exec3xAdapter: (options: TOptions) => Promise<void>;
 
 export { TAdapterRC, TChannel, TPlatform, TWebOrientations, exec2xAdapter, exec3xAdapter };
