@@ -8,9 +8,8 @@ import { getAdapterRCJson } from "@/utils"
 import { mountGlobalVars, unmountGlobalVars } from "@/global"
 
 type TOptions = {
-  projectRootPath: string,
+  buildFolderPath: string,
   platform: TPlatform,
-  projectBuildPath?: string,
   adapterBuildConfig?: TAdapterRC | null
 }
 

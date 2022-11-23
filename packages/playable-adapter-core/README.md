@@ -74,8 +74,7 @@ import {
 
 const main = async () => {
   const config = {
-    projectRootPath: "/your/project/path",
-    projectBuildPath: "/",
+    buildFolderPath: "/your/build/folder/path",
     platform: "web-mobile",
     adapterRC: {
       buildPlatform: "web-mobile",
@@ -154,8 +153,7 @@ export const uploadBuildPkg = Api(Upload(), async () => {
   );
 
   const config = {
-    projectRootPath: unzipDir,
-    projectBuildPath: '/',
+    buildFolderPath: unzipDir,
     platform: filename,
     adapterBuildConfig: {
       buildPlatform: filename,

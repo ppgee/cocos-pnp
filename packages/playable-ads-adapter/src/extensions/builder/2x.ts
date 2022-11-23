@@ -20,9 +20,9 @@ export const initBuildFinishedEvent = async (options: TBuildOptions, callback?: 
     adapterBuildConfig,
   } = getAdapterConfig(options.platform)
 
+  const buildFolderPath = join(projectRootPath, projectBuildPath)
   await exec2xAdapter({
-    projectRootPath,
-    projectBuildPath,
+    buildFolderPath,
     platform: buildPlatform!,
     adapterBuildConfig,
     orientation: options.webOrientation
@@ -31,7 +31,7 @@ export const initBuildFinishedEvent = async (options: TBuildOptions, callback?: 
   Editor.success(`${BUILDER_NAME} 适配完成，共耗时${((end - start) / 1000).toFixed(0)}秒`)
 
   // 打开目录 start
-  shell.openPath(join(projectRootPath, projectBuildPath))
+  shell.openPath(buildFolderPath)
   // 打开目录 end
   callback && callback()
 }

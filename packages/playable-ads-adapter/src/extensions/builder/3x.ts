@@ -45,8 +45,7 @@ export const initBuildFinishedEvent = async (options: Partial<IBuildTaskOption>)
     adapterBuildConfig,
   } = getAdapterConfig(options.platform!)
   await exec3xAdapter({
-    projectRootPath,
-    projectBuildPath,
+    buildFolderPath: join(projectRootPath, projectBuildPath),
     platform: buildPlatform!,
     adapterBuildConfig,
   })

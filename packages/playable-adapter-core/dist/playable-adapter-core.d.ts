@@ -64,9 +64,8 @@ type TAdapterRC = {
 }
 
 declare type TOptions = {
-    projectRootPath: string;
+    buildFolderPath: string;
     platform: TPlatform;
-    projectBuildPath?: string;
     adapterBuildConfig?: TAdapterRC | null;
 };
 declare const exec2xAdapter: (options: TOptions & {
