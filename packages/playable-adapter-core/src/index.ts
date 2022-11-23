@@ -1,9 +1,4 @@
 export {
-  mountGlobalVars,
-  unmountGlobalVars
-} from './global'
-
-export {
   TPlatform,
   TWebOrientations,
   TAdapterRC,

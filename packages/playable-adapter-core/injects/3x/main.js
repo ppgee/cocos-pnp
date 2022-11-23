@@ -23,7 +23,6 @@
           }
         });
       }
-      ;
     }).catch((err) => {
       throw err;
     });

@@ -3,14 +3,21 @@ import { genSingleFile as gen2xSingleFile } from '@/merger/2x'
 import { genSingleFile as gen3xSingleFile } from '@/merger/3x'
 import { genChannelsPkg as gen2xChannelsPkg } from '@/packager/2x'
 import { genChannelsPkg as gen3xChannelsPkg } from '@/packager/3x'
-import { TWebOrientations } from "@/typings"
+import { TAdapterRC, TPlatform, TWebOrientations } from "@/typings"
 import { getAdapterRCJson } from "@/utils"
+import { mountGlobalVars, unmountGlobalVars } from "@/global"
 
 type TOptions = {
-  orientation: TWebOrientations
+  projectRootPath: string,
+  platform: TPlatform,
+  projectBuildPath?: string,
+  adapterBuildConfig?: TAdapterRC | null
 }
 
-export const exec2xAdapter = async (options: TOptions) => {
+export const exec2xAdapter = async (options: TOptions & {
+  orientation: TWebOrientations
+}) => {
+  mountGlobalVars(options)
   try {
     // 执行压缩
     const { success, msg } = await execTinify()
@@ -26,9 +33,11 @@ export const exec2xAdapter = async (options: TOptions) => {
   await gen2xChannelsPkg({
     orientation: options.orientation
   })
+  unmountGlobalVars()
 }
 
-export const exec3xAdapter = async () => {
+export const exec3xAdapter = async (options: TOptions) => {
+  mountGlobalVars(options)
   try {
     // 执行压缩
     const { success, msg } = await execTinify()
@@ -47,4 +56,5 @@ export const exec3xAdapter = async () => {
     zipRes,
     notZipRes
   })
+  unmountGlobalVars()
 }

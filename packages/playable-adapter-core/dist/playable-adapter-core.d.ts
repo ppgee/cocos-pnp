@@ -63,18 +63,15 @@ type TAdapterRC = {
   tinifyApiKey?: string
 }
 
-declare const mountGlobalVars: (options: {
+declare type TOptions = {
     projectRootPath: string;
     platform: TPlatform;
     projectBuildPath?: string;
     adapterBuildConfig?: TAdapterRC | null;
-}) => void;
-declare const unmountGlobalVars: () => void;
-
-declare type TOptions = {
-    orientation: TWebOrientations;
 };
-declare const exec2xAdapter: (options: TOptions) => Promise<void>;
-declare const exec3xAdapter: () => Promise<void>;
+declare const exec2xAdapter: (options: TOptions & {
+    orientation: TWebOrientations;
+}) => Promise<void>;
+declare const exec3xAdapter: (options: TOptions) => Promise<void>;
 
-export { TAdapterRC, TChannel, TPlatform, TWebOrientations, exec2xAdapter, exec3xAdapter, mountGlobalVars, unmountGlobalVars };
+export { TAdapterRC, TChannel, TPlatform, TWebOrientations, exec2xAdapter, exec3xAdapter };
