@@ -69,32 +69,14 @@ $ pnpm install playable-adapter-core
 ```typescript
 import {
   TPlatform,
-  unmountGlobalVars,
-  mountGlobalVars,
   exec2xAdapter,
 } from "playable-adapter-core";
-
-const prepareBuildStart = (options: {
-  adapterRC: TAdapterRC;
-  projectRootPath: string;
-}) => {
-  const { projectRootPath, adapterRC } = options;
-  const { buildPlatform } = adapterRC;
-
-  // required
-  mountGlobalVars({
-    projectRootPath,
-    projectBuildPath: "/",
-    platform: buildPlatform!,
-    adapterBuildConfig: adapterRC,
-  });
-
-  return buildPlatform!;
-};
 
 const main = async () => {
   const config = {
     projectRootPath: "/your/project/path",
+    projectBuildPath: "/",
+    platform: "web-mobile",
     adapterRC: {
       buildPlatform: "web-mobile",
       exportChannels: "Facebook",
@@ -108,24 +90,20 @@ const main = async () => {
     },
   };
 
-  prepareBuildStart(config);
-
   // required
   const version = "2"; // '2' | '3'
   version === "2"
     ? await exec2xAdapter({
+        ...config,
         orientation: "auto",
       })
-    : await exec3xAdapter();
-
-  // option
-  unmountGlobalVars();
+    : await exec3xAdapter(config);
 };
 
 main();
 ```
 
-### koa/midway.js etc.
+### midway.js/koa etc.
 
 ```bash
 npm install safeify
@@ -135,31 +113,11 @@ npm install safeify
 import { Api, useContext } from "@midwayjs/hooks";
 import { Context } from "@midwayjs/koa";
 import {
-  TAdapterRC,
   TPlatform,
   exec2xAdapter,
   exec3xAdapter,
-  unmountGlobalVars,
-  mountGlobalVars,
 } from "playable-adapter-core";
 import { Safeify } from "safeify";
-
-const prepareBuildStart = (options: {
-  adapterRC: TAdapterRC;
-  projectRootPath: string;
-}) => {
-  const { projectRootPath, adapterRC } = options;
-  const { buildPlatform } = adapterRC;
-
-  mountGlobalVars({
-    projectRootPath,
-    projectBuildPath: "/",
-    platform: buildPlatform!,
-    adapterBuildConfig: adapterRC,
-  });
-
-  return buildPlatform!;
-};
 
 export const uploadBuildPkg = Api(Upload(), async () => {
   const ctx = useContext<Context>();
@@ -197,16 +155,18 @@ export const uploadBuildPkg = Api(Upload(), async () => {
 
   const config = {
     projectRootPath: unzipDir,
-    adapterRC: {
+    projectBuildPath: '/',
+    platform: filename,
+    adapterBuildConfig: {
       buildPlatform: filename,
-      exportChannels: ['Facebook', 'Google'],
+      exportChannels: buildChannels,
       injectOptions,
       orientation: webOrientation,
       skipBuild: true,
       tinify,
-      tinifyApiKey,
+      tinifyApiKey
     },
-  };
+  }
 
   // 创建 safeify 实例
   const safeVm = new Safeify({
@@ -216,24 +176,18 @@ export const uploadBuildPkg = Api(Upload(), async () => {
   });
   await safeVm.run(
     `
-      prepareBuildStart(config)
-
       version === '2'
         ? await exec2xAdapter({
+          ...config,
           orientation
         })
-        : await exec3xAdapter()
-
-      unmountGlobalVars()
+        : await exec3xAdapter(config)
     `,
     {
       version,
-      prepareBuildStart,
       exec2xAdapter,
       exec3xAdapter,
       config,
-      mountGlobalVars,
-      unmountGlobalVars,
     }
   );
 
