@@ -7,8 +7,11 @@
 Cocos广告试玩多渠道导出插件，详情请看[这里](./packages/playable-ads-adapter/README.md)
 
 ### 下载插件包
+
 大版本区分2.x和3.x，目前已通过测试的版本是2.4.9、2.4.10、3.6.0
+
 #### 下载地址
+
 插件下载地址：
 [https://github.com/ppgee/cocos-pnp/releases?q=playable-ads-adapter&expanded=true](https://github.com/ppgee/cocos-pnp/releases?q=playable-ads-adapter&expanded=true)
 
@@ -37,7 +40,7 @@ Cocos广告试玩多渠道导出插件，详情请看[这里](./packages/playabl
 - Tiktok
 - Unity
 
-#### 启动说明
+### 启动说明
 
 - 插件有两种方式进行适配，第一种是正常点击项目构建发布时，自动触发适配功能
 - 项目选项栏中出现 **多渠道构建** ，点击该选项下的 **开始构建**进行构建
@@ -46,7 +49,8 @@ Cocos广告试玩多渠道导出插件，详情请看[这里](./packages/playabl
 
 适配淘宝小程序工具，详情请看[这里](./packages/cocos-taobao-adapter/README.md)
 
-#### 下载地址
+### 下载地址
+
 插件下载地址：
 [https://github.com/ppgee/cocos-pnp/releases?q=taobao-adapter&expanded=true](https://github.com/ppgee/cocos-pnp/releases?q=taobao-adapter&expanded=true)
 
