@@ -63,4 +63,4 @@ Cocos广告试玩多渠道导出插件，详情请看[这里](./packages/playabl
 
 ### [Contributors](https://github.com/ppgee/cocos-pnp/graphs/contributors)
 
-![Contributors](https://github.com/ppgee/cocos-pnp)
+![Contributors](https://github.com/ppgee/cocos-pnp/graphs/contributors)
