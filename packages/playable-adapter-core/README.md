@@ -20,9 +20,9 @@
 
 ## Cocos Version Support
 
-| >= 2.4.6  | 3.6.x     |
+| >= 2.4.6  |   3.6.x   |
 | --------- | --------- |
-| Latest ✅ | Latest ✅ |
+|    ✅     |    ✅     |
 
 ## Platform Support
 
@@ -82,6 +82,7 @@ const main = async () => {
         Facebook: {},
       },
       orientation: "auto",
+      enableSplash: false,
       skipBuild: true,
       tinify: true,
       tinifyApiKey: "your tinify api key",
@@ -208,6 +209,17 @@ export package from target platforms
 ```typescript
 const exportChannels: TChannel[] = ['Facebook', 'Google']
 ```
+
+### `enableSplash`
+
+Replace Cocos Splash. ([How to remove or change splash ?](https://blog.csdn.net/qq_38269366/article/details/84994586))
+
+```typescript
+let config = {
+  enableSplash: true
+}
+```
+
 
 ### `injectOptions`
 

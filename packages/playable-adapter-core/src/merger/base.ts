@@ -1,6 +1,8 @@
 import { join } from "path"
 import { CheerioAPI, load } from "cheerio"
 import {
+  getAdapterRCJson,
+  getBase64FromFile,
   getFileSize,
   getOriginPkgPath,
   getZipResourceMapper,
@@ -21,9 +23,11 @@ type TOptions = {
 }
 
 const paddingStyleTags = ($: CheerioAPI) => {
+  const { enableSplash = false } = getAdapterRCJson() || {}
   // 原始包路径
   const originPkgPath = getOriginPkgPath()
 
+  // 将css外链文件转换成内联标签
   $('link[type="text/css"]').toArray().forEach((item) => {
     const href = $(item).attr('href')
     if (!href) {
@@ -34,6 +38,26 @@ const paddingStyleTags = ($: CheerioAPI) => {
     $(`<style>${cssStr}</style>`).appendTo('head')
   })
   $('link[type="text/css"]').remove()
+
+  if (!enableSplash) return
+  // 支持封面图
+  $('head').find('style').each((_index, elem) => {
+    // 匹配css url
+    const cssUrlReg = /url\("?'?.*"?'?\)/g
+    let styleTagStr = $(elem).html() || ''
+
+    const matchStrList = styleTagStr.match(cssUrlReg)
+    if (!matchStrList) return
+  
+    matchStrList.forEach((str) => {
+      // 匹配url
+      const strReg = /"|'|url|\(|\)/g
+      const imgUrl = str.replace(strReg, '')
+      const imgBase64 = getBase64FromFile(join(originPkgPath, imgUrl))
+      styleTagStr = styleTagStr.replace(cssUrlReg, `url(${imgBase64})`)
+    })
+    $(elem).html(styleTagStr).html()
+  })
 }
 
 const paddingScriptTags = ($: CheerioAPI) => {

@@ -5,7 +5,7 @@ import { MAX_ZIP_SIZE, REPLACE_SYMBOL } from "@/constants";
 import { injectFromRCJson } from "@/helpers/dom";
 import { TBuilderOptions, TZipFromSingleFileOptions } from "@/typings";
 import { getGlobalProjectBuildPath } from '@/global'
-import { writeToPath, readToPath, get2xSingleFilePath, getOriginPkgPath, copyDirToPath, replaceGlobalSymbol, rmSync } from "@/utils"
+import { writeToPath, readToPath, getOriginPkgPath, copyDirToPath, replaceGlobalSymbol, rmSync } from "@/utils"
 import JSZip from "jszip";
 
 const globalReplacer = async (options: Pick<TBuilderOptions, 'channel' | 'zipRes' | 'notZipRes'> & { $: CheerioAPI }) => {

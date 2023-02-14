@@ -92,10 +92,11 @@ export const getResCompressRatio = async (storePath: string, value: string): Pro
 
 export const getZipResourceMapper = async (options: {
   dirPath: string
+  skipFiles?: Array<string>
   pieceCbFn?: (objKey: string, data: string) => void
   rmHttp?: boolean
 }) => {
-  const { dirPath, rmHttp = false, pieceCbFn } = options
+  const { dirPath, rmHttp = false, pieceCbFn, skipFiles = [] } = options
 
   let zipRes: TResourceData = {}
   let notZipRes: TResourceData = {}
@@ -106,8 +107,13 @@ export const getZipResourceMapper = async (options: {
     const filePath = resFiles[index];
     const fileExtname = extname(filePath)
 
-    // 移除不需要的文件
+    // 移除不需要的文件后缀
     if (TO_SKIP_EXTNAME.includes(fileExtname)) {
+      continue
+    }
+
+    // 移除不需要的文件
+    if (skipFiles.length > 0 && skipFiles.includes(filePath)) {
       continue
     }
 

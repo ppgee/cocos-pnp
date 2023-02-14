@@ -56,6 +56,7 @@ type TAdapterRC = {
   orientation?: TWebOrientations
   skipBuild?: boolean
   exportChannels?: TChannel[]
+  enableSplash?: boolean
   injectOptions?: {
     [key in TChannel]: TChannelRC
   }
