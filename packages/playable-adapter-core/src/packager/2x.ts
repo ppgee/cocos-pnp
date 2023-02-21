@@ -2,7 +2,7 @@ import {
   TChannel,
   TChannelPkgOptions,
 } from '@/typings'
-import { genChannelsPkg as baseGenChannelsPkg } from './base'
+import { genChannelsPkg as baseGenChannelsPkg, TMode } from './base'
 import {
   export2xAppLovin,
   export2xFacebook,
@@ -31,6 +31,6 @@ const channelExports: { [key in TChannel]: (options: TChannelPkgOptions) => Prom
   Unity: export2xUnity,
 }
 
-export const genChannelsPkg = (options: TChannelPkgOptions): Promise<void> => {
-  return baseGenChannelsPkg(channelExports, options)
+export const genChannelsPkg = (options: TChannelPkgOptions, mode?: TMode): Promise<void> => {
+  return baseGenChannelsPkg(channelExports, options, mode ?? 'parallel')
 }
