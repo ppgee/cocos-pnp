@@ -2,6 +2,7 @@ import pkgJson from './package.json'
 import commonjs from '@rollup/plugin-commonjs'
 import copy from 'rollup-plugin-copy'
 import cocosPluginUpdater from './plugins/cocos-plugin-updater'
+import cocosPluginWorker from './plugins/cocos-plugin-worker'
 import { nodeResolve } from '@rollup/plugin-node-resolve'
 import isBuiltin from 'is-builtin-module';
 import json from '@rollup/plugin-json'
@@ -58,6 +59,7 @@ export default {
       ],
       verbose: true
     }),
+    cocosPluginWorker(),
     cocosPluginUpdater({
       src: `${__dirname}/${outputDir}`,
       dest: `~/.CocosCreator/${is2xBuilder ? 'packages' : 'extensions'}/${appName}`

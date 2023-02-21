@@ -3,7 +3,8 @@ import { IBuildTaskOption } from "~types/packages/builder/@types";
 import { run } from "node-cmd"
 import { BUILDER_NAME } from "@/extensions/constants";
 import { checkOSPlatform, getAdapterConfig, getRCSkipBuild, getRealPath } from "@/extensions/utils";
-import { exec3xAdapter } from 'playable-adapter-core'
+import { Worker } from 'worker_threads'
+import workPath from '../worker/3x?worker'
 import { join } from 'path';
 
 const runBuilder = (buildPlatform: TPlatform) => {
@@ -35,23 +36,30 @@ export const initBuildStartEvent = async (options: Partial<IBuildTaskOption>) =>
 }
 
 export const initBuildFinishedEvent = async (options: Partial<IBuildTaskOption>) => {
-  console.info(`${BUILDER_NAME} 开始适配，导出平台 ${options.platform}`)
-  const start = new Date().getTime();
+  return new Promise((resolve) => {
+    console.info(`${BUILDER_NAME} 开始适配，导出平台 ${options.platform}`)
+    const start = new Date().getTime();
 
-  const {
-    projectRootPath,
-    projectBuildPath,
-    adapterBuildConfig,
-  } = getAdapterConfig()
-  await exec3xAdapter({
-    buildFolderPath: join(projectRootPath, projectBuildPath),
-    adapterBuildConfig: {
-      ...adapterBuildConfig,
-      buildPlatform: options.platform!
-    },
+    const {
+      projectRootPath,
+      projectBuildPath,
+      adapterBuildConfig,
+    } = getAdapterConfig()
+    const worker = new Worker(workPath, {
+      workerData: {
+        buildFolderPath: join(projectRootPath, projectBuildPath),
+        adapterBuildConfig: {
+          ...adapterBuildConfig,
+          buildPlatform: options.platform!
+        },
+      }
+    })
+    worker.on('message', () => {
+      const end = new Date().getTime();
+      console.log(`${BUILDER_NAME} 适配完成，共耗时${((end - start) / 1000).toFixed(0)}秒`)
+      resolve(true)
+    })
   })
-  const end = new Date().getTime();
-  console.log(`${BUILDER_NAME} 适配完成，共耗时${((end - start) / 1000).toFixed(0)}秒`)
 }
 
 export const builder3x = async () => {
