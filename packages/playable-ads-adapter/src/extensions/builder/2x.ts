@@ -17,12 +17,18 @@ export const initBuildFinishedEvent = async (options: TBuildOptions, callback?: 
 
   const start = new Date().getTime();
 
-  const handleExportEnd = () => {
+  const handleExportFinished = () => {
     const end = new Date().getTime();
     Editor.success(`${BUILDER_NAME} 适配完成，共耗时${((end - start) / 1000).toFixed(0)}秒`)
 
     // 打开目录 start
     shell.openPath(buildFolderPath)
+    // 打开目录 end
+    callback && callback()
+  }
+  const handleExportError = (err: string) => {
+    Editor.error('适配失败')
+    Editor.error(err)
     // 打开目录 end
     callback && callback()
   }
@@ -48,8 +54,8 @@ export const initBuildFinishedEvent = async (options: TBuildOptions, callback?: 
     const worker = new Worker(workPath, {
       workerData: params
     })
-    worker.on('message', () => {
-      handleExportEnd()
+    worker.on('message', ({ finished, msg }: { finished: boolean, msg: string }) => {
+      finished ? handleExportFinished() : handleExportError(msg)
     })
   } else {
     Editor.info('不支持Worker，将开启主线程适配')
@@ -63,7 +69,7 @@ export const initBuildFinishedEvent = async (options: TBuildOptions, callback?: 
     }, {
       mode: 'serial'
     })
-    handleExportEnd()
+    handleExportFinished()
   }
 }
 

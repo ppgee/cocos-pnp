@@ -3,7 +3,7 @@ import { IBuildTaskOption } from "~types/packages/builder/@types";
 import { run } from "node-cmd"
 import { BUILDER_NAME } from "@/extensions/constants";
 import { checkOSPlatform, getAdapterConfig, getRCSkipBuild, getRealPath } from "@/extensions/utils";
-import { Worker } from 'worker_threads'
+// import { Worker } from 'worker_threads'
 import { exec3xAdapter } from 'playable-adapter-core'
 import workPath from '../worker/3x?worker'
 import { join } from 'path';
@@ -37,17 +37,7 @@ export const initBuildStartEvent = async (options: Partial<IBuildTaskOption>) =>
 }
 
 export const initBuildFinishedEvent = (options: Partial<IBuildTaskOption>) => {
-  return new Promise(async (resolve) => {
-    console.info(`${BUILDER_NAME} 开始适配，导出平台 ${options.platform}`)
-
-    const start = new Date().getTime();
-
-    const handleExportEnd = () => {
-      const end = new Date().getTime();
-      console.log(`${BUILDER_NAME} 适配完成，共耗时${((end - start) / 1000).toFixed(0)}秒`)
-      resolve(true)
-    }
-
+  return new Promise(async (resolve, reject) => {
     const {
       projectRootPath,
       projectBuildPath,
@@ -55,6 +45,21 @@ export const initBuildFinishedEvent = (options: Partial<IBuildTaskOption>) => {
     } = getAdapterConfig()
 
     const buildFolderPath = join(projectRootPath, projectBuildPath)
+
+    console.info(`${BUILDER_NAME} 开始适配，导出平台 ${options.platform}`)
+
+    const start = new Date().getTime();
+
+    const handleExportFinished = () => {
+      const end = new Date().getTime();
+      console.log(`${BUILDER_NAME} 适配完成，共耗时${((end - start) / 1000).toFixed(0)}秒`)
+      resolve(true)
+    }
+    const handleExportError = (err: string) => {
+      console.error('适配失败')
+      reject(err)
+    }
+
     const params = {
       buildFolderPath,
       adapterBuildConfig: {
@@ -63,27 +68,41 @@ export const initBuildFinishedEvent = (options: Partial<IBuildTaskOption>) => {
       },
     }
 
-    if (typeof(Worker) !== undefined) {
+    try {
+      const { Worker } = require('worker_threads')
+
       console.log('支持Worker，将开启子线程适配')
       const worker = new Worker(workPath, {
         workerData: params
       })
-      worker.on('message', () => {
-        handleExportEnd()
+      worker.on('message', ({ finished, msg }: { finished: boolean, msg: string }) => {
+        finished ? handleExportFinished() : handleExportError(msg)
       })
-    } else {
+    } catch (error) {
       console.log('不支持Worker，将开启主线程适配')
-      await exec3xAdapter({
-        buildFolderPath,
-        adapterBuildConfig: {
-          ...adapterBuildConfig,
-          buildPlatform: options.platform,
-        }
-      }, {
+
+      await exec3xAdapter(params, {
         mode: 'serial'
       })
-      handleExportEnd()
+      handleExportFinished()
     }
+    
+
+    // if (typeof(Worker) !== undefined) {
+    //   console.log('支持Worker，将开启子线程适配')
+    //   const worker = new Worker(workPath, {
+    //     workerData: params
+    //   })
+    //   worker.on('message', ({ finished, msg }: { finished: boolean, msg: string }) => {
+    //     finished ? handleExportFinished() : handleExportError(msg)
+    //   })
+    // } else {
+    //   console.log('不支持Worker，将开启主线程适配')
+    //   await exec3xAdapter(params, {
+    //     mode: 'serial'
+    //   })
+    //   handleExportFinished()
+    // }
   })
 }
 
