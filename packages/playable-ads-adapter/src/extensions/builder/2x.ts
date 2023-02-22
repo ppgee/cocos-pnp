@@ -1,4 +1,3 @@
-import { Worker } from 'worker_threads'
 import { BUILDER_NAME } from '@/extensions/constants'
 import { getAdapterConfig, getExcludedModules, getRCSkipBuild } from '@/extensions/utils'
 import { exec2xAdapter } from 'playable-adapter-core'
@@ -49,24 +48,20 @@ export const initBuildFinishedEvent = async (options: TBuildOptions, callback?: 
     }
   }
 
-  if (typeof(Worker) !== undefined) {
-    Editor.info('支持Worker，将开启子线程适配')
+  try {
+    const { Worker } = require('worker_threads')
+
+    console.log('支持Worker，将开启子线程适配')
     const worker = new Worker(workPath, {
       workerData: params
     })
     worker.on('message', ({ finished, msg }: { finished: boolean, msg: string }) => {
       finished ? handleExportFinished() : handleExportError(msg)
     })
-  } else {
-    Editor.info('不支持Worker，将开启主线程适配')
-    await exec2xAdapter({
-      buildFolderPath,
-      adapterBuildConfig: {
-        ...adapterBuildConfig,
-        buildPlatform: options.platform,
-        orientation: options.webOrientation
-      }
-    }, {
+  } catch (error) {
+    console.log('不支持Worker，将开启主线程适配')
+
+    await exec2xAdapter(params, {
       mode: 'serial'
     })
     handleExportFinished()

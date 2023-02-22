@@ -3,7 +3,6 @@ import { IBuildTaskOption } from "~types/packages/builder/@types";
 import { run } from "node-cmd"
 import { BUILDER_NAME } from "@/extensions/constants";
 import { checkOSPlatform, getAdapterConfig, getRCSkipBuild, getRealPath } from "@/extensions/utils";
-// import { Worker } from 'worker_threads'
 import { exec3xAdapter } from 'playable-adapter-core'
 import workPath from '../worker/3x?worker'
 import { join } from 'path';
