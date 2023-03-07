@@ -85,23 +85,6 @@ export const initBuildFinishedEvent = (options: Partial<IBuildTaskOption>) => {
       })
       handleExportFinished()
     }
-    
-
-    // if (typeof(Worker) !== undefined) {
-    //   console.log('支持Worker，将开启子线程适配')
-    //   const worker = new Worker(workPath, {
-    //     workerData: params
-    //   })
-    //   worker.on('message', ({ finished, msg }: { finished: boolean, msg: string }) => {
-    //     finished ? handleExportFinished() : handleExportError(msg)
-    //   })
-    // } else {
-    //   console.log('不支持Worker，将开启主线程适配')
-    //   await exec3xAdapter(params, {
-    //     mode: 'serial'
-    //   })
-    //   handleExportFinished()
-    // }
   })
 }
 
