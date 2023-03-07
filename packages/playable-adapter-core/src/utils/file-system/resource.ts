@@ -93,10 +93,11 @@ export const getResCompressRatio = async (storePath: string, value: string): Pro
 export const getZipResourceMapper = async (options: {
   dirPath: string
   skipFiles?: Array<string>
-  pieceCbFn?: (objKey: string, data: string) => void
+  mountCbFn?: (objKey: string, data: string) => string // single file mount callback function
+  unmountCbFn?: (objKey: string, data: string) => void // single file unmount callback function
   rmHttp?: boolean
 }) => {
-  const { dirPath, rmHttp = false, pieceCbFn, skipFiles = [] } = options
+  const { dirPath, rmHttp = false, unmountCbFn, mountCbFn, skipFiles = [] } = options
 
   let zipRes: TResourceData = {}
   let notZipRes: TResourceData = {}
@@ -117,16 +118,21 @@ export const getZipResourceMapper = async (options: {
       continue
     }
 
+    // 需要移除不必要的路径前缀
+    const readPkgPath = getRealPath(`${dirPath}/`)
+    const objKey = getRealPath(filePath).replace(readPkgPath, '')
+
     let data = getTargetResData(filePath)
+    if (mountCbFn) {
+      data = mountCbFn(objKey, data)
+    }
+
     if (rmHttp && fileExtname === '.js') {
       data = data.replaceAll('XMLHttpRequest', ADAPTER_FETCH)
     }
 
     const zipRatioInfo = await getResCompressRatio(filePath, data)
 
-    // 需要移除不必要的路径前缀
-    const readPkgPath = getRealPath(`${dirPath}/`)
-    const objKey = getRealPath(filePath).replace(readPkgPath, '')
     if (zipRatioInfo.ratio >= 1) {
       notZipRes[objKey] = data
       continue
@@ -134,7 +140,7 @@ export const getZipResourceMapper = async (options: {
 
     zipRes[objKey] = data
 
-    pieceCbFn && pieceCbFn(objKey, data)
+    unmountCbFn && unmountCbFn(objKey, data)
   }
 
   return {

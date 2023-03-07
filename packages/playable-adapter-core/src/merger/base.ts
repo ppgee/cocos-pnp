@@ -48,7 +48,7 @@ const paddingStyleTags = ($: CheerioAPI) => {
 
     const matchStrList = styleTagStr.match(cssUrlReg)
     if (!matchStrList) return
-  
+
     matchStrList.forEach((str) => {
       // 匹配url
       const strReg = /"|'|url|\(|\)/g
@@ -81,6 +81,46 @@ const paddingScriptTags = ($: CheerioAPI) => {
   $(scriptTags).appendTo('body')
 }
 
+const getJsListFromSettingsJson = (data: string): { jsList: string[], settingsData: string } => {
+  let jsonData = JSON.parse(data)
+  jsonData.plugins = {
+    jsList: [],
+    ...jsonData.plugins
+  }
+  const jsList = [...jsonData.plugins.jsList]
+  jsonData.plugins.jsList = []
+  return {
+    jsList,
+    settingsData: JSON.stringify(jsonData)
+  }
+}
+
+const getJsListFromSettingsJs = (data: string): { jsList: string[], settingsData: string } => {
+  const originData = {
+    jsList: [],
+    settingsData: data
+  }
+
+  // check jsList
+  let settingsStrList = data.split('jsList:')
+  if (settingsStrList.length < 2) {
+    return originData
+  }
+
+  // get jsList
+  const settingsStr = settingsStrList.pop() || ''
+  const regExp = /\[[^\]]*\]/
+  const jsListStrRegExp = regExp.exec(settingsStr)
+  if (!jsListStrRegExp) {
+    return originData
+  }
+  const jsListStr = jsListStrRegExp[0]
+  return {
+    jsList: JSON.parse(jsListStr),
+    settingsData: data.replace(jsListStr, '[]')
+  }
+}
+
 const paddingAllResToMapped = async (options: {
   injectsCode: TOptions['injectsCode'],
   $: CheerioAPI,
@@ -90,10 +130,25 @@ const paddingAllResToMapped = async (options: {
   const originPkgPath = getOriginPkgPath()
 
   let zip = new JSZip();
+
+  let pluginJsList: string[] = []
   const { zipRes, notZipRes } = await getZipResourceMapper({
     dirPath: originPkgPath,
     rmHttp: true,
-    pieceCbFn: (objKey, data) => {
+    mountCbFn: (objKey, data) => {
+      if (objKey.indexOf('src/settings.json') !== -1) { // get jsList in settings.json
+        const { jsList, settingsData } = getJsListFromSettingsJson(data)
+        pluginJsList = jsList
+        return settingsData
+      } else if (objKey.indexOf('src/settings.js') !== -1) { // get jsList in settings.js
+        const { jsList, settingsData } = getJsListFromSettingsJs(data)
+        pluginJsList = jsList
+        return settingsData
+      }
+
+      return data
+    },
+    unmountCbFn: (objKey, data) => {
       zip.file(objKey, data, { compression: 'DEFLATE' })
     }
   })
@@ -110,6 +165,7 @@ const paddingAllResToMapped = async (options: {
   // 不需压缩的文件
   $(`<script data-id="adapter-resource">window.__adapter_resource__=${JSON.stringify(notZipRes)}</script>`).appendTo('body')
   // 注入相关代码
+  $(`<script data-id="adapter-plugins">window.__adapter_plugins__=${JSON.stringify(pluginJsList)}</script>`).appendTo('body')
   $(`<script data-id="adapter-init">${injectsCode.init}</script>`).appendTo('body')
   $(`<script data-id="adapter-main">${injectsCode.main}</script>`).appendTo('body')
 

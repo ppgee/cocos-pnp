@@ -30,6 +30,22 @@
       throw err;
     });
   }
+  function __adapter_init_plugins() {
+    if (!window.__adapter_plugins__ || window.__adapter_plugins__.length === 0) {
+      return;
+    }
+
+    window.__adapter_plugins__.forEach((scriptPath) => {
+      const fileName = 'src/' + scriptPath
+      if (!window.__adapter_js__[fileName]) {
+        console.warn('window.__adapter_js__ is not found ', fileName)
+        return
+      }
+
+      __adapter_eval(window.__adapter_js__[fileName])
+      delete window.__adapter_js__[fileName];
+    })
+  }
   function __adapter_exec_js() {
     window.__adapter_js__ = {};
     for (const filePath in window.__adapter_resource__) {
@@ -51,6 +67,8 @@
         console.error(error)
       }
     }
+
+    __adapter_init_plugins();
     __adapter_success();
   }
   function __adapter_console() {

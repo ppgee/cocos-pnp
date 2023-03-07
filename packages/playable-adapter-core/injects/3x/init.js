@@ -72,6 +72,10 @@ window.__adapter_init = function () {
   }
 
   function __adapter_eval(name) {
+    if (!window.__adapter_js__[name]) {
+      console.warn('window.__adapter_js__ is not found ', name)
+      return
+    }
     eval(window.__adapter_js__[name]);
     delete window.__adapter_js__[name];
   }
@@ -355,6 +359,17 @@ window.__adapter_init = function () {
     })
   }
 
+  function __adapter_init_plugins() {
+    if (!window.__adapter_plugins__ || window.__adapter_plugins__.length === 0) {
+      return;
+    }
+
+    window.__adapter_plugins__.forEach((scriptPath) => {
+      const fileName = 'src/' + scriptPath
+      __adapter_eval(fileName)
+    })
+  }
+
   function __adapter_get_path(key) {
     for (var k in window.__adapter_resource__) {
       if (k.indexOf(key) == 0) {
@@ -380,6 +395,7 @@ window.__adapter_init = function () {
 
   prepareLoad.then(() => {
     __adapter_init_cc()
+    __adapter_init_plugins()
     System.import('./' + __adapter_get_path('index')).catch((err) => {
       console.error(err);
     })
