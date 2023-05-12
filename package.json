@@ -1,7 +1,7 @@
 {
   "name": "cocos-pnp",
-  "version": "1.0.0",
-  "description": "Cocos相关插件",
+  "version": "1.3.3",
+  "description": "Ads Playable for Cocos",
   "main": "index.js",
   "scripts": {
     "commit": "cz",
@@ -21,7 +21,11 @@
   },
   "keywords": [
     "cocos",
-    "adapter"
+    "ads-playable",
+    "facebook",
+    "unity",
+    "google",
+    "tiktok"
   ],
   "author": "ppgee",
   "license": "ISC",

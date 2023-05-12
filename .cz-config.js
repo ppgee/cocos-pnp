@@ -26,7 +26,6 @@ module.exports = {
   ],
 
   scopes: [
-    { name: 'cocos-taobao-adapter' },
     { name: 'playable-ads-adapter' },
     { name: 'playable-adapter-core' },
   ],
