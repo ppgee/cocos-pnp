@@ -1,1 +1,1 @@
-"use strict";module.exports={description:"A adapter builder"};
+"use strict";module.exports={description:"Playable Ads Adapter"};

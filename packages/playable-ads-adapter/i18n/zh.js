@@ -1,1 +1,1 @@
-"use strict";module.exports={description:"适配构建器"};
+"use strict";module.exports={description:"广告试玩适配器"};

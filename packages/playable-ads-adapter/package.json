@@ -1,6 +1,7 @@
 {
-  "version": "1.3.3",
+  "version": "1.3.4",
   "name": "playable-ads-adapter",
+  "description": "i18n:playable-ads-adapter.description",
   "main": "./main.js",
   "devDependencies": {
     "@rollup/plugin-alias": "^4.0.2",
