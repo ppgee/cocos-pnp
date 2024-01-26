@@ -89,4 +89,5 @@ export type TAdapterRC = {
   }
   tinify?: boolean
   tinifyApiKey?: string
+  isZip?: boolean
 }

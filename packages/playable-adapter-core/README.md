@@ -20,25 +20,16 @@
 
 ## Cocos Version Support
 
-| >= 2.4.6  |   3.6.x   |
-| --------- | --------- |
-|    ✅     |    ✅     |
+| >= 2.4.6 | 3.6.x |
+| -------- | ----- |
+| ✅       | ✅    |
 
 ## Platform Support
 
-| platform / version | >= 2.4.6 | 3.6.x |
-| ------------------ | -------- | ----- |
-| AppLovin           | ✅       | ✅    |
-| Facebook           | ✅       | ✅    |
-| Google             | ✅       | ✅    |
-| IronSource         | ✅       | ✅    |
-| Liftoff            | ✅       | ✅    |
-| Mintegral          | ✅       | ✅    |
-| Moloco             | ✅       | ✅    |
-| Pangle             | ✅       | ✅    |
-| Rubeex             | ✅       | ✅    |
-| Tiktok             | ✅       | ✅    |
-| Unity              | ✅       | ✅    |
+|              | AppLovin | Facebook | Google | IronSource | Liftoff | Mintegral | Moloco | Pangle | Rubeex | Tiktok | Unity |
+| ------------ | -------- | -------- | ------ | ---------- | ------- | --------- | ------ | ------ | ------ | ------ | ----- |
+| **>= 2.4.6** | ✅       | ✅       | ✅     | ✅         | ✅      | ✅        | ✅     | ✅     | ✅     | ✅     | ✅    |
+| **3.8.x**    | ✅       | ✅       | ✅     | ✅         | ✅      | ✅        | ✅     | ✅     | ✅     | ✅     | ✅    |
 
 ## Installing
 
@@ -67,10 +58,7 @@ $ pnpm install playable-adapter-core
 ### common
 
 ```typescript
-import {
-  TPlatform,
-  exec2xAdapter,
-} from "playable-adapter-core";
+import { TPlatform, exec2xAdapter } from "playable-adapter-core";
 
 const main = async () => {
   const config = {
@@ -91,9 +79,7 @@ const main = async () => {
 
   // required
   const version = "2"; // '2' | '3'
-  version === "2"
-    ? await exec2xAdapter(config)
-    : await exec3xAdapter(config);
+  version === "2" ? await exec2xAdapter(config) : await exec3xAdapter(config);
 };
 
 main();
@@ -108,11 +94,7 @@ npm install safeify
 ```typescript
 import { Api, useContext } from "@midwayjs/hooks";
 import { Context } from "@midwayjs/koa";
-import {
-  TPlatform,
-  exec2xAdapter,
-  exec3xAdapter,
-} from "playable-adapter-core";
+import { TPlatform, exec2xAdapter, exec3xAdapter } from "playable-adapter-core";
 import { Safeify } from "safeify";
 
 export const uploadBuildPkg = Api(Upload(), async () => {
@@ -158,9 +140,9 @@ export const uploadBuildPkg = Api(Upload(), async () => {
       orientation: webOrientation,
       skipBuild: true,
       tinify,
-      tinifyApiKey
+      tinifyApiKey,
     },
-  }
+  };
 
   // 创建 safeify 实例
   const safeVm = new Safeify({
@@ -207,7 +189,7 @@ window.advChannels = "Facebook";
 export package from target platforms
 
 ```typescript
-const exportChannels: TChannel[] = ['Facebook', 'Google']
+const exportChannels: TChannel[] = ["Facebook", "Google"];
 ```
 
 ### `enableSplash`
@@ -216,10 +198,9 @@ Replace Cocos Splash. ([How to remove or change splash ?](https://blog.csdn.net/
 
 ```typescript
 let config = {
-  enableSplash: true
-}
+  enableSplash: true,
+};
 ```
-
 
 ### `injectOptions`
 
@@ -241,9 +222,9 @@ type TChannel =
 
 const injectOptions: {
   [key in TChannel]: {
-    head: string; // 在html的head标签内尾部追加
-    body: string; // 在html的body标签内，且在所有script前追加
-    sdkScript: string; // 在渠道对应地方注入sdk脚本
+    head: string; // To append to the end of the <head> tag in HTML
+    body: string; // To append content within the <body> tag of an HTML document, but before all <script> tags
+    sdkScript: string; // To inject an SDK script at the correct location within a channel
   };
 } = {};
 ```
@@ -253,6 +234,61 @@ const injectOptions: {
 ```typescript
 let config = {
   tinify: true, // compress resource before build package
-  tinifyApiKey: '', // tinify api key, visit to https://tinypng.com/developers
-}
+  tinifyApiKey: "", // tinify api key, visit to https://tinypng.com/developers
+};
 ```
+
+### JsZip
+
+You can configure the use of JSZip in your application according to your requirements
+
+```typescript
+let config = {
+  isZip: true, // default true
+};
+```
+
+## Break Change
+
+### `v2.0.0`
+
+`URL.createObjectURL` instead of `System.__proto__.createScript`
+
+Since Cocos Creator 3.7 has updated SystemJS, adjustments have been made in the implementation. Instead of modifying `System.__proto__.createScript`, the choice is to use `URL.createObjectURL` to maintain the default behavior of SystemJS. This change does not affect version 2.x.
+
+The `URL.createObjectURL` method is used to create a URL that represents the given object (such as a `File` or `Blob` object) in the parameter. When you directly open an HTML file on the local file system (e.g., using a URL starting with `file:///`), modern browsers typically restrict many file system-related web APIs, including creating object URLs, for security reasons. It is strongly recommended to serve files through an HTTP server instead of trying to bypass the browser's security restrictions.
+
+This behavior is adopted by modern browsers as a security measure to prevent cross-site scripting attacks and data leakage. The browser's same-origin policy restricts how documents or scripts loaded from one origin can interact with resources from another origin. It is an important security mechanism that helps protect user data from certain network attacks.
+
+To resolve this issue, you should serve your application through an HTTP server instead of opening it directly from the file system. This approach not only addresses the issue of having a null origin but also allows your application to run under conditions that closely resemble a production environment.
+
+Here are a few methods to set up a local HTTP server:
+
+1. **Using Python's HTTP server**:
+   If you have Python 3.x installed, navigate to your project directory in the command line and run the following command to start a simple HTTP server:
+
+   ```bash
+   python -m http.server
+   ```
+
+   You can then access your application at `http://localhost:8000`.
+
+2. **Using Node.js with `http-server`**:
+   If you have Node.js installed, you can use the `http-server` package. Install it by running the following command in the command line:
+
+   ```bash
+   npm install -g http-server
+   ```
+
+   Then navigate to your project directory and start the server:
+
+   ```bash
+   http-server .
+   ```
+
+   Your application will now be available at `http://localhost:8080`.
+
+3. **Using other HTTP server software**:
+   You can also choose to use other professional web server software such as Apache, Nginx, or others, but this may require more complex configuration.
+
+Remember, even when using an HTTP server in your local development environment, ensure that all network requests adhere to the same security principles, especially when handling user data.

@@ -5,7 +5,7 @@ import {
   getBase64FromFile,
   getFileSize,
   getOriginPkgPath,
-  getZipResourceMapper,
+  getResourceMapper,
   readToPath,
   writeToPath
 } from "@/utils"
@@ -125,6 +125,8 @@ const paddingAllResToMapped = async (options: {
   injectsCode: TOptions['injectsCode'],
   $: CheerioAPI,
 }) => {
+  const { isZip = true } = getAdapterRCJson() || {}
+
   const { injectsCode, $ } = options
   // 原始包路径
   const originPkgPath = getOriginPkgPath()
@@ -132,9 +134,10 @@ const paddingAllResToMapped = async (options: {
   let zip = new JSZip();
 
   let pluginJsList: string[] = []
-  const { zipRes, notZipRes } = await getZipResourceMapper({
+  const { zipRes, notZipRes } = await getResourceMapper({
     dirPath: originPkgPath,
     rmHttp: true,
+    isZip,
     mountCbFn: (objKey, data) => {
       if (objKey.indexOf('src/settings.json') !== -1) { // get jsList in settings.json
         const { jsList, settingsData } = getJsListFromSettingsJson(data)
@@ -153,14 +156,16 @@ const paddingAllResToMapped = async (options: {
     }
   })
 
-  // 注入解压库
-  // $(`<script data-id="jszip">${getJSZipInjectScript()}</script>`).appendTo('body')
-  $(`<script data-id="jszip">${jszipCode}</script>`).appendTo('body')
+  if (isZip) {
+    // 注入解压库
+    // $(`<script data-id="jszip">${getJSZipInjectScript()}</script>`).appendTo('body')
+    $(`<script data-id="jszip">${jszipCode}</script>`).appendTo('body')
 
-  // 注入压缩文件
-  const content = await zip.generateAsync({ type: 'nodebuffer' })
-  let strBase64 = Buffer.from(content).toString('base64');
-  $(`<script data-id="adapter-zip-0">window.__adapter_zip__="${strBase64}";</script>`).appendTo('body')
+    // 注入压缩文件
+    const content = await zip.generateAsync({ type: 'nodebuffer' })
+    let strBase64 = Buffer.from(content).toString('base64');
+    $(`<script data-id="adapter-zip-0">window.__adapter_zip__="${strBase64}";</script>`).appendTo('body')
+  }
 
   // 不需压缩的文件
   $(`<script data-id="adapter-resource">window.__adapter_resource__=${JSON.stringify(notZipRes)}</script>`).appendTo('body')

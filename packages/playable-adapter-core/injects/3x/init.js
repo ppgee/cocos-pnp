@@ -1,33 +1,6 @@
 "use strict";
 window.__adapter_init = function () {
-  class AdapterFetch {
-    constructor() {
-      this.response = null, this.status = 200, this.responseType = "", this.onload = function () {
-        console.log("onload")
-      }
-    }
-    open(e, t) {
-      const n = __adapter_get_resource(t);
-      n ? this.response = n : console.log("res", n, t)
-    }
-    send() {
-      switch (this.responseType) {
-        case "json":
-          this.response = JSON.parse(this.response);
-          break;
-        case "text":
-          this.response = this.response;
-          break;
-        case "arraybuffer":
-          this.response = base64toArrayBuffer(this.response);
-          break;
-        default:
-          console.err("type error", url, this.responseType)
-      }
-      this.onload()
-    }
-  }
-
+  // Utilities
   function base64ToBlob(base64, type) {
     let oriResBase64 = base64;
     let base64Arr = oriResBase64.split(',');
@@ -67,8 +40,32 @@ window.__adapter_init = function () {
     return u8arr.buffer;
   }
 
-  function __adapter_init_http() {
-    window.adapterFetch = AdapterFetch
+  class AdapterFetch {
+    constructor() {
+      this.response = null, this.status = 200, this.responseType = "", this.onload = function () {
+        console.log("onload")
+      }
+    }
+    open(e, t) {
+      const n = __adapter_get_resource(t);
+      n ? this.response = n : console.log("res", n, t)
+    }
+    send() {
+      switch (this.responseType) {
+        case "json":
+          this.response = JSON.parse(this.response);
+          break;
+        case "text":
+          this.response = this.response;
+          break;
+        case "arraybuffer":
+          this.response = base64toArrayBuffer(this.response);
+          break;
+        default:
+          this.response = this.response;
+      }
+      this.onload()
+    }
   }
 
   function __adapter_eval(name) {
@@ -139,6 +136,53 @@ window.__adapter_init = function () {
     return res;
   }
 
+  function __adapter_init_http() {
+    window.adapterFetch = AdapterFetch
+
+    const _fetch = window.fetch
+    window.fetch = function (url, options) {
+      const resource = __adapter_get_resource(url);
+      if (resource) {
+        // 模拟fetch响应结果
+        let response = {
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: {
+            get: function (key) {
+              // 根据不同的资源url返回不同的content-type，json、css、wasm
+              if (key === 'content-type') {
+                if (url.indexOf('.json') !== -1) {
+                  return 'application/json'
+                } else if (url.indexOf('.css') !== -1) {
+                  return 'text/css'
+                } else if (url.indexOf('.wasm') !== -1) {
+                  return 'application/wasm'
+                }
+              }
+              return 'application/javascript';
+            }
+          },
+          url: url,
+          clone: function () {
+            return response;
+          },
+          text: function () {
+            return Promise.resolve(resource);
+          },
+          json: function () {
+            return Promise.resolve(JSON.parse(resource));
+          },
+          arrayBuffer: function () {
+            return Promise.resolve(base64toArrayBuffer(resource));
+          }
+        }
+        return Promise.resolve(response);
+      }
+      return _fetch(url, options)
+    }
+  }
+
   function __adapter_init_js() {
     const _createScript = System.__proto__.createScript
     System.__proto__.createScript = function (url) {
@@ -148,18 +192,9 @@ window.__adapter_init = function () {
         console.error(`${url} 找不到资源`)
         return _createScript.call(this, url)
       }
-      const script = document.createElement('script');
-      script.text = res;
-      const _addEventListener = script.addEventListener
-      script.addEventListener = function (type, listener) {
-        if (type === 'load') {
-          setTimeout(() => {
-            listener()
-          })
-        }
-        _addEventListener.call(this, type, listener)
-      }
-      return script;
+
+      const blob = new Blob([res], { type: 'text/javascript' });
+      return _createScript.call(this, URL.createObjectURL(blob))
     };
   }
 

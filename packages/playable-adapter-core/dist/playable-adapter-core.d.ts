@@ -62,6 +62,7 @@ type TAdapterRC = {
   }
   tinify?: boolean
   tinifyApiKey?: string
+  isZip?: boolean
 }
 
 declare type TMode = 'parallel' | 'serial';

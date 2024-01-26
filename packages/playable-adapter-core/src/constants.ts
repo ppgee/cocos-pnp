@@ -31,5 +31,4 @@ export const TO_SKIP_EXTNAME = [
   '.ico',
   '.html',
   '.css',
-  '.wasm'
 ]

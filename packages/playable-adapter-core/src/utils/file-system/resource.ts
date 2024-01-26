@@ -90,14 +90,15 @@ export const getResCompressRatio = async (storePath: string, value: string): Pro
   }
 }
 
-export const getZipResourceMapper = async (options: {
+export const getResourceMapper = async (options: {
   dirPath: string
+  isZip?: boolean
   skipFiles?: Array<string>
   mountCbFn?: (objKey: string, data: string) => string // single file mount callback function
   unmountCbFn?: (objKey: string, data: string) => void // single file unmount callback function
   rmHttp?: boolean
 }) => {
-  const { dirPath, rmHttp = false, unmountCbFn, mountCbFn, skipFiles = [] } = options
+  const { dirPath, rmHttp = false, unmountCbFn, mountCbFn, skipFiles = [], isZip = true } = options
 
   let zipRes: TResourceData = {}
   let notZipRes: TResourceData = {}
@@ -129,6 +130,12 @@ export const getZipResourceMapper = async (options: {
 
     if (rmHttp && fileExtname === '.js') {
       data = data.replaceAll('XMLHttpRequest', ADAPTER_FETCH)
+    }
+
+    // 如果不需要压缩，直接返回
+    if (!isZip) {
+      notZipRes[objKey] = data
+      continue
     }
 
     const zipRatioInfo = await getResCompressRatio(filePath, data)
