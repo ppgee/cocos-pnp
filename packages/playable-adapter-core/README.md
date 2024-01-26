@@ -248,9 +248,9 @@ let config = {
 };
 ```
 
-## Break Change
+## Breaking Changes
 
-### `v2.0.0`
+### `v1.0.0`
 
 `URL.createObjectURL` instead of `System.__proto__.createScript`
 

@@ -1,6 +1,6 @@
 {
   "name": "playable-adapter-core",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A node application for exporting playable ads",
   "title": "Playable Adapter Core",
   "main": "dist/playable-adapter-core.js",
