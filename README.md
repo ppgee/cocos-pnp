@@ -147,6 +147,16 @@ type TAdapterRC = {
 }
 ```
 
+5. Supports JSZip compression to further reduce the package size, using the following configuration:
+
+```json
+// .adapterrc
+{
+  ...,
+  "isZip": true // Whether to compress the package with JSZip, the default is true
+}
+```
+
 ## Plugin Development and Build Steps
 
 ### Clone the Project

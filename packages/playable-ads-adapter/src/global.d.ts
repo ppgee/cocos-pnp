@@ -499,3 +499,11 @@ type TBuilderOptions = {
 type TZipFromSingleFileOptions = TBuilderOptions & {
   transformScript?: (scriptNode: Cheerio<Element>) => Promise<void>
 }
+
+type ConsoleMethodName = 'log' | 'info' | 'warn' | 'error' | 'debug'; // 等等，根据需要添加
+type PrefixedConsoleMethodName = `adapter:${ConsoleMethodName}`;
+type TWorkerMsg = {
+  event: 'adapter:finished' | PrefixedConsoleMethodName
+  finished: boolean
+  msg: string
+}

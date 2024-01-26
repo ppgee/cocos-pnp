@@ -147,6 +147,16 @@ type TAdapterRC = {
 }
 ```
 
+5. 支持JSZip压缩包，让包体进一步缩小，使用配置如下：
+
+```json
+// .adapterrc
+{
+  ...,
+  "isZip": true // 是否开启 JSZip 压缩，默认为true
+}
+```
+
 ## 插件开发和构建步骤
 
 ### 拉取项目

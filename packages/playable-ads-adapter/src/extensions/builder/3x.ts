@@ -1,11 +1,28 @@
 import { shell } from 'electron'
-import { IBuildTaskOption } from "~types/packages/builder/@types";
+import { IBuildTaskOption, Platform } from "~types/packages/builder/@types";
 import { run } from "node-cmd"
 import { BUILDER_NAME } from "@/extensions/constants";
 import { checkOSPlatform, getAdapterConfig, getRCSkipBuild, getRealPath } from "@/extensions/utils";
 import { exec3xAdapter } from 'playable-adapter-core'
 import workPath from '../worker/3x?worker'
 import { join } from 'path';
+
+const setupWorker = (params: { buildFolderPath: string; adapterBuildConfig: TAdapterRC}, successCb: Function, failCb: Function) => {
+  const { Worker } = require('worker_threads')
+
+  console.log('支持Worker，将开启子线程适配')
+  const worker = new Worker(workPath, {
+    workerData: params
+  })
+  worker.on('message', ({ finished, msg, event }: TWorkerMsg) => {
+    if (event === 'adapter:finished') {
+      finished ? successCb() : failCb(msg)
+      return
+    }
+    // 处理消息 adapter:log 和 adapter:info
+    console[event.split(':')[1] as ConsoleMethodName](msg)
+  })
+}
 
 const runBuilder = (buildPlatform: TPlatform) => {
   return new Promise<void>((resolve, reject) => {
@@ -68,15 +85,7 @@ export const initBuildFinishedEvent = (options: Partial<IBuildTaskOption>) => {
     }
 
     try {
-      const { Worker } = require('worker_threads')
-
-      console.log('支持Worker，将开启子线程适配')
-      const worker = new Worker(workPath, {
-        workerData: params
-      })
-      worker.on('message', ({ finished, msg }: { finished: boolean, msg: string }) => {
-        finished ? handleExportFinished() : handleExportError(msg)
-      })
+      setupWorker(params, handleExportFinished, handleExportError)
     } catch (error) {
       console.log('不支持Worker，将开启主线程适配')
 
