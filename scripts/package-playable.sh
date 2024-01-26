@@ -15,7 +15,7 @@ pnpm build --environment BUILD_VERSION:3x
 
 cd $PLUGIN_DIST
 
-zip -r -v -9 playable-36x.zip ./playable-ads-adapter
+zip -r -v -9 playable-3x.zip ./playable-ads-adapter
 
 echo "Packaged the plugin of 3.x finished."
 
@@ -33,6 +33,6 @@ pnpm build --environment BUILD_VERSION:2x
 
 cd $PLUGIN_DIST
 
-zip -r -v -9 playable-24x.zip ./playable-ads-adapter
+zip -r -v -9 playable-2x.zip ./playable-ads-adapter
 
 echo "Package the plugin of 2.4.x finished."
