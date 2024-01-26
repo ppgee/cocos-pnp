@@ -32,27 +32,10 @@ Once installed, you can use it. If you cannot find the plugin, try restarting th
 
 ### Supported Channels
 
-- AppLovin
-
-- Facebook
-
-- Google
-
-- IronSource
-
-- Liftoff
-
-- Mintegral
-
-- Moloco
-
-- Pangle
-
-- Rubeex
-
-- Tiktok
-
-- Unity
+|              | AppLovin | Facebook | Google | IronSource | Liftoff | Mintegral | Moloco | Pangle | Rubeex | Tiktok | Unity |
+| ------------ | -------- | -------- | ------ | ---------- | ------- | --------- | ------ | ------ | ------ | ------ | ----- |
+| **>= 2.4.6** | ✅       | ✅       | ✅     | ✅         | ✅      | ✅        | ✅     | ✅     | ✅     | ✅     | ✅    |
+| **3.8.x**    | ✅       | ✅       | ✅     | ✅         | ✅      | ✅        | ✅     | ✅     | ✅     | ✅     | ✅    |
 
 ### Extend Features
 
