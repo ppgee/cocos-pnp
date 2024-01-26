@@ -24,25 +24,25 @@ type TOptions = {
 
 const paddingStyleTags = ($: CheerioAPI) => {
   const { enableSplash = false } = getAdapterRCJson() || {}
-  // 原始包路径
+  // Original package path
   const originPkgPath = getOriginPkgPath()
 
-  // 将css外链文件转换成内联标签
+  // Convert external CSS files into inline tags
   $('link[type="text/css"]').toArray().forEach((item) => {
     const href = $(item).attr('href')
     if (!href) {
       return
     }
     const cssStr = readToPath(join(originPkgPath, href), 'utf-8')
-    // 增加部分tag
+    // Add some tags
     $(`<style>${cssStr}</style>`).appendTo('head')
   })
   $('link[type="text/css"]').remove()
 
   if (!enableSplash) return
-  // 支持封面图
+  // Support for splash screen
   $('head').find('style').each((_index, elem) => {
-    // 匹配css url
+    // Match css url
     const cssUrlReg = /url\("?'?.*"?'?\)/g
     let styleTagStr = $(elem).html() || ''
 
@@ -50,7 +50,7 @@ const paddingStyleTags = ($: CheerioAPI) => {
     if (!matchStrList) return
 
     matchStrList.forEach((str) => {
-      // 匹配url
+      // Match url
       const strReg = /"|'|url|\(|\)/g
       const imgUrl = str.replace(strReg, '')
       const imgBase64 = getBase64FromFile(join(originPkgPath, imgUrl))
@@ -61,7 +61,7 @@ const paddingStyleTags = ($: CheerioAPI) => {
 }
 
 const paddingScriptTags = ($: CheerioAPI) => {
-  // 原始包路径
+  // Original package path
   const originPkgPath = getOriginPkgPath()
 
   let scriptTags = ''
@@ -71,11 +71,11 @@ const paddingScriptTags = ($: CheerioAPI) => {
       return
     }
     let scriptStr = readToPath(join(originPkgPath, href), 'utf-8')
-    // 增加部分tag
+    // Add some tags
     scriptTags += `<script type="systemjs-importmap">${scriptStr}</script>`
   })
 
-  // 清空html中的script tag
+  // Clear script tags in HTML
   $('head link').remove()
   $('body script').remove()
   $(scriptTags).appendTo('body')
@@ -128,9 +128,8 @@ const paddingAllResToMapped = async (options: {
   const { isZip = true } = getAdapterRCJson() || {}
 
   const { injectsCode, $ } = options
-  // 原始包路径
+  // Original package path
   const originPkgPath = getOriginPkgPath()
-
 
   let zip = isZip ? new JSZip() : null
 
@@ -160,19 +159,19 @@ const paddingAllResToMapped = async (options: {
   })
 
   if (isZip && zip) {
-    // 注入解压库
+    // Inject decompression library
     // $(`<script data-id="jszip">${getJSZipInjectScript()}</script>`).appendTo('body')
     $(`<script data-id="jszip">${jszipCode}</script>`).appendTo('body')
 
-    // 注入压缩文件
+    // Inject compressed files
     const content = await zip.generateAsync({ type: 'nodebuffer' })
     let strBase64 = Buffer.from(content).toString('base64');
     $(`<script data-id="adapter-zip-0">window.__adapter_zip__="${strBase64}";</script>`).appendTo('body')
   }
 
-  // 不需压缩的文件
+  // Files that do not need to be compressed
   $(`<script data-id="adapter-resource">window.__adapter_resource__=${JSON.stringify(notZipRes)}</script>`).appendTo('body')
-  // 注入相关代码
+  // Inject related code
   $(`<script data-id="adapter-plugins">window.__adapter_plugins__=${JSON.stringify(pluginJsList)}</script>`).appendTo('body')
   $(`<script data-id="adapter-init">${injectsCode.init}</script>`).appendTo('body')
   $(`<script data-id="adapter-main">${injectsCode.main}</script>`).appendTo('body')
@@ -188,22 +187,22 @@ export const genSingleFile = async (options: TOptions) => {
     singleFilePath,
     injectsCode
   } = options
-  // 原始包路径
+  // Original package path
   const originPkgPath = getOriginPkgPath()
 
-  // 构建相关目录和文件路径
+  // Build related directories and file paths
   const htmlPath = join(originPkgPath, '/index.html')
   const htmlStr = readToPath(htmlPath, 'utf-8')
 
   const $ = load(htmlStr)
 
-  // 将style文件填充到html中
+  // Fill style files into HTML
   paddingStyleTags($)
 
-  // 清空html中的script tag
+  // Clear script tags in HTML
   paddingScriptTags($)
 
-  // 将资源打入html中
+  // Embed resources into HTML
   const { zipRes, notZipRes } = await paddingAllResToMapped({
     injectsCode,
     $
@@ -211,7 +210,7 @@ export const genSingleFile = async (options: TOptions) => {
 
   writeToPath(singleFilePath, $.html())
 
-  console.info(`【单文件模板成功生成】文件大小为：${getFileSize(singleFilePath) / 1024}kb`)
+  console.info(`【Single file template successfully generated】 File size: ${getFileSize(singleFilePath) / 1024}kb`)
 
   return {
     zipRes,

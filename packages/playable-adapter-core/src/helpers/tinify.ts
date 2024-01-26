@@ -2,11 +2,11 @@ import Axios from 'axios';
 import { readFileSync } from 'fs';
 import { checkImgType, getAllFilesFormDir, getOriginPkgPath, getRCTinify, writeToPath } from "@/utils"
 
-// 远程上传文件
+// Upload file remotely
 const postFileToRemote = (filePath: string, data: Buffer): Promise<void> => {
   const { tinifyApiKey } = getRCTinify()
   return new Promise((resolve, reject) => {
-    console.log('【准备上传图片到TinyPng】 ', filePath)
+    console.log('【Preparing to upload image to TinyPng】 ', filePath)
     Axios.request({
       method: 'post',
       url: 'https://api.tinify.com/shrink',
@@ -16,14 +16,14 @@ const postFileToRemote = (filePath: string, data: Buffer): Promise<void> => {
       },
       data
     }).then((response) => {
-      console.log('【准备下载压缩图片】 ', filePath)
+      console.log('【Preparing to download compressed image】 ', filePath)
       Axios.request({
         method: 'get',
         url: response.data.output.url,
         responseType: 'arraybuffer'
       }).then((fileResponse) => {
         writeToPath(filePath, Buffer.from(fileResponse.data))
-        console.log('【压缩图片完成】 ', filePath)
+        console.log('【Image compression completed】 ', filePath)
         resolve()
       }).catch((fileErr) => {
         reject(fileErr)
@@ -36,23 +36,23 @@ const postFileToRemote = (filePath: string, data: Buffer): Promise<void> => {
 
 export const execTinify = async (): Promise<{ success: boolean, msg: string }> => {
   const { tinify, tinifyApiKey } = getRCTinify()
-  // 是否压缩
+  // Whether to compress
   if (!tinify) {
     return {
       success: false,
-      msg: '未开启压缩'
+      msg: 'Compression not enabled'
     }
   }
 
-  // 是否有api key
+  // Whether there is an API key
   if (!tinifyApiKey) {
     return {
       success: false,
-      msg: '需要提供您的API密钥，获取地址：https://tinify.cn/developers'
+      msg: 'You need to provide your API key, get it from: https://tinify.cn/developers'
     }
   }
 
-  // 原始包路径
+  // Original package path
   const originPkgPath = getOriginPkgPath()
   const files = getAllFilesFormDir(originPkgPath).filter((filePath) => {
     return checkImgType(filePath)
@@ -67,6 +67,6 @@ export const execTinify = async (): Promise<{ success: boolean, msg: string }> =
 
   return {
     success: true,
-    msg: '完成压缩'
+    msg: 'Compression completed'
   }
 }

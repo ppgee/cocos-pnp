@@ -16,7 +16,6 @@ type TOptions = {
 export const exec2xAdapter = async (options: TOptions, config?: { mode: TMode }) => {
   mountGlobalVars(options)
   try {
-    // 执行压缩
     const { success, msg } = await execTinify()
     if (!success) {
       console.warn(`${msg}，aborting the image compression process`)

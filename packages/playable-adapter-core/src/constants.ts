@@ -1,6 +1,6 @@
 import { TPlayableConfig } from '@/typings'
 
-// 游戏配置json
+// game config
 export const PLAYABLE_DEFAULT_CONFIG: TPlayableConfig = {
   playable_orientation: 0,
   playable_languages: ["ja", "zh", "ar", "es", "en", "ko", "pt", "ru", "vi"]
@@ -8,7 +8,7 @@ export const PLAYABLE_DEFAULT_CONFIG: TPlayableConfig = {
 
 export const REPLACE_SYMBOL = '{{__adv_channels_adapter__}}'
 export const ADAPTER_FETCH = 'adapterFetch'
-// 每个zip包最大体积
+// every channel's adapter zip file size limit
 export const MAX_ZIP_SIZE = 2 * 1024 * 1024
 
 export const TO_STRING_EXTNAME = [

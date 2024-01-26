@@ -1,4 +1,4 @@
-import { TAdapterRC, TPlatform } from "./typings";
+import { TAdapterRC } from "./typings";
 import { getRealPath } from "./utils/file-system/resource";
 
 export const mountGlobalVars = (options: {

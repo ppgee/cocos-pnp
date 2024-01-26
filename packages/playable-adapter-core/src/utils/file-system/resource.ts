@@ -14,7 +14,7 @@ type TResZipInfo = {
 
 export const getRealPath = (pathStr: string) => {
   let realPath = pathStr
-  // 适配window路径
+  // To adapt paths for Windows, use backslashes (\) as separators.
   if (realPath.indexOf('\\') !== -1) {
     realPath = realPath.replace(/\\/g, '/')
   }

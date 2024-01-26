@@ -20,7 +20,7 @@ const getPlayableConfig = (options?: { orientation?: TWebOrientations, languages
   return playableConfig
 }
 
-// 过滤XMLHttpRequest
+// Replacing XMLHttpRequest
 export const removeXMLHttpRequest = (codeStr: string) => {
   return codeStr.replace(/XMLHttpRequest/g, ADAPTER_FETCH)
 }
