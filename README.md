@@ -4,7 +4,7 @@ A Plugin for Exporting Cocos Playable Ads in Multi-Channel.
 
 中文说明，点击[这里](./README-CN.md)
 
-If you only need to use the plugin, you can download [the build package](https://github.com/ppgee/cocos-pnp/releases?q=playable-ads-adapter&expanded=true) directly. The major versions are differentiated between `2.x` and `3.x`. Currently, the tested versions are `2.4.9`, `2.4.10`, and `3.6.x`. For other versions, please test them yourself. If you have any questions, feel free to submit an issue or pull request.
+If you only need to use the plugin, you can download [the build package](https://github.com/ppgee/cocos-pnp/releases?q=playable-ads-adapter&expanded=true) directly. The major versions are differentiated between `2.x` and `3.x`. Currently, the tested versions are `2.4.9`, `2.4.10`, and `3.x`. For other versions, please test them yourself. If you have any questions, feel free to submit an issue or pull request.
 
 ## Download
 
@@ -177,7 +177,7 @@ pnpm install
 # Develop version 2.4.x
 pnpm watch:2x
 
-# Develop version 3.6.x
+# Develop version 3.x
 pnpm watch:3x
 ```
 
@@ -190,7 +190,7 @@ pnpm install
 # Build version 2.4.x
 pnpm build:2x
 
-# Build version 3.6.x
+# Build version 3.x
 pnpm build:3x
 ```
 
