@@ -15,48 +15,51 @@ const globalReplacer = async (options: Pick<TBuilderOptions, 'channel' | 'zipRes
     return
   }
 
-  let zip = new JSZip();
+  // Compressed files are required.
+  const isZip = Object.keys(zipRes || {}).length > 0
+  if (isZip) {
+    let zip = new JSZip();
 
-  for (const key in zipRes) {
-    let data = zipRes[key];
-    data = data.replaceAll(REPLACE_SYMBOL, channel)
-    zip.file(key, data, { compression: 'DEFLATE' })
-  }
+    for (const key in zipRes) {
+      let data = zipRes[key];
+      data = data.replaceAll(REPLACE_SYMBOL, channel)
+      zip.file(key, data, { compression: 'DEFLATE' })
+    }
 
-  // 增加压缩文件
-  const content = await zip.generateAsync({ type: 'nodebuffer' })
-  let strBase64 = Buffer.from(content).toString('base64');
+    // Add compressed files.
+    const content = await zip.generateAsync({ type: 'nodebuffer' })
+    let strBase64 = Buffer.from(content).toString('base64');
 
-  let splitSize = Number((MAX_ZIP_SIZE * .8).toFixed(0))
-  let splitCount = Math.ceil(strBase64.length / splitSize)
-  for (let index = 0; index < splitCount; index++) {
-    const str = strBase64.slice(index * splitSize, (index + 1) * splitSize);
-    if (index === 0) {
-      $(`script[data-id="adapter-zip-0"]`).html(`window.__adapter_zip__="${str}";`)
-    } else {
-      $(`script[data-id="adapter-zip-${index - 1}"]`).after(`<script data-id="adapter-zip-${index}">window.__adapter_zip__+="${str}";</script>`)
+    let splitSize = Number((MAX_ZIP_SIZE * .8).toFixed(0))
+    let splitCount = Math.ceil(strBase64.length / splitSize)
+    for (let index = 0; index < splitCount; index++) {
+      const str = strBase64.slice(index * splitSize, (index + 1) * splitSize);
+      if (index === 0) {
+        $(`script[data-id="adapter-zip-0"]`).html(`window.__adapter_zip__="${str}";`)
+      } else {
+        $(`script[data-id="adapter-zip-${index - 1}"]`).after(`<script data-id="adapter-zip-${index}">window.__adapter_zip__+="${str}";</script>`)
+      }
     }
   }
 
+  // Non-compressed files are not required.
   for (const key in notZipRes) {
     if (Object.prototype.hasOwnProperty.call(notZipRes, key)) {
       const data = notZipRes[key];
       notZipRes[key] = data.replaceAll(REPLACE_SYMBOL, channel)
     }
   }
-
-  // 不需压缩的文件
   $(`script[data-id="adapter-resource"]`).html(`window.__adapter_resource__=${JSON.stringify(notZipRes)};`)
 }
 
 export const exportSingleFile = async (singleFilePath: string, options: TBuilderOptions) => {
   const { channel, transformHTML, transform, zipRes, notZipRes } = options
 
-  console.info(`【${channel}】开始适配`)
+  console.info(`【${channel}】adaptation started`)
   const singleHtml = readToPath(singleFilePath, 'utf-8')
   const targetPath = join(getGlobalProjectBuildPath(), `${channel}.html`)
 
-  // 替换全局变量
+  // Replace global variables.
   let $ = load(singleHtml)
   await globalReplacer({
     channel,
@@ -65,7 +68,7 @@ export const exportSingleFile = async (singleFilePath: string, options: TBuilder
     $
   })
 
-  // 注入额外配置
+  // Inject additional configuration.
   await injectFromRCJson($, channel)
   writeToPath(targetPath, $.html())
 
@@ -78,72 +81,66 @@ export const exportSingleFile = async (singleFilePath: string, options: TBuilder
     await transform(targetPath)
   }
 
-  console.info(`【${channel}】完成适配`)
+  console.info(`【${channel}】adaptation completed`)
 }
 
 export const exportZipFromPkg = async (options: TBuilderOptions) => {
   const { channel, transformHTML, transform } = options
 
-  console.info(`【${channel}】开始适配`)
-  // 复制文件夹
+  console.info(`【${channel}】adaptation started`)
+  // Copy the folder.
   const originPkgPath = getOriginPkgPath()
   const projectBuildPath = getGlobalProjectBuildPath()
   const destPath = join(projectBuildPath, channel)
   copyDirToPath(originPkgPath, destPath)
 
-  // 替换全局变量
+  // Replace global variables.
   replaceGlobalSymbol(destPath, channel)
 
-  // 注入额外配置
+  // Inject additional configuration.
   const singleHtmlPath = join(destPath, '/index.html')
   const singleHtml = readToPath(singleHtmlPath, 'utf-8')
   const $ = load(singleHtml)
   await injectFromRCJson($, channel)
 
-  // 增加sdk脚本
+  // Add the SDK script.
   if (transformHTML) {
     await transformHTML($)
   }
 
-  // 更新html文件
+  // Update the HTML file.
   writeToPath(singleHtmlPath, $.html())
 
   if (transform) {
     await transform(destPath)
   }
 
-  // // 压缩文件
-  // await zipDirToPath(destPath)
-  // // 删除多余文件夹
-  // rmSync(destPath)
-
-
-  console.info(`【${channel}】完成适配`)
+  console.info(`【${channel}】adaptation completed`)
 }
 
 export const exportDirZipFromSingleFile = async (singleFilePath: string, options: TZipFromSingleFileOptions) => {
   const { channel, transformHTML, transform, transformScript, zipRes, notZipRes } = options
 
-  console.info(`【${channel}】开始适配`)
-  // 复制文件夹
+  console.info(`【${channel}】adaptation started`)
+  // Copy the folder.
   const singleHtmlPath = singleFilePath
   const projectBuildPath = getGlobalProjectBuildPath()
   const destPath = join(projectBuildPath, channel)
 
-  // 先清空文件夹内容
+  // Empty the contents of the folder first.
   rmSync(destPath)
 
-  // html文件路径
+  // HTML file path.
   const htmlPath = join(destPath, '/index.html')
 
-  // 创建js目录
+  // Create a "js" directory.
   const jsDirname = '/js'
   const jsDirPath = join(destPath, jsDirname)
   mkdirSync(jsDirPath, { recursive: true })
 
   let $ = load(readToPath(singleHtmlPath, 'utf-8'))
 
-  // 替换全局变量
+  // Replace global variables.
   await globalReplacer({
     channel,
     zipRes: zipRes ? { ...zipRes } : {},
@@ -151,10 +148,10 @@ export const exportDirZipFromSingleFile = async (singleFilePath: string, options
     $
   })
 
-  // 注入配置文件
+  // Inject configuration file.
   await injectFromRCJson($, channel)
 
-  // 抽离所有script并生成js文件
+  // To extract all scripts and generate a JavaScript file
   const scriptNodes = $('body script[type!="systemjs-importmap"]')
   for (let index = 0; index < scriptNodes.length; index++) {
     const scriptNode = $(scriptNodes[index]);
@@ -179,9 +176,5 @@ export const exportDirZipFromSingleFile = async (singleFilePath: string, options
     await transform(destPath)
   }
 
-  // // 压缩文件
-  // await zipDirToPath(destPath)
-  // // 删除多余文件夹
-  // rmSync(destPath)
-  console.info(`【${channel}】完成适配`)
+  console.info(`【${channel}】adaptation completed`)
 }

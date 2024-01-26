@@ -19,14 +19,13 @@ export const exec2xAdapter = async (options: TOptions, config?: { mode: TMode })
     // 执行压缩
     const { success, msg } = await execTinify()
     if (!success) {
-      console.warn(`${msg}，跳出压缩图片流程`)
+      console.warn(`${msg}，aborting the image compression process`)
     }
   } catch (error) {
     console.error(error)
   }
 
   const { zipRes, notZipRes } = await gen2xSingleFile()
-  // 适配文件
   const { orientation = 'auto' } = getAdapterRCJson() || {}
   const { mode = 'parallel' } = config ?? { mode: 'parallel' }
   await gen2xChannelsPkg({
@@ -40,17 +39,15 @@ export const exec2xAdapter = async (options: TOptions, config?: { mode: TMode })
 export const exec3xAdapter = async (options: TOptions, config?: { mode: TMode }) => {
   mountGlobalVars(options)
   try {
-    // 执行压缩
     const { success, msg } = await execTinify()
     if (!success) {
-      console.warn(`${msg}，跳出压缩图片流程`)
+      console.warn(`${msg}，aborting the image compression process`)
     }
   } catch (error) {
     console.error(error)
   }
 
   const { zipRes, notZipRes } = await gen3xSingleFile()
-  // 适配文件
   const { orientation = 'auto' } = getAdapterRCJson() || {}
   const { mode = 'parallel' } = config ?? { mode: 'parallel' }
   await gen3xChannelsPkg({

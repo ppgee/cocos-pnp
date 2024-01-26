@@ -2,19 +2,19 @@ import { copyFileSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSy
 import jszip from "jszip";
 import path from "path";
 
-// 查询文件大小
+// Query file size
 export const getFileSize = (filePath: string) => {
   return statSync(filePath).size
 }
 
-// 获取所有目录下所有文件
+// Get all files in all directories
 export const getAllFilesFormDir = (dirPath: string): string[] => {
   let files: string[] = []
-  let dirList = readdirSync(dirPath);//读取目录中的所有文件及文件夹（同步操作）
-  dirList.forEach((fileName) => {//遍历检测目录中的文件
+  let dirList = readdirSync(dirPath); // Read all files and directories in the directory (synchronous operation)
+  dirList.forEach((fileName) => { // Traverse to check the files in the directory
     let filePath = path.join(dirPath, fileName);
-    let file = statSync(filePath);//获取一个文件的属性
-    if (file.isDirectory()) {//如果是目录的话，继续查询
+    let file = statSync(filePath); // Get the properties of a file
+    if (file.isDirectory()) { // If it is a directory, continue searching
       files = files.concat(getAllFilesFormDir(filePath))
     } else {
       files.push(filePath)
@@ -27,17 +27,17 @@ export const getAllFilesFormDir = (dirPath: string): string[] => {
 export const rmSync = (dest: string) => {
   let files = [];
   /**
-   * 判断给定的路径是否存在
+   * Check if the given path exists
    */
   if (existsSync(dest)) {
     /**
-     * 返回文件和子目录的数组
+     * Return an array of files and subdirectories
      */
     files = readdirSync(dest);
     files.forEach(function (file, index) {
       const curPath = path.join(dest, file);
       /**
-       * statSync同步读取文件夹文件，如果是文件夹，在重复触发函数
+       * statSync synchronously reads folder files, if it is a folder, trigger the function again
        */
       if (statSync(curPath).isDirectory()) { // recurse
         rmSync(curPath);
@@ -46,36 +46,36 @@ export const rmSync = (dest: string) => {
       }
     });
     /**
-     * 清除文件夹
+     * Clear the directory
      */
     rmdirSync(dest);
   } else {
-    console.warn("给定的路径不存在，请给出正确的路径");
+    console.warn("The given path does not exist, please provide the correct path");
   }
 }
 
 /**
- * 文件夹复制
- * @param {string} source 源文件夹
- * @param {string} destination 目标文件夹
+ * Directory copy
+ * @param {string} source Source directory
+ * @param {string} destination Target directory
  */
 export const cpSync = (source: string, destination: string) => {
-  // 如果存在文件夹 先递归删除该文件夹
+  // If the folder exists, recursively delete it first
   if (existsSync(destination)) rmSync(destination)
-  // 新建文件夹 递归新建
+  // Create a new folder recursively
   mkdirSync(destination, { recursive: true });
-  // 读取源文件夹
+  // Read the source folder
   let rd = readdirSync(source)
   for (const fd of rd) {
-    // 循环拼接源文件夹/文件全名称
+    // Loop to concatenate the full name of source folder/file
     let sourceFullName = path.join(source, fd);
-    // 循环拼接目标文件夹/文件全名称
+    // Loop to concatenate the full name of target folder/file
     let destFullName = path.join(destination, fd);
-    // 读取文件信息
+    // Read file information
     let lstatRes = lstatSync(sourceFullName)
-    // 是否是文件
+    // If it is a file
     if (lstatRes.isFile()) copyFileSync(sourceFullName, destFullName);
-    // 是否是文件夹
+    // If it is a directory
     if (lstatRes.isDirectory()) cpSync(sourceFullName, destFullName);
   }
 }
@@ -100,21 +100,21 @@ export const zipToPath = (filePath: string): Promise<void> => {
     const extname = path.extname(filePath)
     const zipPath = filePath.replace(extname, '.zip')
 
-    // 查看是否存在文件
+    // Check if the file exists
     if (existsSync(zipPath)) {
       unlinkSync(zipPath);
     }
 
     let zip = new jszip();
     zip.file(filename, readFileSync(filePath))
-    zip.generateAsync({//设置压缩格式，开始打包
-      type: "nodebuffer",//nodejs用
-      compression: "DEFLATE",//压缩算法
-      compressionOptions: {//压缩级别
+    zip.generateAsync({ // Set compression format, start packaging
+      type: "nodebuffer", // Nodejs use
+      compression: "DEFLATE", // Compression algorithm
+      compressionOptions: { // Compression level
         level: 9
       }
     }).then((content) => {
-      writeFileSync(zipPath, content, 'utf-8');//将打包的内容写入 当前目录下的 result.zip中
+      writeFileSync(zipPath, content, 'utf-8'); // Write the packaged content into the result.zip in the current directory
       resolve()
     }).catch((err) => {
       reject(err)
@@ -126,28 +126,28 @@ export const zipDirToPath = (destPath: string): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     const zipPath = `${destPath}.zip`
 
-    // 查看是否存在文件
+    // Check if the file exists
     if (existsSync(zipPath)) {
       unlinkSync(zipPath);
     }
 
     let zip = new jszip();
 
-    //读取目录及文件
+    // Read directories and files
     const files = getAllFilesFormDir(destPath)
     files.forEach((filePath: string) => {
       const filename = filePath.replace(destPath, '')
       zip.file(filename, readFileSync(filePath))
     })
 
-    zip.generateAsync({//设置压缩格式，开始打包
-      type: "nodebuffer",//nodejs用
-      compression: "DEFLATE",//压缩算法
-      compressionOptions: {//压缩级别
+    zip.generateAsync({ // Set compression format, start packaging
+      type: "nodebuffer", // Nodejs use
+      compression: "DEFLATE", // Compression algorithm
+      compressionOptions: { // Compression level
         level: 9
       }
     }).then((content) => {
-      writeFileSync(zipPath, content);//将打包的内容写入 当前目录下的 result.zip中
+      writeFileSync(zipPath, content); // Write the packaged content into the result.zip in the current directory
       resolve(true)
     }).catch((err) => {
       reject(err)

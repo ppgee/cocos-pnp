@@ -22,13 +22,13 @@ export const getRealPath = (pathStr: string) => {
   return realPath
 }
 
-// 替换全局变量
+// Replace global variables.
 export const replaceGlobalSymbol = (dirPath: string, replaceText: string) => {
   const fileList = readdirSync(dirPath)
   fileList.forEach((file) => {
     const absPath = path.join(dirPath, file)
     const statInfo = statSync(absPath)
-    // 如果是文件夹，递归向下找文件
+    // If it is a directory, recursively search downward for files.
     if (statInfo.isDirectory()) {
       replaceGlobalSymbol(absPath, replaceText)
     } else if (statInfo.isFile() && path.extname(file) === '.js') {
@@ -41,7 +41,7 @@ export const replaceGlobalSymbol = (dirPath: string, replaceText: string) => {
   })
 }
 
-//判断图片类型是否支持上传，支持true,不支持false
+// Determine if the image type is supported for upload: supported `true`, not supported `false`.
 export const checkImgType = (name: string) => {
   let extname = lookup(name)
   if (typeof extname === 'boolean') {
@@ -59,7 +59,6 @@ export const getTargetResData = (filePath: string) => {
   let resData: string = ''
   const fileExtname = extname(filePath)
 
-  // 不存在文件后缀
   if (!fileExtname) {
     return ''
   }
@@ -103,23 +102,23 @@ export const getResourceMapper = async (options: {
   let zipRes: TResourceData = {}
   let notZipRes: TResourceData = {}
 
-  // 遍历每个文件，并根据每个文件的压缩率进行标记是否进行解压
+  // To iterate through each file and determine whether to decompress based on the compression ratio of each file
   const resFiles = getAllFilesFormDir(dirPath)
   for (let index = 0; index < resFiles.length; index++) {
     const filePath = resFiles[index];
     const fileExtname = extname(filePath)
 
-    // 移除不需要的文件后缀
+    // To remove unnecessary file extensions
     if (TO_SKIP_EXTNAME.includes(fileExtname)) {
       continue
     }
 
-    // 移除不需要的文件
+    // To remove unnecessary files
     if (skipFiles.length > 0 && skipFiles.includes(filePath)) {
       continue
     }
 
-    // 需要移除不必要的路径前缀
+    // To remove unnecessary path prefixes from file paths
     const readPkgPath = getRealPath(`${dirPath}/`)
     const objKey = getRealPath(filePath).replace(readPkgPath, '')
 
@@ -132,7 +131,7 @@ export const getResourceMapper = async (options: {
       data = data.replaceAll('XMLHttpRequest', ADAPTER_FETCH)
     }
 
-    // 如果不需要压缩，直接返回
+    // If compression is not necessary, return directly.
     if (!isZip) {
       notZipRes[objKey] = data
       continue

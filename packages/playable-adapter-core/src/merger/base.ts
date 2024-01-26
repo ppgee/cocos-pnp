@@ -131,7 +131,8 @@ const paddingAllResToMapped = async (options: {
   // 原始包路径
   const originPkgPath = getOriginPkgPath()
 
-  let zip = new JSZip();
+
+  let zip = isZip ? new JSZip() : null
 
   let pluginJsList: string[] = []
   const { zipRes, notZipRes } = await getResourceMapper({
@@ -152,11 +153,13 @@ const paddingAllResToMapped = async (options: {
       return data
     },
     unmountCbFn: (objKey, data) => {
-      zip.file(objKey, data, { compression: 'DEFLATE' })
+      if (zip) {
+        zip.file(objKey, data, { compression: 'DEFLATE' })
+      }
     }
   })
 
-  if (isZip) {
+  if (isZip && zip) {
     // 注入解压库
     // $(`<script data-id="jszip">${getJSZipInjectScript()}</script>`).appendTo('body')
     $(`<script data-id="jszip">${jszipCode}</script>`).appendTo('body')
