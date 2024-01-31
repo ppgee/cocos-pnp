@@ -55,8 +55,13 @@ export const initBuildFinishedEvent = async (options: TBuildOptions, callback?: 
     const worker = new Worker(workPath, {
       workerData: params
     })
-    worker.on('message', ({ finished, msg }: { finished: boolean, msg: string }) => {
-      finished ? handleExportFinished() : handleExportError(msg)
+    worker.on('message', ({ finished, msg, event }: TWorkerMsg) => {
+      if (event === 'adapter:finished') {
+        finished ? handleExportFinished() : handleExportError(msg)
+        return
+      }
+      // 处理消息 adapter:log 和 adapter:info
+      Editor[event.split(':')[1] as ConsoleMethodName](msg)
     })
   } catch (error) {
     console.log('不支持Worker，将开启主线程适配')
