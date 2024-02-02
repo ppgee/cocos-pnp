@@ -84,6 +84,7 @@ type TAdapterRC = {
       sdkScript: string // Injects the SDK script into the corresponding channel
     }
   },
+  isZip?: boolean // // Whether to compress the package with JSZip, the default is true
   tinify?: boolean // Whether to compress images with Tinypng.
   tinifyApiKey?: string // Tinypng API key
 }
