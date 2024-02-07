@@ -162,6 +162,8 @@ const paddingAllResToMapped = async (options: {
       compDiff = resStr.length - zipStr.length
       console.log('【Compressed】', compDiff)
       resStr = zipStr
+    } else {
+      console.log('【Compressed】', 'Compression is not recommended, the compressed file is too large')
     }
   }
 
@@ -173,7 +175,7 @@ const paddingAllResToMapped = async (options: {
     $(`<script data-id="adapter-zip-0">window.__adapter_zip__="${resStr}";</script>`).appendTo('body')
   } else {
     // Inject uncompressed files
-    $(`<script data-id="adapter-resource">window.__adapter_resource__=${resStr}</script>`).appendTo('body')
+    $(`<script data-id="adapter-resource-0">window.__adapter_resource__=${resStr}</script>`).appendTo('body')
   }
 
   // Inject related code
