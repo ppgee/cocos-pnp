@@ -152,14 +152,15 @@ const paddingAllResToMapped = async (options: {
 
   let resStr = JSON.stringify(resMapper)
   let compDiff = 0
+
   if (isZip) {
     const zip = deflate(resStr)
-    // 将 Uint8Array 转换为字符串
+    // Uint8Array to base64
     const zipStr = Buffer.from(zip).toString('base64')
-    // 如果压缩后的字符串大小比原来的小10%，就压缩
-    if (zipStr.length < resStr.length * 0.9) {
+    console.log('【Origin Pkg Size】', resStr.length, '【Compressed Pkg Size】', zipStr.length)
+    if (zipStr.length < resStr.length) {
       compDiff = resStr.length - zipStr.length
-      console.log('【Compressed】', resStr.length, zipStr.length, compDiff)
+      console.log('【Compressed】', compDiff)
       resStr = zipStr
     }
   }
