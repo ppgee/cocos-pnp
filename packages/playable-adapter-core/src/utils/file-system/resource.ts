@@ -1,9 +1,9 @@
 import { readdirSync, statSync } from "fs"
-import JSZip from "jszip"
 import { lookup } from "mime-types"
 import path, { extname } from "path"
 import { REPLACE_SYMBOL, TO_STRING_EXTNAME, TO_SKIP_EXTNAME, ADAPTER_FETCH } from "@/constants"
 import { getAllFilesFormDir, readToPath, writeToPath } from "./base"
+import { removeXMLHttpRequest } from "../extends"
 
 type TResourceData = { [key: string]: string }
 
@@ -72,35 +72,16 @@ export const getTargetResData = (filePath: string) => {
   return resData
 }
 
-export const getResCompressRatio = async (storePath: string, value: string): Promise<TResZipInfo> => {
-  let zip = JSZip()
-  zip.file(storePath, value, {
-    compression: 'DEFLATE'
-  })
-  const content = await zip.generateAsync({
-    type: 'nodebuffer'
-  })
-
-  const strBase64 = Buffer.from(content).toString('base64')
-  const ratio = Number((strBase64.length / value.length).toFixed(2))
-  return {
-    key: storePath,
-    ratio,
-  }
-}
-
 export const getResourceMapper = async (options: {
   dirPath: string
-  isZip?: boolean
   skipFiles?: Array<string>
   mountCbFn?: (objKey: string, data: string) => string // single file mount callback function
   unmountCbFn?: (objKey: string, data: string) => void // single file unmount callback function
   rmHttp?: boolean
 }) => {
-  const { dirPath, rmHttp = false, unmountCbFn, mountCbFn, skipFiles = [], isZip = true } = options
+  const { dirPath, rmHttp = false, unmountCbFn, mountCbFn, skipFiles = [] } = options
 
-  let zipRes: TResourceData = {}
-  let notZipRes: TResourceData = {}
+  let resMapper: TResourceData = {}
 
   // To iterate through each file and determine whether to decompress based on the compression ratio of each file
   const resFiles = getAllFilesFormDir(dirPath)
@@ -128,29 +109,15 @@ export const getResourceMapper = async (options: {
     }
 
     if (rmHttp && fileExtname === '.js') {
-      data = data.replaceAll('XMLHttpRequest', ADAPTER_FETCH)
+      data = removeXMLHttpRequest(data)
     }
 
-    // If compression is not necessary, return directly.
-    if (!isZip) {
-      notZipRes[objKey] = data
-      continue
-    }
-
-    const zipRatioInfo = await getResCompressRatio(filePath, data)
-
-    if (zipRatioInfo.ratio >= 1) {
-      notZipRes[objKey] = data
-      continue
-    }
-
-    zipRes[objKey] = data
+    resMapper[objKey] = data
 
     unmountCbFn && unmountCbFn(objKey, data)
   }
 
   return {
-    zipRes,
-    notZipRes
+    resMapper
   }
 }

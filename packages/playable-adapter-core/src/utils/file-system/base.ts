@@ -1,5 +1,4 @@
 import { copyFileSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmdirSync, statSync, unlinkSync, writeFileSync } from "fs";
-import jszip from "jszip";
 import path from "path";
 
 // Query file size
@@ -91,66 +90,4 @@ export const writeToPath = (filepath: string, data: string | NodeJS.ArrayBufferV
 
 export const copyDirToPath = (src: string, dest: string) => {
   cpSync(src, dest)
-}
-
-export const zipToPath = (filePath: string): Promise<void> => {
-  return new Promise((resolve, reject) => {
-
-    const filename = path.basename(filePath)
-    const extname = path.extname(filePath)
-    const zipPath = filePath.replace(extname, '.zip')
-
-    // Check if the file exists
-    if (existsSync(zipPath)) {
-      unlinkSync(zipPath);
-    }
-
-    let zip = new jszip();
-    zip.file(filename, readFileSync(filePath))
-    zip.generateAsync({ // Set compression format, start packaging
-      type: "nodebuffer", // Nodejs use
-      compression: "DEFLATE", // Compression algorithm
-      compressionOptions: { // Compression level
-        level: 9
-      }
-    }).then((content) => {
-      writeFileSync(zipPath, content, 'utf-8'); // Write the packaged content into the result.zip in the current directory
-      resolve()
-    }).catch((err) => {
-      reject(err)
-    });
-  })
-}
-
-export const zipDirToPath = (destPath: string): Promise<boolean> => {
-  return new Promise((resolve, reject) => {
-    const zipPath = `${destPath}.zip`
-
-    // Check if the file exists
-    if (existsSync(zipPath)) {
-      unlinkSync(zipPath);
-    }
-
-    let zip = new jszip();
-
-    // Read directories and files
-    const files = getAllFilesFormDir(destPath)
-    files.forEach((filePath: string) => {
-      const filename = filePath.replace(destPath, '')
-      zip.file(filename, readFileSync(filePath))
-    })
-
-    zip.generateAsync({ // Set compression format, start packaging
-      type: "nodebuffer", // Nodejs use
-      compression: "DEFLATE", // Compression algorithm
-      compressionOptions: { // Compression level
-        level: 9
-      }
-    }).then((content) => {
-      writeFileSync(zipPath, content); // Write the packaged content into the result.zip in the current directory
-      resolve(true)
-    }).catch((err) => {
-      reject(err)
-    });
-  })
 }

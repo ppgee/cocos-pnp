@@ -12,7 +12,7 @@ import {
 import {
   jszipCode
 } from '@/helpers/injects'
-import JSZip from "jszip"
+import { deflate } from 'pako'
 
 type TOptions = {
   singleFilePath: string
@@ -131,13 +131,10 @@ const paddingAllResToMapped = async (options: {
   // Original package path
   const originPkgPath = getOriginPkgPath()
 
-  let zip = isZip ? new JSZip() : null
-
   let pluginJsList: string[] = []
-  const { zipRes, notZipRes } = await getResourceMapper({
+  const { resMapper } = await getResourceMapper({
     dirPath: originPkgPath,
     rmHttp: true,
-    isZip,
     mountCbFn: (objKey, data) => {
       if (objKey.indexOf('src/settings.json') !== -1) { // get jsList in settings.json
         const { jsList, settingsData } = getJsListFromSettingsJson(data)
@@ -150,35 +147,45 @@ const paddingAllResToMapped = async (options: {
       }
 
       return data
-    },
-    unmountCbFn: (objKey, data) => {
-      if (zip) {
-        zip.file(objKey, data, { compression: 'DEFLATE' })
-      }
     }
   })
 
-  if (isZip && zip) {
+  let resStr = JSON.stringify(resMapper)
+  let compDiff = 0
+
+  if (isZip) {
+    const zip = deflate(resStr)
+    // Uint8Array to base64
+    const zipStr = Buffer.from(zip).toString('base64')
+    console.log('【Origin Pkg Size】', resStr.length, '【Compressed Pkg Size】', zipStr.length)
+    if (zipStr.length < resStr.length) {
+      compDiff = resStr.length - zipStr.length
+      console.log('【Compressed】', compDiff)
+      resStr = zipStr
+    } else {
+      console.log('【Compressed】', 'Compression is not recommended, the compressed file is too large')
+    }
+  }
+
+  if (compDiff > 0) {
     // Inject decompression library
-    // $(`<script data-id="jszip">${getJSZipInjectScript()}</script>`).appendTo('body')
     $(`<script data-id="jszip">${jszipCode}</script>`).appendTo('body')
 
     // Inject compressed files
-    const content = await zip.generateAsync({ type: 'nodebuffer' })
-    let strBase64 = Buffer.from(content).toString('base64');
-    $(`<script data-id="adapter-zip-0">window.__adapter_zip__="${strBase64}";</script>`).appendTo('body')
+    $(`<script data-id="adapter-zip-0">window.__adapter_zip__="${resStr}";</script>`).appendTo('body')
+  } else {
+    // Inject uncompressed files
+    $(`<script data-id="adapter-resource-0">window.__adapter_resource__=${resStr}</script>`).appendTo('body')
   }
 
-  // Files that do not need to be compressed
-  $(`<script data-id="adapter-resource">window.__adapter_resource__=${JSON.stringify(notZipRes)}</script>`).appendTo('body')
   // Inject related code
   $(`<script data-id="adapter-plugins">window.__adapter_plugins__=${JSON.stringify(pluginJsList)}</script>`).appendTo('body')
   $(`<script data-id="adapter-init">${injectsCode.init}</script>`).appendTo('body')
   $(`<script data-id="adapter-main">${injectsCode.main}</script>`).appendTo('body')
 
   return {
-    zipRes,
-    notZipRes
+    resMapper,
+    compDiff
   }
 }
 
@@ -203,7 +210,7 @@ export const genSingleFile = async (options: TOptions) => {
   paddingScriptTags($)
 
   // Embed resources into HTML
-  const { zipRes, notZipRes } = await paddingAllResToMapped({
+  const { resMapper, compDiff } = await paddingAllResToMapped({
     injectsCode,
     $
   })
@@ -213,7 +220,7 @@ export const genSingleFile = async (options: TOptions) => {
   console.info(`【Single file template successfully generated】 File size: ${getFileSize(singleFilePath) / 1024}kb`)
 
   return {
-    zipRes,
-    notZipRes
+    resMapper,
+    compDiff
   }
 }

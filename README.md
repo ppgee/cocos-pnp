@@ -84,7 +84,7 @@ type TAdapterRC = {
       sdkScript: string // Injects the SDK script into the corresponding channel
     }
   },
-  isZip?: boolean // // Whether to compress the package with JSZip, the default is true
+  isZip?: boolean // // Whether to compress the package with Pako, the default is true
   tinify?: boolean // Whether to compress images with Tinypng.
   tinifyApiKey?: string // Tinypng API key
 }
@@ -131,13 +131,13 @@ type TAdapterRC = {
 }
 ```
 
-5. Supports JSZip compression to further reduce the package size, using the following configuration:
+5. Supports Pako compression to further reduce the package size, using the following configuration:
 
 ```json
 // .adapterrc
 {
   ...,
-  "isZip": true // Whether to compress the package with JSZip, the default is true
+  "isZip": true // Whether to compress the package with Pako, the default is true
 }
 ```
 
