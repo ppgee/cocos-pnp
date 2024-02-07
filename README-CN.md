@@ -130,13 +130,13 @@ type TAdapterRC = {
 }
 ```
 
-5. 支持JSZip压缩包，让包体进一步缩小，使用配置如下：
+5. 支持Pako压缩包，让包体进一步缩小，使用配置如下：
 
 ```json
 // .adapterrc
 {
   ...,
-  "isZip": true // 是否开启 JSZip 压缩，默认为true
+  "isZip": true // 是否开启 Pako 压缩，默认为true
 }
 ```
 

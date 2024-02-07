@@ -453,8 +453,7 @@ type TProjectJson = {
 
 type TChannelPkgOptions = {
   orientation: TWebOrientations
-  zipRes?: TResourceData
-  notZipRes?: TResourceData
+  resMapper?: TResourceData
 }
 
 type TPlayableConfig = {
@@ -486,18 +485,6 @@ type TResourceData = { [key: string]: string }
 type TResZipInfo = {
   key: string,
   ratio: number,
-}
-
-type TBuilderOptions = {
-  channel: TChannel
-  zipRes?: TResourceData
-  notZipRes?: TResourceData
-  transformHTML?: ($: CheerioAPI) => Promise<void>
-  transform?: (destPath: string) => Promise<void>
-}
-
-type TZipFromSingleFileOptions = TBuilderOptions & {
-  transformScript?: (scriptNode: Cheerio<Element>) => Promise<void>
 }
 
 type ConsoleMethodName = 'log' | 'info' | 'warn' | 'error'; // 等等，根据需要添加
