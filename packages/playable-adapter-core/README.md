@@ -238,9 +238,9 @@ let config = {
 };
 ```
 
-### JsZip
+### Pako
 
-You can configure the use of JSZip in your application according to your requirements
+You can configure the use of Pako in your application according to your requirements
 
 ```typescript
 let config = {

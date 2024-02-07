@@ -1,34 +1,28 @@
 ; (function () {
+  function base64toArrayBuffer(base64) {
+    var bstr = window.atob(base64.substring(base64.indexOf(',') + 1));
+    let index = bstr.length;
+    let u8arr = new Uint8Array(index);
+    while (index--) {
+      u8arr[index] = bstr.charCodeAt(index);
+    }
+    return u8arr.buffer;
+  }
   function __adapter_eval(txt) {
     txt && eval.call(window, txt);
   }
   function __adapter_unzip() {
     console.time("load resource");
-    window.__adapter_resource__ = window.__adapter_resource__ || {};
-    const zipper = new JSZip();
-    let progress = 0;
-    zipper.loadAsync(window.__adapter_zip__, {
-      base64: true
-    }).then((zip) => {
-      for (const filePath in zip.files) {
-        if (zip.files[filePath].dir) {
-          continue;
-        }
-        progress++;
-        // console.log(filePath, type);
-        let key = filePath;
-        zip.file(key).async("string").then((data) => {
-          window.__adapter_resource__[key] = data;
-          progress--;
-          if (progress == 0) {
-            console.timeEnd("load resource");
-            __adapter_exec_js();
-          }
-        });
-      }
-    }).catch((err) => {
-      throw err;
-    });
+    try {
+      const zipData = base64toArrayBuffer(window.__adapter_zip__);
+      const decompressed = pako.inflate(zipData, { to: 'string' });
+      window.__adapter_resource__ = JSON.parse(decompressed);
+      __adapter_exec_js();
+    } catch (error) {
+      console.error(error)
+      throw error;
+    }
+    console.timeEnd("load resource");
   }
   function __adapter_init_plugins() {
     if (!window.__adapter_plugins__ || window.__adapter_plugins__.length === 0) {
@@ -92,8 +86,8 @@
     }
   }
 
-  // 如果不存在jszip，则直接运行js
-  if (!window['JSZip']) {
+  // 如果不存在pako，则直接运行js
+  if (!window['pako']) {
     __adapter_exec_js();
     return;
   }

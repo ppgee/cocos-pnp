@@ -40,13 +40,19 @@ export type TPlayableConfig = {
   playable_languages: string[]
 }
 
+export type TResourceData = { [key: string]: string }
+
+export type TChannelPkgOptions = {
+  orientation: TWebOrientations
+  resMapper?: TResourceData
+  compDiff?: number
+}
+
 export type TBuilderOptions = {
   channel: TChannel
-  zipRes?: { [key: string]: string }
-  notZipRes?: { [key: string]: string }
   transformHTML?: ($: CheerioAPI) => Promise<void>
   transform?: (destPath: string) => Promise<void>
-}
+} & Pick<TChannelPkgOptions, 'resMapper' | 'compDiff'>
 
 export type TZipFromSingleFileOptions = TBuilderOptions & {
   transformScript?: (scriptNode: Cheerio<Element>) => Promise<void>
@@ -64,13 +70,6 @@ export type TChannel =
   | 'Rubeex'
   | 'Tiktok'
   | 'Unity'
-
-
-export type TChannelPkgOptions = {
-  orientation: TWebOrientations
-  zipRes?: { [key: string]: string }
-  notZipRes?: { [key: string]: string }
-}
 
 export type TChannelRC = {
   head: string

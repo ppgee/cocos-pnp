@@ -5,30 +5,30 @@ import { MAX_ZIP_SIZE, REPLACE_SYMBOL } from "@/constants";
 import { injectFromRCJson } from "@/helpers/dom";
 import { TBuilderOptions, TZipFromSingleFileOptions } from "@/typings";
 import { getGlobalProjectBuildPath } from '@/global'
-import { writeToPath, readToPath, getOriginPkgPath, copyDirToPath, replaceGlobalSymbol, rmSync } from "@/utils"
-import JSZip from "jszip";
+import { writeToPath, readToPath, getOriginPkgPath, copyDirToPath, replaceGlobalSymbol, rmSync, isObjectString } from "@/utils"
+import { deflate } from 'pako'
+import { jszipCode } from "@/helpers/injects";
 
-const globalReplacer = async (options: Pick<TBuilderOptions, 'channel' | 'zipRes' | 'notZipRes'> & { $: CheerioAPI }) => {
-  const { channel, zipRes, notZipRes, $ } = options
-
-  if (!zipRes && !notZipRes) {
+const globalReplacer = async (options: Pick<TBuilderOptions, 'channel' | 'resMapper'> & { $: CheerioAPI }) => {
+  const { channel, resMapper, $ } = options
+  if (!resMapper) {
     return
   }
 
-  // Compressed files are required.
-  const isZip = Object.keys(zipRes || {}).length > 0
-  if (isZip) {
-    let zip = new JSZip();
+  // Non-compressed files are not required.
+  for (const [key, value] of Object.entries(resMapper)) {
+    resMapper[key] = value.replaceAll(REPLACE_SYMBOL, channel);
+  }
+}
 
-    for (const key in zipRes) {
-      let data = zipRes[key];
-      data = data.replaceAll(REPLACE_SYMBOL, channel)
-      zip.file(key, data, { compression: 'DEFLATE' })
-    }
-
+const paddingScriptTags = ($: CheerioAPI, payload: { compDiff: TBuilderOptions['compDiff'], resMapper: TBuilderOptions['resMapper'] }) => {
+  const { compDiff, resMapper } = payload
+  
+  const isCompress = (compDiff ?? 0) > 0
+  if (isCompress) {
     // Add compressed files.
-    const content = await zip.generateAsync({ type: 'nodebuffer' })
-    let strBase64 = Buffer.from(content).toString('base64');
+    const zip = deflate(JSON.stringify(resMapper))
+    let strBase64 = Buffer.from(zip).toString('base64');
 
     let splitSize = Number((MAX_ZIP_SIZE * .8).toFixed(0))
     let splitCount = Math.ceil(strBase64.length / splitSize)
@@ -40,20 +40,16 @@ const globalReplacer = async (options: Pick<TBuilderOptions, 'channel' | 'zipRes
         $(`script[data-id="adapter-zip-${index - 1}"]`).after(`<script data-id="adapter-zip-${index}">window.__adapter_zip__+="${str}";</script>`)
       }
     }
-  }
 
-  // Non-compressed files are not required.
-  for (const key in notZipRes) {
-    if (Object.prototype.hasOwnProperty.call(notZipRes, key)) {
-      const data = notZipRes[key];
-      notZipRes[key] = data.replaceAll(REPLACE_SYMBOL, channel)
-    }
+    // Inject decompression library.
+    $(`<script data-id="jszip">${jszipCode}</script>`).appendTo('body')
+  } else {
+    $(`script[data-id="adapter-resource"]`).html(`window.__adapter_resource__=${JSON.stringify(resMapper)};`)
   }
-  $(`script[data-id="adapter-resource"]`).html(`window.__adapter_resource__=${JSON.stringify(notZipRes)};`)
 }
 
 export const exportSingleFile = async (singleFilePath: string, options: TBuilderOptions) => {
-  const { channel, transformHTML, transform, zipRes, notZipRes } = options
+  const { channel, transformHTML, transform, resMapper, compDiff } = options
 
   console.info(`【${channel}】adaptation started`)
   const singleHtml = readToPath(singleFilePath, 'utf-8')
@@ -61,12 +57,14 @@ export const exportSingleFile = async (singleFilePath: string, options: TBuilder
 
   // Replace global variables.
   let $ = load(singleHtml)
-  await globalReplacer({
+  globalReplacer({
     channel,
-    zipRes: zipRes ? { ...zipRes } : {},
-    notZipRes: notZipRes ? { ...notZipRes } : {},
+    resMapper: resMapper ? { ...resMapper } : {},
     $
   })
+  // Fill files into HTML
+  paddingScriptTags($, { compDiff, resMapper })
+
 
   // Inject additional configuration.
   await injectFromRCJson($, channel)
@@ -119,7 +117,7 @@ export const exportZipFromPkg = async (options: TBuilderOptions) => {
 }
 
 export const exportDirZipFromSingleFile = async (singleFilePath: string, options: TZipFromSingleFileOptions) => {
-  const { channel, transformHTML, transform, transformScript, zipRes, notZipRes } = options
+  const { channel, transformHTML, transform, transformScript, resMapper, compDiff } = options
 
   console.info(`【${channel}】adaptation started`)
   // Copy the folder.
@@ -141,12 +139,13 @@ export const exportDirZipFromSingleFile = async (singleFilePath: string, options
   let $ = load(readToPath(singleHtmlPath, 'utf-8'))
 
   // Replace global variables.
-  await globalReplacer({
+  globalReplacer({
     channel,
-    zipRes: zipRes ? { ...zipRes } : {},
-    notZipRes: notZipRes ? { ...notZipRes } : {},
+    resMapper: resMapper ? { ...resMapper } : {},
     $
   })
+  // Fill files into HTML
+  paddingScriptTags($, { compDiff, resMapper })
 
   // Inject configuration file.
   await injectFromRCJson($, channel)

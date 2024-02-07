@@ -24,13 +24,13 @@ export const exec2xAdapter = async (options: TOptions, config?: { mode: TMode })
     console.error(error)
   }
 
-  const { zipRes, notZipRes } = await gen2xSingleFile()
+  const { resMapper, compDiff } = await gen2xSingleFile()
   const { orientation = 'auto' } = getAdapterRCJson() || {}
   const { mode = 'parallel' } = config ?? { mode: 'parallel' }
   await gen2xChannelsPkg({
     orientation,
-    zipRes,
-    notZipRes
+    resMapper,
+    compDiff
   }, mode)
   unmountGlobalVars()
 }
@@ -46,13 +46,13 @@ export const exec3xAdapter = async (options: TOptions, config?: { mode: TMode })
     console.error(error)
   }
 
-  const { zipRes, notZipRes } = await gen3xSingleFile()
+  const { resMapper, compDiff } = await gen3xSingleFile()
   const { orientation = 'auto' } = getAdapterRCJson() || {}
   const { mode = 'parallel' } = config ?? { mode: 'parallel' }
   await gen3xChannelsPkg({
     orientation,
-    zipRes,
-    notZipRes
+    resMapper,
+    compDiff
   }, mode)
   unmountGlobalVars()
 }

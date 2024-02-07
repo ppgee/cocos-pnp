@@ -1,6 +1,6 @@
 {
   "name": "playable-adapter-core",
-  "version": "1.0.3",
+  "version": "1.2.0",
   "description": "A node application for exporting playable ads",
   "title": "Playable Adapter Core",
   "main": "dist/playable-adapter-core.js",
@@ -32,6 +32,7 @@
     "@rollup/plugin-typescript": "^9.0.2",
     "@types/mime-types": "^2.1.1",
     "@types/node": "^18.8.4",
+    "@types/pako": "^2.0.3",
     "is-builtin-module": "^3.2.0",
     "rollup": "^2.79.1",
     "rollup-plugin-dts": "^5.0.0",
@@ -41,7 +42,7 @@
   "dependencies": {
     "axios": "^1.1.3",
     "cheerio": "1.0.0-rc.12",
-    "jszip": "^3.10.1",
-    "mime-types": "^2.1.35"
+    "mime-types": "^2.1.35",
+    "pako": "^2.1.0"
   }
 }

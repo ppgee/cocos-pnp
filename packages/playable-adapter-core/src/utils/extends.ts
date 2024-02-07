@@ -20,6 +20,15 @@ const getPlayableConfig = (options?: { orientation?: TWebOrientations, languages
   return playableConfig
 }
 
+export const isObjectString = (str: string) => {
+  try {
+    const obj = JSON.parse(str);
+    return obj && typeof obj === 'object' && !Array.isArray(obj);
+  } catch (e) {
+    return false;
+  }
+}
+
 // Replacing XMLHttpRequest
 export const removeXMLHttpRequest = (codeStr: string) => {
   return codeStr.replace(/XMLHttpRequest/g, ADAPTER_FETCH)
