@@ -13,6 +13,7 @@ import {
   jszipCode
 } from '@/helpers/injects'
 import { deflate } from 'pako'
+import { TRANSPARENT_GIF } from "@/constants"
 
 type TOptions = {
   singleFilePath: string
@@ -39,7 +40,6 @@ const paddingStyleTags = ($: CheerioAPI) => {
   })
   $('link[type="text/css"]').remove()
 
-  if (!enableSplash) return
   // Support for splash screen
   $('head').find('style').each((_index, elem) => {
     // Match css url
@@ -53,7 +53,7 @@ const paddingStyleTags = ($: CheerioAPI) => {
       // Match url
       const strReg = /"|'|url|\(|\)/g
       const imgUrl = str.replace(strReg, '')
-      const imgBase64 = getBase64FromFile(join(originPkgPath, imgUrl))
+      const imgBase64 = enableSplash ? getBase64FromFile(join(originPkgPath, imgUrl)) : TRANSPARENT_GIF
       styleTagStr = styleTagStr.replace(cssUrlReg, `url(${imgBase64})`)
     })
     $(elem).html(styleTagStr).html()
@@ -81,7 +81,7 @@ const paddingScriptTags = ($: CheerioAPI) => {
   $(scriptTags).appendTo('body')
 }
 
-const getJsListFromSettingsJson = (data: string): { jsList: string[], settingsData: string } => {
+const getJsListFromSettingsJson = (data: string): { jsList: string[], settingsData: { [key: string]: any } } => {
   let jsonData = JSON.parse(data)
   jsonData.plugins = {
     jsList: [],
@@ -91,7 +91,7 @@ const getJsListFromSettingsJson = (data: string): { jsList: string[], settingsDa
   jsonData.plugins.jsList = []
   return {
     jsList,
-    settingsData: JSON.stringify(jsonData)
+    settingsData: jsonData
   }
 }
 
@@ -125,7 +125,7 @@ const paddingAllResToMapped = async (options: {
   injectsCode: TOptions['injectsCode'],
   $: CheerioAPI,
 }) => {
-  const { isZip = true } = getAdapterRCJson() || {}
+  const { isZip = true, enableSplash = true } = getAdapterRCJson() || {}
 
   const { injectsCode, $ } = options
   // Original package path
@@ -139,7 +139,12 @@ const paddingAllResToMapped = async (options: {
       if (objKey.indexOf('src/settings.json') !== -1) { // get jsList in settings.json
         const { jsList, settingsData } = getJsListFromSettingsJson(data)
         pluginJsList = jsList
-        return settingsData
+        // Remove the splash screen in version 3.x.x.
+        if (!enableSplash && settingsData?.splashScreen?.totalTime) {
+          settingsData.splashScreen.totalTime = 0
+        }
+
+        return JSON.stringify(settingsData)
       } else if (objKey.indexOf('src/settings.js') !== -1) { // get jsList in settings.js
         const { jsList, settingsData } = getJsListFromSettingsJs(data)
         pluginJsList = jsList

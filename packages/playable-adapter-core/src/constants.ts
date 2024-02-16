@@ -32,3 +32,5 @@ export const TO_SKIP_EXTNAME = [
   '.html',
   '.css',
 ]
+
+export const TRANSPARENT_GIF = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
