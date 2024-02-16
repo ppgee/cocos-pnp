@@ -76,7 +76,7 @@ type TAdapterRC = {
   orientation?: TWebOrientations // Cocos build device orientation value
   exportChannels?: TChannel[] // Channels to export. If empty or not specified, export all channels.
   skipBuild?: boolean // Whether to skip the build process. Default is false.
-  enableSplash?: boolean // Whether to set a custom splash screen. Default is false.
+  enableSplash?: boolean // Whether to set a custom splash screen. Default is true.
   injectOptions?: {
     [key in TChannel]: {
       head: string // Appended to the head tag in HTML

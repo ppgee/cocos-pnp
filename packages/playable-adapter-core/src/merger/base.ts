@@ -23,7 +23,7 @@ type TOptions = {
 }
 
 const paddingStyleTags = ($: CheerioAPI) => {
-  const { enableSplash = false } = getAdapterRCJson() || {}
+  const { enableSplash = true } = getAdapterRCJson() || {}
   // Original package path
   const originPkgPath = getOriginPkgPath()
 

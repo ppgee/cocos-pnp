@@ -70,7 +70,7 @@ const main = async () => {
         Facebook: {},
       },
       orientation: "auto",
-      enableSplash: false,
+      enableSplash: true,
       skipBuild: true,
       tinify: true,
       tinifyApiKey: "your tinify api key",
@@ -198,7 +198,7 @@ Replace Cocos Splash. ([How to remove or change splash ?](https://blog.csdn.net/
 
 ```typescript
 let config = {
-  enableSplash: true,
+  enableSplash: false,
 };
 ```
 
