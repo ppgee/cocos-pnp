@@ -38,6 +38,11 @@ const paddingStyleTags = ($: CheerioAPI) => {
     // Add some tags
     $(`<style>${cssStr}</style>`).appendTo('head')
   })
+  // Hide progress bar, set the opacity to 0, and set the visibility to hidden
+  if (!enableSplash) {
+    $(`<style>#splash .progress-bar{opacity:0;visibility:hidden}</style>`).appendTo('head')
+  }
+
   $('link[type="text/css"]').remove()
 
   // Support for splash screen
