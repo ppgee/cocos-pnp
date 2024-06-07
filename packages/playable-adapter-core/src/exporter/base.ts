@@ -11,16 +11,18 @@ import { jszipCode } from "@/helpers/injects";
 
 const FILE_MAX_SIZE = MAX_ZIP_SIZE * .8
 
-const globalReplacer = async (options: Pick<TBuilderOptions, 'channel' | 'resMapper'> & { $: CheerioAPI }) => {
-  const { channel, resMapper, $ } = options
+const globalReplacer = (options: Pick<TBuilderOptions, 'channel' | 'resMapper'> & { $: CheerioAPI }) => {
+  const { channel, resMapper } = options
   if (!resMapper) {
-    return
+    return {} as TResourceData
   }
 
   // Non-compressed files are not required.
   for (const [key, value] of Object.entries(resMapper)) {
     resMapper[key] = value.replaceAll(REPLACE_SYMBOL, channel);
   }
+
+  return resMapper
 }
 
 const compressScripts = ($: CheerioAPI, payload: { resMapper: TBuilderOptions['resMapper'] }) => {
@@ -99,9 +101,9 @@ const restoreScripts = ($: CheerioAPI, payload: { resMapper: TBuilderOptions['re
 }
 
 const fillCodeToHTML = ($: CheerioAPI, options: TBuilderOptions) => {
-  const { channel, resMapper, compDiff } = options
+  let { channel, resMapper, compDiff } = options
   // Replace global variables.
-  globalReplacer({
+  resMapper = globalReplacer({
     channel,
     resMapper: resMapper ? { ...resMapper } : {},
     $
