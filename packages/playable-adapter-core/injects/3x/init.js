@@ -441,8 +441,13 @@ window.__adapter_init = function () {
   prepareLoad.then(() => {
     __adapter_init_cc();
     __adapter_init_plugins();
-    System.import('./' + __adapter_get_path('index')).catch((err) => {
+    try {
+      System.import('./' + __adapter_get_path('index')).catch((err) => {
+        console.error(err);
+      });
+    } catch (err) {
       console.error(err);
-    });
+      console.error("System.import('./' + __adapter_get_path('index'))");
+    }
   });
 };

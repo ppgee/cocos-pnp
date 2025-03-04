@@ -1,6 +1,6 @@
+import { checkImgType, getAllFilesFormDir, getOriginPkgPath, getRCTinify, writeToPath } from "@/utils";
 import Axios from 'axios';
 import { readFileSync } from 'fs';
-import { checkImgType, getAllFilesFormDir, getOriginPkgPath, getRCTinify, writeToPath } from "@/utils"
 
 // Upload file remotely
 const postFileToRemote = (filePath: string, data: Buffer): Promise<void> => {
@@ -24,7 +24,7 @@ const postFileToRemote = (filePath: string, data: Buffer): Promise<void> => {
         const compressedSize = fileResponse.data.length;
         const ratio = ((1 - compressedSize / originalSize) * 100).toFixed(1);
         
-        writeToPath(filePath, Buffer.from(fileResponse.data))
+        writeToPath(filePath, new Uint8Array(fileResponse.data))
         console.info(`[压缩] ${filePath} (${(originalSize/1024).toFixed(1)}kb -> ${(compressedSize/1024).toFixed(1)}kb, -${ratio}%)`)
         resolve()
       }).catch((fileErr) => {

@@ -1,15 +1,14 @@
-import path, { basename, extname, join } from 'path';
-import { CheerioAPI, load } from 'cheerio';
-import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rename, renameSync, rmdirSync, statSync, unlink, unlinkSync, writeFileSync } from 'fs';
 import { MAX_ZIP_SIZE, REPLACE_SYMBOL } from '@/constants';
-import { injectFromRCJson } from '@/helpers/dom';
-import { TBuilderOptions, TResourceData, TZipFromSingleFileOptions } from '@/typings';
 import { getGlobalProjectBuildPath } from '@/global';
-import { writeToPath, readToPath, getOriginPkgPath, copyDirToPath, replaceGlobalSymbol, rmSync, getAdapterRCJson, getChannelRCJson } from '@/utils';
-import { deflate } from 'pako';
+import { injectFromRCJson } from '@/helpers/dom';
 import { jszipCode } from '@/helpers/injects';
-import JSZip, { file } from 'jszip';
-import { rmdir, stat } from 'fs/promises';
+import { TBuilderOptions, TResourceData, TZipFromSingleFileOptions } from '@/typings';
+import { copyDirToPath, getAdapterRCJson, getOriginPkgPath, readToPath, replaceGlobalSymbol, writeToPath } from '@/utils';
+import { CheerioAPI, load } from 'cheerio';
+import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rename, renameSync, rmdirSync, statSync, unlinkSync, writeFileSync } from 'fs';
+import JSZip from 'jszip';
+import { deflate } from 'pako';
+import path, { basename, extname, join } from 'path';
 
 const FILE_MAX_SIZE = MAX_ZIP_SIZE * 0.8;
 
@@ -146,12 +145,6 @@ export const exportSingleFile = async (singleFilePath: string, options: TBuilder
 		await transform(targetPath);
 	}
 
-	// Pack in zip
-	let { inZip } = getChannelRCJson(channel) || {};
-	if (inZip) {
-		await createZip(getGlobalProjectBuildPath(), [targetPath], `${fileName}${channel.toLowerCase()}`, zip);
-	}
-
 	console.info(`[适配] ${channel} 渠道适配完成`);
 };
 
@@ -188,34 +181,26 @@ export const exportZipFromPkg = async (options: TBuilderOptions) => {
 	}
 
 	// Pack in zip
-	let { inZip } = getChannelRCJson(channel) || {};
-	if (inZip) {
-		await createZip(getGlobalProjectBuildPath(), [destPath], `${fileName}${channel.toLowerCase()}`, zip);
-	}
+	await createZip(getGlobalProjectBuildPath(), [destPath], `${fileName}${channel.toLowerCase()}`, zip);
 
 	console.info(`[适配] ${channel} 渠道适配完成`);
 };
 
-export const exportDirZipFromSingleFile = async (singleFilePath: string, options: TZipFromSingleFileOptions) => {
-	const { channel, transformHTML, transform, transformScript, resMapper, compDiff } = options;
+export const exportZipFromSingleFile = async (singleFilePath: string, options: TZipFromSingleFileOptions) => {
+	const { channel, transformHTML, transform, transformScript, exportType } = options;
 
 	console.info(`[适配] 开始适配 ${channel} 渠道`);
-	const { fileName} = getAdapterRCJson() || {};
+	const { fileName } = getAdapterRCJson() || {};
 	// Copy the folder.
 	const singleHtmlPath = singleFilePath;
 	const projectBuildPath = getGlobalProjectBuildPath();
 	const destPath = join(projectBuildPath, `${fileName}${channel.toLowerCase()}`);
 
-	// Empty the contents of the folder first.
-	rmSync(destPath);
+	// Create destination directory
+	mkdirSync(destPath, { recursive: true });
 
 	// HTML file path.
 	const htmlPath = join(destPath, '/index.html');
-
-	// Create a "js" directory.
-	const jsDirname = '/js';
-	const jsDirPath = join(destPath, jsDirname);
-	mkdirSync(jsDirPath, { recursive: true });
 
 	let $ = load(readToPath(singleHtmlPath, 'utf-8'));
 	fillCodeToHTML($, options);
@@ -225,22 +210,52 @@ export const exportDirZipFromSingleFile = async (singleFilePath: string, options
 
 	// To extract all scripts and generate a JavaScript file
 	const scriptNodes = $('body script[type!="systemjs-importmap"]');
-	for (let index = 0; index < scriptNodes.length; index++) {
-		const scriptNode = $(scriptNodes[index]);
-		if (transformScript) {
-			await transformScript(scriptNode);
+
+	if (exportType === 'dirZip') {
+		// Create a "js" directory.
+		const jsDirname = '/js';
+		const jsDirPath = join(destPath, jsDirname);
+		mkdirSync(jsDirPath, { recursive: true });
+
+		// Process scripts and move them to js directory
+		for (let index = 0; index < scriptNodes.length; index++) {
+			const scriptNode = $(scriptNodes[index]);
+			if (transformScript) {
+				await transformScript(scriptNode);
+			}
+			let jsStr = scriptNode.text();
+			const jsFileName = `index${index}.js`;
+			const jsPath = join(jsDirPath, jsFileName);
+			scriptNode.replaceWith(`<script src=".${jsDirname}/${jsFileName}"></script>`);
+			writeToPath(jsPath, jsStr);
 		}
-		let jsStr = scriptNode.text();
-		const jsFileName = `index${index}.js`;
-		const jsPath = join(jsDirPath, jsFileName);
-		scriptNode.replaceWith(`<script src=".${jsDirname}/${jsFileName}"></script>`);
-		writeToPath(jsPath, jsStr);
+	} else {
+		// For zip type, keep all files in the same directory
+		// Make sure the destination directory exists
+		mkdirSync(destPath, { recursive: true });
+
+		for (let index = 0; index < scriptNodes.length; index++) {
+			const scriptNode = $(scriptNodes[index]);
+			if (transformScript) {
+				await transformScript(scriptNode);
+			}
+			let jsStr = scriptNode.text();
+			const jsFileName = `index${index}.js`;
+			const jsPath = join(destPath, jsFileName);
+			scriptNode.replaceWith(`<script src="./${jsFileName}"></script>`);
+			writeToPath(jsPath, jsStr);
+		}
 	}
+
+	// Add base tag to ensure correct resource paths
+	if ($('head base').length === 0) {
+		$('head').prepend('<base href="./">');
+	}
+
 	writeToPath(htmlPath, $.html());
 
 	if (transformHTML) {
 		await transformHTML($);
-		const htmlPath = join(destPath, '/index.html');
 		writeToPath(htmlPath, $.html());
 	}
 
@@ -249,10 +264,7 @@ export const exportDirZipFromSingleFile = async (singleFilePath: string, options
 	}
 
 	// Pack in zip
-	let { inZip } = getChannelRCJson(channel) || {};
-	if (inZip) {
-		await createZip(getGlobalProjectBuildPath(), [destPath], `${fileName}${channel.toLowerCase()}`, zip);
-	}
+	await createZip(getGlobalProjectBuildPath(), [destPath], `${fileName}${channel.toLowerCase()}`, zip);
 
 	console.info(`[适配] ${channel} 渠道适配完成`);
 };
@@ -282,7 +294,7 @@ export const createZip = async (destPath: string, filePaths: string[], zipName: 
 
 	// 将 zip 内容写入到文件中
 	let file_path = path.join(destPath, `${zipName}.zip`);
-	writeFileSync(file_path, zipContent);
+	writeFileSync(file_path, new Uint8Array(zipContent));
 	rename(file_path, path.join(destPath, `${zipName}.zip`), (err) => {
 		if (err) {
 			console.error(`Error moving file: ${err}`);
@@ -317,7 +329,8 @@ export const readFile = (zip: JSZip | null, filePath: string, fileName: string):
 		fileName = basename(filePath);
 	}
 
-	zip!.file(fileName, readFileSync(filePath));
+	const fileContent = readFileSync(filePath);
+	zip!.file(fileName, new Uint8Array(fileContent));
 
 	unlinkSync(filePath);
 };

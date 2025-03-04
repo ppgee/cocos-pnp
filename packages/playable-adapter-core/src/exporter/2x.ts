@@ -1,10 +1,10 @@
-import { TBuilderOptions, TZipFromSingleFileOptions } from "@/typings"
-import { get2xSingleFilePath } from "@/utils"
+import { TBuilderOptions, TZipFromSingleFileOptions } from "@/typings";
+import { get2xSingleFilePath } from "@/utils";
 import {
+  exportZipFromSingleFile as baseExportDirZipFromSingleFile,
   exportSingleFile as baseExportSingleFile,
-  exportZipFromPkg as baseExportZipFromPkg,
-  exportDirZipFromSingleFile as baseExportDirZipFromSingleFile
-} from './base'
+  exportZipFromPkg as baseExportZipFromPkg
+} from './base';
 
 export const exportSingleFile = async (options: TBuilderOptions) => {
   await baseExportSingleFile(get2xSingleFilePath(), options)

@@ -1,13 +1,13 @@
-import { APPEND_TO_HEAD } from './inject-vars';
-import { exportDirZipFromSingleFile, exportZipFromPkg } from '@/exporter/3x';
+import { exportZipFromSingleFile } from '@/exporter/3x';
 import { TChannel, TChannelPkgOptions } from '@/typings';
 import { exportConfigJson, getChannelRCSdkScript } from '@/utils';
+import { APPEND_TO_HEAD } from './inject-vars';
 
 export const export3xTiktok = async (options: TChannelPkgOptions) => {
 	const { orientation } = options;
 	const channel: TChannel = 'Tiktok';
 
-	await exportDirZipFromSingleFile({
+	await exportZipFromSingleFile({
 		...options,
 		channel,
 		transformHTML: async ($) => {
@@ -19,6 +19,7 @@ export const export3xTiktok = async (options: TChannelPkgOptions) => {
 				destPath,
 				orientation
 			});
-		}
+		},
+		exportType: 'dirZip'
 	});
 };

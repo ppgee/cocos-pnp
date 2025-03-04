@@ -439,7 +439,6 @@ type TChannelRC = {
 	head: string;
 	body: string;
 	sdkScript: string;
-	inZip: boolean;
 };
 
 type TAdapterRC = {
