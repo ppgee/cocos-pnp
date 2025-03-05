@@ -272,14 +272,14 @@ export const exportZipFromSingleFile = async (singleFilePath: string, options: T
 //打包成一个zip文件
 export const createZip = async (destPath: string, filePaths: string[], zipName: string, zip: JSZip | null) => {
 	if (filePaths.length === 0) {
-		throw new Error('filePath array is empty.');
+		throw new Error('[创建zip文件] filePath array is empty.');
 	}
 
 	// 遍历文件路径数组
 	for (let filePath of filePaths) {
 		// 检查文件是否存在
 		if (!existsSync(filePath)) {
-			console.error(`file ${filePath} not exists.`);
+			console.error(`[创建zip文件] file ${filePath} not exists.`);
 			continue;
 		}
 
@@ -297,7 +297,7 @@ export const createZip = async (destPath: string, filePaths: string[], zipName: 
 	writeFileSync(file_path, new Uint8Array(zipContent));
 	rename(file_path, path.join(destPath, `${zipName}.zip`), (err) => {
 		if (err) {
-			console.error(`Error moving file: ${err}`);
+			console.error(`[创建zip文件] Error moving file: ${err}`);
 		}
 	});
 };
