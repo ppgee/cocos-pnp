@@ -10,6 +10,7 @@ import {
   type LoadedArtifact,
   type ValidationReport
 } from '@cocos-pnp/playable-validator';
+import { generateValidationHtmlReport } from './html-report.js';
 
 const MIME_MAP: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -190,11 +191,18 @@ function buildWorkbenchHtml(
     initialChannel,
     sizeBytes: staticReport.sizeBreakdown.totalBytes,
     fileCount: staticReport.sizeBreakdown.fileCount,
+    sizeBreakdown: staticReport.sizeBreakdown,
     channels: ALL_CHANNEL_IDS.map((id) => {
       const ch = staticReport.channels.find((c) => c.channel === id);
+      const spec = CHANNEL_SPECS[id];
+      const limitBytes =
+        artifact.format === 'single-html'
+          ? (spec.maxSingleHtmlBytes ?? spec.maxZipBytes ?? 5 * 1024 * 1024)
+          : (spec.maxZipBytes ?? spec.maxSingleHtmlBytes ?? 5 * 1024 * 1024);
       return {
         id,
-        displayName: CHANNEL_SPECS[id].displayName,
+        displayName: spec.displayName,
+        limitBytes,
         passed: ch?.passed ?? false,
         errorCount: ch?.errorCount ?? 0,
         warningCount: ch?.warningCount ?? 0,
@@ -237,9 +245,24 @@ function buildWorkbenchHtml(
     .evt.cta { border-left-color:var(--ok); }
     .evt.error, .evt.audio, .evt.network { border-left-color:var(--err); }
     .evt .meta { color:var(--muted); font-size:10.5px; margin-bottom:2px; }
-    .diag-list { max-height:140px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; font-size:11.5px; }
-    .diag-err { color:var(--err); }
-    .diag-warn { color:var(--warn); }
+    .diag-list { display:flex; flex-direction:column; gap:6px; font-size:11.5px; }
+    .diag-card { padding:7px 9px; border-radius:6px; background:#0d1117; border-left:3px solid var(--border); }
+    .diag-card.err { border-left-color:var(--err); }
+    .diag-card.warn { border-left-color:var(--warn); }
+    .diag-card.info { border-left-color:var(--accent); }
+    .diag-fix { color:#79c0ff; margin-top:3px; font-size:11px; }
+    .tabs { display:flex; border-bottom:1px solid var(--border); background:#0d1117; }
+    .tab-btn { flex:1; border:0; border-radius:0; background:transparent; color:var(--muted); padding:9px 8px; font-weight:600; border-bottom:2px solid transparent; }
+    .tab-btn.active { color:var(--text); border-bottom-color:var(--accent); background:var(--panel); }
+    .tab-pane { display:none; flex:1; overflow-y:auto; padding:12px 14px; flex-direction:column; gap:10px; min-height:0; }
+    .tab-pane.active { display:flex; }
+    .stack-bar { display:flex; height:10px; border-radius:999px; overflow:hidden; background:#21262d; }
+    .size-row { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid rgba(48,54,61,0.5); font-size:11.5px; }
+    .size-row .mono { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:230px; }
+    .quota-bar { height:6px; background:#21262d; border-radius:999px; overflow:hidden; margin-top:4px; }
+    .quota-fill { height:100%; background:var(--ok); }
+    .quota-fill.warn { background:var(--warn); }
+    .quota-fill.err { background:var(--err); }
   </style>
 </head>
 <body>
@@ -253,6 +276,7 @@ function buildWorkbenchHtml(
       <button id="btnMute">Mute: OFF</button>
       <button id="btnViewable">Viewable: ON</button>
       <button id="btnReload">Reload</button>
+      <a href="/api/report.html" download="playable-audit-report.html" style="text-decoration:none;"><button type="button" id="btnExportReport">Export HTML Report</button></a>
       <span class="spacer"></span>
       <span id="metaInfo" style="color:var(--muted);font-size:12px;"></span>
     </div>
@@ -265,22 +289,40 @@ function buildWorkbenchHtml(
       <div class="sidebar">
         <div class="section">
           <div class="section-title">
-            <span>Static Compliance</span>
+            <span>Live CTA Probe</span>
             <span id="staticBadge" class="badge ok">PASS</span>
           </div>
-          <div id="diagList" class="diag-list"></div>
-        </div>
-        <div class="section">
-          <div class="section-title"><span>Live CTA Probe</span></div>
           <div id="ctaBox" class="cta-box">Click your CTA button inside the playable to verify store redirect API...</div>
         </div>
-        <div class="section" style="padding-bottom:6px;border-bottom:0;">
-          <div class="section-title">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="events">Events</button>
+          <button class="tab-btn" data-tab="compliance">Compliance</button>
+          <button class="tab-btn" data-tab="size">Size</button>
+        </div>
+        <div id="pane-events" class="tab-pane active">
+          <div class="section-title" style="margin-bottom:2px;">
             <span>Runtime Event Log</span>
             <button id="btnClear" style="padding:2px 8px;font-size:11px;">Clear</button>
           </div>
+          <div id="eventLog" class="events" style="padding:0;"></div>
         </div>
-        <div id="eventLog" class="events"></div>
+        <div id="pane-compliance" class="tab-pane">
+          <div class="section-title" style="margin-bottom:2px;">
+            <span>Channel Diagnostics</span>
+            <span id="diagSummary" style="color:var(--muted);font-weight:400;"></span>
+          </div>
+          <div id="diagList" class="diag-list"></div>
+        </div>
+        <div id="pane-size" class="tab-pane">
+          <div class="section-title" style="margin-bottom:2px;">
+            <span>Package Quota &amp; Breakdown</span>
+            <span id="quotaText" style="color:var(--muted);font-weight:400;"></span>
+          </div>
+          <div class="quota-bar"><div id="quotaFill" class="quota-fill" style="width:0%"></div></div>
+          <div id="b64Notice" style="color:var(--muted);font-size:11.5px;"></div>
+          <div id="sizeStack" class="stack-bar"></div>
+          <div id="sizeTopList"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -291,6 +333,12 @@ function buildWorkbenchHtml(
     const deviceFrame = document.getElementById('deviceFrame');
     const staticBadge = document.getElementById('staticBadge');
     const diagList = document.getElementById('diagList');
+    const diagSummary = document.getElementById('diagSummary');
+    const quotaText = document.getElementById('quotaText');
+    const quotaFill = document.getElementById('quotaFill');
+    const b64Notice = document.getElementById('b64Notice');
+    const sizeStack = document.getElementById('sizeStack');
+    const sizeTopList = document.getElementById('sizeTopList');
     const ctaBox = document.getElementById('ctaBox');
     const eventLog = document.getElementById('eventLog');
     const metaInfo = document.getElementById('metaInfo');
@@ -301,7 +349,21 @@ function buildWorkbenchHtml(
     let isMuted = false;
     let isViewable = true;
 
-    metaInfo.textContent = DATA.format + ' | ' + (DATA.sizeBytes / 1024).toFixed(1) + ' KB | ' + DATA.fileCount + ' file(s)';
+    function fmtBytes(b) {
+      if (b >= 1048576) return (b / 1048576).toFixed(2) + ' MB';
+      if (b >= 1024) return (b / 1024).toFixed(1) + ' KB';
+      return b + ' B';
+    }
+
+    document.querySelectorAll('.tab-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-tab');
+        document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('active', b === btn));
+        document.querySelectorAll('.tab-pane').forEach((p) => p.classList.toggle('active', p.id === 'pane-' + target));
+      });
+    });
+
+    metaInfo.textContent = DATA.format + ' | ' + fmtBytes(DATA.sizeBytes) + ' | ' + DATA.fileCount + ' file(s)';
 
     for (const ch of DATA.channels) {
       const opt = document.createElement('option');
@@ -319,22 +381,69 @@ function buildWorkbenchHtml(
       eventLog.prepend(el);
     }
 
+    function renderSizePanel(ch) {
+      const sb = DATA.sizeBreakdown;
+      const pct = Math.min(100, (sb.totalBytes / Math.max(1, ch.limitBytes)) * 100);
+      quotaText.textContent = fmtBytes(sb.totalBytes) + ' / ' + fmtBytes(ch.limitBytes);
+      quotaFill.style.width = pct.toFixed(1) + '%';
+      quotaFill.className = 'quota-fill' + (sb.totalBytes > ch.limitBytes ? ' err' : pct >= 85 ? ' warn' : '');
+      b64Notice.textContent = sb.inlineBase64Bytes > 0
+        ? 'Inline Base64: ' + fmtBytes(sb.inlineBase64Bytes) + ' (~' + fmtBytes(sb.estimatedBase64OverheadBytes) + ' overhead)'
+        : 'Inline Base64: 0 B';
+
+      const total = Math.max(1, sb.uncompressedBytes);
+      const colors = ['#58a6ff', '#a371f7', '#3fb950', '#d29922', '#f85149', '#f0883e', '#8b949e'];
+      const cats = Object.entries(sb.byCategory || {}).sort((a, b) => b[1] - a[1]);
+      sizeStack.innerHTML = cats.map(([cat, bytes], i) =>
+        '<div style="width:' + ((bytes / total) * 100).toFixed(2) + '%;background:' + colors[i % colors.length] + '" title="' + cat + ': ' + fmtBytes(bytes) + '"></div>'
+      ).join('');
+
+      sizeTopList.innerHTML = '';
+      for (const item of (sb.topContributors || []).slice(0, 10)) {
+        const row = document.createElement('div');
+        row.className = 'size-row';
+        const left = document.createElement('span');
+        left.className = 'mono';
+        left.title = item.label;
+        left.textContent = item.label;
+        const right = document.createElement('span');
+        right.textContent = fmtBytes(item.bytes);
+        row.appendChild(left);
+        row.appendChild(right);
+        sizeTopList.appendChild(row);
+      }
+    }
+
     function renderStaticInfo() {
       const ch = DATA.channels.find((c) => c.id === currentChannel);
       if (!ch) return;
       staticBadge.className = 'badge ' + (ch.passed ? 'ok' : 'err');
       staticBadge.textContent = ch.passed ? 'PASS' : ch.errorCount + ' ERROR(S)';
+      diagSummary.textContent = ch.errorCount + ' err / ' + ch.warningCount + ' warn';
       diagList.innerHTML = '';
       if (ch.diagnostics.length === 0) {
-        diagList.innerHTML = '<div style="color:var(--ok);">No static issues detected.</div>';
+        diagList.innerHTML = '<div style="color:var(--ok);">All static compliance checks passed for ' + ch.displayName + '.</div>';
       } else {
         for (const d of ch.diagnostics) {
-          const row = document.createElement('div');
-          row.className = d.severity === 'error' ? 'diag-err' : d.severity === 'warning' ? 'diag-warn' : '';
-          row.textContent = '[' + d.severity.toUpperCase() + '] ' + d.code + ': ' + d.message;
-          diagList.appendChild(row);
+          const card = document.createElement('div');
+          card.className = 'diag-card ' + (d.severity === 'error' ? 'err' : d.severity === 'warning' ? 'warn' : 'info');
+          const head = document.createElement('div');
+          head.style.fontWeight = '700';
+          head.textContent = '[' + d.severity.toUpperCase() + '] ' + d.code;
+          const msg = document.createElement('div');
+          msg.textContent = d.message;
+          card.appendChild(head);
+          card.appendChild(msg);
+          if (d.suggestion) {
+            const fix = document.createElement('div');
+            fix.className = 'diag-fix';
+            fix.textContent = 'Fix: ' + d.suggestion;
+            card.appendChild(fix);
+          }
+          diagList.appendChild(card);
         }
       }
+      renderSizePanel(ch);
     }
 
     function loadChannel(ch) {
@@ -462,6 +571,15 @@ export async function startPreviewServer(
           staticReport
         })
       );
+      return;
+    }
+
+    if (pathname === '/api/report.html') {
+      res.writeHead(200, {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="playable-audit-report.html"'
+      });
+      res.end(generateValidationHtmlReport(staticReport));
       return;
     }
 

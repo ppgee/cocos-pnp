@@ -121,6 +121,13 @@ describe('@cocos-pnp/playable-cli local interactive preview workbench', () => {
       const uiHtml = await uiResp.text();
       assert.ok(uiHtml.includes('Playable Preview Workbench'));
       assert.ok(uiHtml.includes('Landscape 844x390'));
+      assert.ok(uiHtml.includes('Export HTML Report'));
+      assert.ok(uiHtml.includes('Package Quota &amp; Breakdown'));
+
+      const reportResp = await fetch(`${handle.url}api/report.html`);
+      assert.equal(reportResp.status, 200);
+      const reportHtml = await reportResp.text();
+      assert.ok(reportHtml.includes('Ad Network Compliance Matrix'));
 
       const infoResp = await fetch(`${handle.url}api/info`);
       assert.equal(infoResp.status, 200);
