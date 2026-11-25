@@ -1,0 +1,101 @@
+name: Release v2 Packages to npm
+
+on:
+  push:
+    tags:
+      - 'v2.*'
+  workflow_dispatch:
+    inputs:
+      dist_tag:
+        description: 'npm dist-tag (alpha, beta, or latest)'
+        required: true
+        default: 'alpha'
+        type: choice
+        options:
+          - alpha
+          - beta
+          - latest
+      dry_run:
+        description: 'Run pnpm publish --dry-run without publishing to npm'
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish-v2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js with npm registry
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run full v2 test suite
+        run: pnpm run test:v2
+
+      - name: Verify npm publish metadata, exports, bin, and packed tarballs
+        run: pnpm run pack:check
+
+      - name: Determine dist-tag & publish mode
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "dist_tag=${{ inputs.dist_tag }}" >> "$GITHUB_OUTPUT"
+            echo "dry_run=${{ inputs.dry_run }}" >> "$GITHUB_OUTPUT"
+          else
+            TAG="${GITHUB_REF_NAME}"
+            if [[ "$TAG" == *-alpha* ]]; then
+              echo "dist_tag=alpha" >> "$GITHUB_OUTPUT"
+            elif [[ "$TAG" == *-beta* ]]; then
+              echo "dist_tag=beta" >> "$GITHUB_OUTPUT"
+            else
+              echo "dist_tag=latest" >> "$GITHUB_OUTPUT"
+            fi
+            echo "dry_run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish @ppgee/* v2 packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          PUBLISH_FLAGS="--access public --tag ${{ steps.meta.outputs.dist_tag }} --no-git-checks"
+          if [ "${{ steps.meta.outputs.dry_run }}" = "true" ]; then
+            echo "Running dry-run publish..."
+            pnpm --filter '@ppgee/playable-sdk' publish $PUBLISH_FLAGS --dry-run
+            pnpm --filter '@ppgee/playable-validator' publish $PUBLISH_FLAGS --dry-run
+            pnpm --filter '@ppgee/playable-core' publish $PUBLISH_FLAGS --dry-run
+            pnpm --filter '@ppgee/playable-cli' publish $PUBLISH_FLAGS --dry-run
+          else
+            if [ -z "$NODE_AUTH_TOKEN" ]; then
+              echo "::error::NPM_TOKEN secret is not configured."
+              exit 1
+            fi
+            pnpm --filter '@ppgee/playable-sdk' publish $PUBLISH_FLAGS --provenance
+            pnpm --filter '@ppgee/playable-validator' publish $PUBLISH_FLAGS --provenance
+            pnpm --filter '@ppgee/playable-core' publish $PUBLISH_FLAGS --provenance
+            pnpm --filter '@ppgee/playable-cli' publish $PUBLISH_FLAGS --provenance
+          fi
+
+      - name: Create GitHub Release (tag pushes only)
+        if: startsWith(github.ref, 'refs/tags/v2.') && steps.meta.outputs.dry_run == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}

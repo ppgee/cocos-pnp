@@ -1,0 +1,63 @@
+{
+  "name": "@ppgee/playable-cli",
+  "version": "2.0.0-alpha.0",
+  "description": "CLI, interactive preview workbench, offline HTML audit reporter, and MCP Server for HTML5 Playable Ads",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "playable": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.js",
+    "!dist/**/*.test.d.ts",
+    "!dist/**/*.test.js.map",
+    "!dist/**/*.test.d.ts.map"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ppgee/cocos-pnp.git",
+    "directory": "packages/playable-cli"
+  },
+  "homepage": "https://github.com/ppgee/cocos-pnp#readme",
+  "bugs": {
+    "url": "https://github.com/ppgee/cocos-pnp/issues"
+  },
+  "keywords": [
+    "playable-ads",
+    "cli",
+    "mcp-server",
+    "validator",
+    "previewer",
+    "html5-games"
+  ],
+  "author": "PGee",
+  "license": "ISC",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "tsc -p tsconfig.json && node -e \"require('fs').chmodSync('dist/cli.js', 0o755)\"",
+    "test": "pnpm build && node --test dist/**/*.test.js"
+  },
+  "dependencies": {
+    "@ppgee/playable-core": "workspace:*",
+    "@ppgee/playable-validator": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.8.0"
+  }
+}

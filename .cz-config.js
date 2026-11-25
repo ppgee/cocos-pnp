@@ -28,6 +28,11 @@ module.exports = {
   scopes: [
     { name: 'playable-ads-adapter' },
     { name: 'playable-adapter-core' },
+    { name: 'playable-sdk' },
+    { name: 'playable-validator' },
+    { name: 'playable-core' },
+    { name: 'playable-cli' },
+    { name: 'v2' },
   ],
 
   messages: {

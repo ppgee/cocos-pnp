@@ -1,3 +1,4 @@
 node_modules/
 dist/
+playable-dist/
 !packages/playable-adapter-core/dist/

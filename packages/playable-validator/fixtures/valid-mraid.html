@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Demo Playable (Valid MRAID)</title>
+  <script src="mraid.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #102040;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    #cta {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 14px 36px;
+      border: 0;
+      border-radius: 999px;
+      background: #ff6a00;
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stage" width="390" height="844"></canvas>
+  <button id="cta" data-playable-cta>Install Now</button>
+  <script>
+    function renderStage() {
+      const canvas = document.getElementById('stage');
+      canvas.width = window.innerWidth || 390;
+      canvas.height = window.innerHeight || 844;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#142850';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const size = Math.min(canvas.width, canvas.height) * 0.45;
+      ctx.fillStyle = '#ffd166';
+      ctx.fillRect((canvas.width - size) / 2, (canvas.height - size) / 2, size, size);
+      ctx.fillStyle = '#06d6a0';
+      ctx.beginPath();
+      ctx.arc(canvas.width / 2, canvas.height / 2, size * 0.3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function boot() {
+      renderStage();
+      window.addEventListener('resize', renderStage);
+    }
+
+    if (window.mraid) {
+      const onReady = () => {
+        if (window.mraid.isViewable()) {
+          boot();
+        }
+        window.mraid.addEventListener('viewableChange', (viewable) => {
+          if (viewable) boot();
+        });
+      };
+      if (window.mraid.getState() === 'loading') {
+        window.mraid.addEventListener('ready', onReady);
+      } else {
+        onReady();
+      }
+    } else {
+      boot();
+    }
+
+    document.getElementById('cta').addEventListener('click', () => {
+      if (window.mraid && typeof window.mraid.open === 'function') {
+        window.mraid.open('https://example.com/app-store');
+      }
+    });
+  </script>
+</body>
+</html>

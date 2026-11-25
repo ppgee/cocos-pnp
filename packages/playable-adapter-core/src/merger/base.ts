@@ -141,7 +141,7 @@ const paddingAllResToMapped = async (options: {
     dirPath: originPkgPath,
     rmHttp: true,
     mountCbFn: (objKey, data) => {
-      if (objKey.indexOf('src/settings.json') !== -1) { // get jsList in settings.json
+      if (/src\/settings(\.[a-f0-9]+)?\.json$/i.test(objKey)) { // get jsList in settings.json (MD5-safe, #47)
         const { jsList, settingsData } = getJsListFromSettingsJson(data)
         pluginJsList = jsList
         // Remove the splash screen in version 3.x.x.
@@ -150,7 +150,7 @@ const paddingAllResToMapped = async (options: {
         }
 
         return JSON.stringify(settingsData)
-      } else if (objKey.indexOf('src/settings.js') !== -1) { // get jsList in settings.js
+      } else if (/src\/settings(\.[a-f0-9]+)?\.js$/i.test(objKey)) { // get jsList in settings.js (MD5-safe)
         const { jsList, settingsData } = getJsListFromSettingsJs(data)
         pluginJsList = jsList
         return settingsData

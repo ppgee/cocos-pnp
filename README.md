@@ -1,203 +1,136 @@
-# Playable ads adapter
+# cocos-pnp v2 — HTML5 & Cocos Playable Ads Packager, Validator & MCP Toolchain
 
-A Plugin for Exporting Cocos Playable Ads in Multi-Channel.
+[中文文档](./README-CN.md)
 
-中文说明，点击[这里](./README-CN.md)
+**An engine-agnostic multi-network Playable Ads packager, size analyzer, and headless-browser compliance validator for HTML5 (Vite, PixiJS, Three.js, AI-generated H5) and Cocos Creator 3.x builds.**
 
-If you only need to use the plugin, you can download [the build package](https://github.com/ppgee/cocos-pnp/releases?q=playable-ads-adapter&expanded=true) directly. The major versions are differentiated between `2.x` and `3.x`. Currently, the tested versions are `2.4.9`, `2.4.10`, and `3.x`. For other versions, please test them yourself. If you have any questions, feel free to submit an issue or pull request.
+Write your playable once, build submission-ready `.html` / `.zip` packages for **8 major ad networks (2026 specs)** in a single command, and automatically verify every artifact in headless Chrome (portrait & landscape blank-screen detection, unauthorized external request blocking, pre-interaction audio detection, and live CTA trigger verification). Includes a built-in **MCP Server** and **Agent Skill** for autonomous AI Coding Agent workflows.
 
-## Download
+---
 
-Plugin download link:
+## Highlights
 
-[https://github.com/ppgee/cocos-pnp/releases?q=playable-ads-adapter&expanded=true](https://github.com/ppgee/cocos-pnp/releases?q=playable-ads-adapter&expanded=true)
+1. **8 Major Ad Networks Aligned with 2026 Specs** (see [docs/channel-specs-2026.md](./docs/channel-specs-2026.md))
+   - `AppLovin`, `Unity Ads / LevelPlay` (migrated from sunset ironSource DAPI), `Google Ads`, `Meta (Facebook)`, `TikTok / Pangle`, `Mintegral`, `Moloco`, and `Liftoff / Vungle`.
+2. **Static + Headless Chrome Runtime Validation (`@ppgee/playable-validator`)**
+   - Automatically reuses your locally installed Chrome/Chromium/Edge (no 300MB browser download required), with `--static-only` for zero-browser CI fast checks.
+   - Audits size ceilings (including Meta's `index.html <= 2 MB` inside 5 MB ZIP & 100-file limit), Google's allowed extension whitelist, TikTok `config.json` & `playable-sdk.js`, Mintegral matching-folder layout & `gameReady`/`gameEnd`, Liftoff lowercase ASCII path naming, and inline Base64 overhead attribution.
+   - Verifies runtime behavior in mocked network hosts: uncaught exceptions, console errors, blocked external requests, portrait + landscape dual-orientation rendering, pre-interaction audio playback, and CTA API invocation.
+3. **Engine-Agnostic Core + Pluggable `EngineAdapter` + Zero-Leak Runtime SDK (`@ppgee/playable-core` + `@ppgee/playable-sdk`)**
+   - Shared 7-entry browser VFS shim (`SafeURL`, `fetch`, `XMLHttpRequest`, `WebAssembly.instantiateStreaming`, `Image.src`, `Audio/Media.src`, `FontFace`);
+   - 6 built-in auto-detected engine adapters (`cocos-3x`, `cocos-2x`, `playcanvas`, `godot-4`, `unity-webgl`, and `generic-web` for Vite/PixiJS/Three.js/Phaser/AI H5), plus custom adapter plugin registration via `options.adapters`;
+   - Native `playable.config.json` support with transparent fallback for legacy v1 `.adapterrc` files;
+   - Channel-isolated bridge generation guarantees zero `mraid` references on non-MRAID networks (Google, Meta, TikTok, Mintegral, Moloco);
+   - Net-benefit `pako` deflate compression and slim-ZIP externalization to stay under Meta/Google/Liftoff caps.
+4. **AI Agent Ready (CLI + MCP Server + Skill)**
+   - `--json` output across all CLI commands;
+   - `playable mcp` runs a zero-dependency stdio MCP Server exposing `get_channel_specs`, `build_playable`, `check_playable`, and `inspect_playable_size`;
+   - Reusable Agent Skill at [skills/playable-ads-workflow/SKILL.md](./skills/playable-ads-workflow/SKILL.md).
 
-## Install
+---
 
-After downloading the plugin, extract it and place it in the corresponding plugin folder for Cocos:
+## Supported Ad Networks (2026 Baseline)
 
-- For 2.x, the plugin folder is `packages` in the root directory of the project.
+| Network | Format | Size Ceiling | MRAID | CTA API | Key Constraints |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **AppLovin** (`applovin`) | Single HTML | <= 5 MB | Required v2.0 | `mraid.open()` | Zero external requests; dual orientation |
+| **Unity / LevelPlay** (`unity`) | Single HTML | <= 5 MB | Required v3.0 | `mraid.open()` | Legacy ironSource DAPI deprecated; `ready` + `viewableChange` gating; dual orientation |
+| **Google Ads** (`google`) | ZIP | <= 5 MB | Forbidden | `ExitApi.exit()` | <= 512 files; `ad.orientation` **or** `ad.size` (never both) + `exitapi.js`; strict extension whitelist |
+| **Meta** (`meta`, `facebook`) | ZIP / Single HTML | ZIP <= 5 MB & `index.html` <= 2 MB | Forbidden | `FbPlayableAd.onCTAClick()` | <= 100 files; zero-arg CTA; no raw JS redirects |
+| **TikTok / Pangle** (`tiktok`, `pangle`) | ZIP | <= 5 MB | Forbidden | `window.openAppStore()` | Root `index.html` + `config.json`; `playable-sdk.js` required |
+| **Mintegral** (`mintegral`, `mtg`) | ZIP / Single HTML | <= 5 MB | Forbidden | `window.install()` | Classic `<name>.zip -> <name>/<name>.html` (`[a-zA-Z0-9_]` only); `gameReady()` & `gameEnd()` required |
+| **Moloco** (`moloco`) | Single HTML | <= 5 MB | Forbidden | `FbPlayableAd.onCTAClick()` | Rejects ZIP; zero-arg CTA; dual orientation |
+| **Liftoff / Vungle** (`liftoff`, `vungle`) | ZIP / Single HTML | <= 5 MB | Optional | `mraid.open()` + `postMessage('download')` | Root `index.html`/`ad.html`; lowercase ASCII paths; no `<iframe>`; `complete` lifecycle |
 
-- For 3.x, the plugin folder is `extensions` in the root directory of the project.
+---
 
-Once installed, you can use it. If you cannot find the plugin, try restarting the project.
+## Quick Start
 
-## Using the Plugin
+Requirements: Node.js `>= 20` (recommended `22+`) and `pnpm >= 9`. For headless runtime checks, a local Chrome/Chromium/Edge binary is auto-detected (or pass `--browser-path`).
 
-- There are two ways to adapt the plugin. The first is to automatically trigger the adaptation function when building and publishing the project (select `web-mobile` or `web-desktop` as the build channel).
+```bash
+# 1. Install dependencies & build v2 packages
+pnpm install
+pnpm run build:v2
 
-- In the project option bar, select **多渠道构建**, then click **开始构建** to start the build.
+# 2. Build the included playable demo for all 8 networks (with --target-size auto, --encoding auto/base122 ~14% lossless payload savings, and --report offline HTML audit report with screenshots)
+pnpm playable build examples/mini-playable -o ./playable-dist --channel all --target-size auto --encoding auto --check --report ./playable-dist/report.html
 
-## Plugin Description
+# 3. Launch the interactive 8-network local preview workbench (portrait/landscape/mute/viewable/CTA monitor)
+pnpm playable preview ./playable-dist/AppLovin.html --channel applovin
 
-### Supported Channels
+# 4. Run offline full-asset optimization (sharp images + ffmpeg audio/video with MP4 faststart + HarfBuzz font subsetting + SVGO / icon vectorization + esbuild JS tree-shaking & minification)
+pnpm playable optimize ./your-dist --target-size 4MB --vectorize-icons --dry-run
 
-|              | AppLovin | Facebook | Google | IronSource | Liftoff | Mintegral | Moloco | Pangle | Rubeex | Tiktok | Unity |
-| ------------ | -------- | -------- | ------ | ---------- | ------- | --------- | ------ | ------ | ------ | ------ | ----- |
-| **>= 2.4.6** | ✅       | ✅       | ✅     | ✅         | ✅      | ✅        | ✅     | ✅     | ✅     | ✅     | ✅    |
-| **3.8.x**    | ✅       | ✅       | ✅     | ✅         | ✅      | ✅        | ✅     | ✅     | ✅     | ✅     | ✅    |
+# 5. Validate any existing .html, .zip, or build directory
+pnpm playable check ./playable-dist/Google.zip --channel google
+pnpm playable check ./build/web-mobile --channel applovin,unity --static-only
 
-### Extend Features
-
-1. Supports global dynamic replacement of channel names, making it easy to handle special logic for a specific channel. The placeholder for this feature is `'{{__adv_channels_adapter__}}'`, for example:
-
-```typescript
-// source code
-window.advChannels = '{{__adv_channels_adapter__}}' // Prevent rollup dead code elimination from omitting this code, the placeholder variable can be mounted on the global without deactivation
-
-// Code will be replaced with Facebook channel:
-window.advChannels = 'Facebook'
+# 6. Inspect 2026 network specs, built-in engine adapters, or scaffold playable.config.json
+pnpm playable specs
+pnpm playable engines
+pnpm playable init
 ```
 
-2. Supports injecting additional scripts for each channel to configure special business logic. You need to create a `.adapterrc` file in the root directory to edit the configuration information in JSON format. An example of the configuration is as follows:
+### Unified Runtime SDK Example
 
-```typescript
-type TChannel =
-  | 'AppLovin'
-  | 'Facebook'
-  | 'Google'
-  | 'IronSource'
-  | 'Liftoff'
-  | 'Mintegral'
-  | 'Moloco'
-  | 'Pangle'
-  | 'Rubeex'
-  | 'Tiktok'
-  | 'Unity'
+No channel `if/else` branches needed in game code (full example in [examples/mini-playable/game.js](./examples/mini-playable/game.js)):
 
-type TPlatform =
-  | 'web-desktop'
-  | 'web-mobile';
-
-type TWebOrientations = 'portrait' | 'landscape' | 'auto'
-
-type TAdapterRC = {
-  buildPlatform?: TPlatform // Cocos build platform value
-  orientation?: TWebOrientations // Cocos build device orientation value
-  exportChannels?: TChannel[] // Channels to export. If empty or not specified, export all channels.
-  skipBuild?: boolean // Whether to skip the build process. Default is false.
-  enableSplash?: boolean // Whether to set a custom splash screen. Default is true.
-  injectOptions?: {
-    [key in TChannel]: {
-      head: string // Appended to the head tag in HTML
-      body: string // Appended before all scripts in the body tag in HTML
-      sdkScript: string // Injects the SDK script into the corresponding channel
-    }
+```js
+window.playable.init({
+  onStart: () => {
+    startGame();
+    window.playable.ready();
   },
-  isZip?: boolean // // Whether to compress the package with Pako, the default is true
-  tinify?: boolean // Whether to compress images with Tinypng.
-  tinifyApiKey?: string // Tinypng API key
-}
+  onPause: () => pauseAudioAndLoop(),
+  onResume: () => resumeAudioAndLoop(),
+  onResize: ({ width, height }) => resizeCanvas(width, height)
+});
+
+// Call when the playable loop finishes (required by Mintegral & Liftoff)
+window.playable.gameEnd();
+
+// Call on explicit CTA click (mark button with data-playable-cta for automated runtime verification)
+ctaButton.addEventListener('click', () => {
+  window.playable.cta();
+});
 ```
 
-`.adapterrc` file example:
+---
+
+## MCP Server Setup (for Claude / Cursor / Antigravity / Codex)
 
 ```json
 {
-  "buildPlatform": "web-mobile",
-  "orientation": "auto",
-  "injectOptions": {
-    "AppLovin": {
-      "head": "<script>console.log('AppLovin')</script>"
-    },
-    "Google": {
-      "body": "<a onclick=\"ExitApi.exit()\" style=\"display: none;\"></a>"
-    },
-    "Unity": {
-      "body": "<script>if(mraid.getState()==='loading'){mraid.addEventListener('ready',onSdkReady)}else{onSdkReady()}function viewableChangeHandler(viewable){if(viewable){}else{}}function onSdkReady(){mraid.addEventListener('viewableChange',viewableChangeHandler);if(mraid.isViewable()){showMyAd()}}var url='ios链接';var android='安卓链接';if(/android/i.test(userAgent)){url=android}function showMyAd(){mraid.open(url)}</script>",
-      "sdkScript": "<script src=\"./mraid.js\"></script>"
+  "mcpServers": {
+    "cocos-pnp-playable": {
+      "command": "node",
+      "args": ["/absolute/path/to/cocos-pnp/packages/playable-cli/dist/cli.js", "mcp"]
     }
   }
 }
 ```
 
-3. Supports specifying selected channels, using the following configuration:
+Exposed tools: `get_channel_specs`, `build_playable`, `optimize_playable_assets`, `check_playable`, and `inspect_playable_size`.
 
-```json
-// .adapterrc
-{
-  "exportChannels": ["Google", "Facebook"] // Channels to export. If empty or not specified, export all channels.
-}
-```
+---
 
-4. Supports image compression with `Tinypng` to further reduce the package size, using the following configuration:
-
-```json
-// .adapterrc
-{
-  ...,
-  "tinify": true // Whether to compress images with Tinypng
-  "tinifyApiKey": "YOUR_TINYPNG_API_KEY" // Tinypng API key
-}
-```
-
-5. Supports Pako compression to further reduce the package size, using the following configuration:
-
-```json
-// .adapterrc
-{
-  ...,
-  "isZip": true // Whether to compress the package with Pako, the default is true
-}
-```
-
-## Plugin Development and Build Steps
-
-### Clone the Project
+## Running Tests
 
 ```bash
-git clone git@github.com:ppgee/cocos-pnp.git
+pnpm run test:v2
 ```
 
-### Development Setup and Dependency Installation
+---
 
-Please configure the hot update plugin directory first.
+## Legacy v1 Cocos Creator Editor Plugin
 
-```javascript
-// rollup.config.js
-...
-const plugins = [
-  ...,
-  /*
-   * src is the exported project in the current project
-   * desc is the global directory of the developer's Cocos editor
-   */
-  cocosPluginUpdater({
-    src: `${__dirname}/${outputDir}`,
-    dest: `~/.CocosCreator/${is2xBuilder ? 'packages' : 'extensions'}/${appName}`
-  }),
-]
-...
-
-```
-
-```bash
-# Install dependencies
-pnpm install
-
-# Develop version 2.4.x
-pnpm watch:2x
-
-# Develop version 3.x
-pnpm watch:3x
-```
-
-### Build the Project
-
-```bash
-# Install dependencies
-pnpm install
-
-# Build version 2.4.x
-pnpm build:2x
-
-# Build version 3.x
-pnpm build:3x
-```
+- **Migration guide (v1 -> v2)**: [docs/v2-migration.md](./docs/v2-migration.md)
+- **Legacy v1 plugin downloads** (Cocos Creator 2.4.x / 3.8.2): [GitHub Releases](https://github.com/ppgee/cocos-pnp/releases?q=playable-ads-adapter&expanded=true)
+- `packages/playable-adapter-core` and `packages/playable-ads-adapter` remain untouched for legacy 2.x/3.x editor workflows. For Cocos 3.8.5+ and new projects, use the v2 CLI directly on your `web-mobile` output.
 
 ### [Contributors](https://github.com/ppgee/cocos-pnp/graphs/contributors)
 
 <a href="https://github.com/ppgee/cocos-pnp/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=ppgee/cocos-pnp" />
 </a>
-

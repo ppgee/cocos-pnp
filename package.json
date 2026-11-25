@@ -5,7 +5,13 @@
   "main": "index.js",
   "scripts": {
     "commit": "cz",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build:v2": "pnpm --filter @ppgee/playable-sdk build && pnpm --filter @ppgee/playable-validator build && pnpm --filter @ppgee/playable-core build && pnpm --filter @ppgee/playable-cli build",
+    "test:v2": "pnpm run build:v2 && pnpm --filter @ppgee/playable-sdk test && pnpm --filter @ppgee/playable-validator test && pnpm --filter @ppgee/playable-core test && pnpm --filter @ppgee/playable-cli test",
+    "pack:check": "pnpm run build:v2 && node scripts/verify-packages.mjs",
+    "build:validator": "pnpm --filter @ppgee/playable-validator build && pnpm --filter @ppgee/playable-cli build",
+    "test:validator": "pnpm --filter @ppgee/playable-validator test",
+    "playable": "node packages/playable-cli/dist/cli.js",
+    "test": "pnpm run test:v2"
   },
   "repository": {
     "type": "git",
