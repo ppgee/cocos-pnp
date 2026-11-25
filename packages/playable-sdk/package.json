@@ -1,0 +1,27 @@
+{
+  "name": "@cocos-pnp/playable-sdk",
+  "version": "2.0.0-alpha.0",
+  "description": "Zero-dependency lightweight unified runtime SDK for HTML5 Playable Ads across 8 major ad networks",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "tsc -p tsconfig.json",
+    "test": "pnpm build && node --test dist/**/*.test.js"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.8.0"
+  },
+  "license": "ISC"
+}

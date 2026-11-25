@@ -1,0 +1,40 @@
+{
+  "name": "@cocos-pnp/playable-core",
+  "version": "2.0.0-alpha.0",
+  "description": "Stateless multi-network Playable Ads packager for generic Web/HTML5 and Cocos Creator 3.x builds",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "tsc -p tsconfig.json",
+    "test": "pnpm build && node --test dist/**/*.test.js"
+  },
+  "dependencies": {
+    "@cocos-pnp/playable-sdk": "workspace:*",
+    "@cocos-pnp/playable-validator": "workspace:*",
+    "cheerio": "^1.0.0",
+    "jszip": "^3.10.1",
+    "mime-types": "^2.1.35",
+    "pako": "^2.1.0"
+  },
+  "optionalDependencies": {
+    "sharp": "^0.34.0"
+  },
+  "devDependencies": {
+    "@types/mime-types": "^2.1.4",
+    "@types/node": "^22.0.0",
+    "@types/pako": "^2.0.3",
+    "typescript": "^5.8.0"
+  },
+  "license": "ISC"
+}

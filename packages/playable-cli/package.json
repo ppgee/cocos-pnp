@@ -1,0 +1,28 @@
+{
+  "name": "@cocos-pnp/playable-cli",
+  "version": "2.0.0-alpha.0",
+  "description": "CLI for validating and inspecting HTML5 Playable Ads across major ad networks",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "playable": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "tsc -p tsconfig.json",
+    "test": "pnpm build && node --test dist/**/*.test.js"
+  },
+  "dependencies": {
+    "@cocos-pnp/playable-core": "workspace:*",
+    "@cocos-pnp/playable-validator": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.8.0"
+  },
+  "license": "ISC"
+}

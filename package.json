@@ -5,7 +5,12 @@
   "main": "index.js",
   "scripts": {
     "commit": "cz",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build:v2": "pnpm --filter @cocos-pnp/playable-sdk build && pnpm --filter @cocos-pnp/playable-validator build && pnpm --filter @cocos-pnp/playable-core build && pnpm --filter @cocos-pnp/playable-cli build",
+    "test:v2": "pnpm run build:v2 && pnpm --filter @cocos-pnp/playable-sdk test && pnpm --filter @cocos-pnp/playable-validator test && pnpm --filter @cocos-pnp/playable-core test && pnpm --filter @cocos-pnp/playable-cli test",
+    "build:validator": "pnpm --filter @cocos-pnp/playable-validator build && pnpm --filter @cocos-pnp/playable-cli build",
+    "test:validator": "pnpm --filter @cocos-pnp/playable-validator test",
+    "playable": "node packages/playable-cli/dist/cli.js",
+    "test": "pnpm run test:v2"
   },
   "repository": {
     "type": "git",

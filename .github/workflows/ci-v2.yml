@@ -1,0 +1,41 @@
+name: CI (v2 Toolchain + v1 Core)
+
+on:
+  push:
+    branches: [main, 'feat/**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build and test all v2 packages (SDK, Validator, Core, CLI, MCP)
+        run: pnpm run test:v2
+
+      - name: Build legacy v1 playable-adapter-core
+        run: pnpm --filter playable-adapter-core build
+
+      - name: Smoke-test example playable across all 8 ad networks
+        run: |
+          TMP_OUT=$(mktemp -d)
+          pnpm playable build examples/mini-playable -o "$TMP_OUT" --channel all --check --name ci_demo
+          rm -rf "$TMP_OUT"

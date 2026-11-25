@@ -1,0 +1,35 @@
+{
+  "name": "@cocos-pnp/playable-validator",
+  "version": "2.0.0-alpha.0",
+  "description": "Static and headless-runtime compliance validator & size analyzer for HTML5 Playable Ads",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "tsc -p tsconfig.json",
+    "test": "pnpm build && node --test dist/**/*.test.js"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "jszip": "^3.10.1"
+  },
+  "optionalDependencies": {
+    "playwright-core": "^1.52.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "playwright-core": "^1.52.0",
+    "typescript": "^5.8.0"
+  },
+  "license": "ISC"
+}
