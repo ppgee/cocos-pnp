@@ -220,7 +220,7 @@ export const cocos3xAdapter: EngineAdapter = {
       `<script data-id="playable-cocos-plugins">window.__PLAYABLE_COCOS_PLUGINS__=${escapeInlineScript(JSON.stringify(pluginJsList))};</script>`
     );
 
-    const payload = buildVfsPayloadScripts(vfs, { compress });
+    const payload = buildVfsPayloadScripts(vfs, { compress, encoding: ctx.encoding });
     for (const blk of payload.scripts) {
       $('body').append(`<script data-id="${blk.id}">${escapeInlineScript(blk.code)}</script>`);
     }

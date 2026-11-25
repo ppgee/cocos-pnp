@@ -2,7 +2,7 @@ import path from 'node:path';
 import { load as loadHtml } from 'cheerio';
 import { lookup as lookupMime } from 'mime-types';
 import { buildBrowserVfsShim } from './browser-shim.js';
-import { buildVfsPayloadScripts } from './payload.js';
+import { buildVfsPayloadScripts, type PayloadEncoding } from './payload.js';
 import type { LoadedSource, VirtualFile } from '../types.js';
 
 export const TEXT_EXTENSIONS = new Set([
@@ -93,7 +93,7 @@ export function splitSingleHtmlToSlimZip(singleHtml: string): {
 export function prepareGoogleZipFiles(
   source: LoadedSource,
   allowedExtensions: string[],
-  options: { compress?: boolean } = {}
+  options: { compress?: boolean; encoding?: PayloadEncoding } = {}
 ): { html: string; files: VirtualFile[] } {
   const allowedSet = new Set(allowedExtensions.map((e) => e.toLowerCase()));
   const keptFiles: VirtualFile[] = [];
@@ -142,7 +142,10 @@ export function prepareGoogleZipFiles(
   normalizeAttr('audio[src], video[src], source[src]', 'src');
 
   if (Object.keys(inlinedVfs).length > 0) {
-    const payload = buildVfsPayloadScripts(inlinedVfs, { compress: options.compress });
+    const payload = buildVfsPayloadScripts(inlinedVfs, {
+      compress: options.compress,
+      encoding: options.encoding
+    });
     const headTags = [
       ...payload.scripts.map((blk) => `<script data-id="${blk.id}">${escapeInlineScript(blk.code)}</script>`),
       `<script data-id="playable-vfs-loader">${escapeInlineScript(buildBrowserVfsShim())}</script>`

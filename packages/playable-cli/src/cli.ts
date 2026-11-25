@@ -10,7 +10,8 @@ import {
   optimizeDirectory,
   parseByteSize,
   type AssetOptimizeOptions,
-  type OrientationMode
+  type OrientationMode,
+  type PayloadEncoding
 } from '@cocos-pnp/playable-core';
 import {
   ALL_CHANNEL_IDS,
@@ -25,6 +26,7 @@ import {
   formatOptimizeResult,
   formatValidationReport
 } from './formatter.js';
+import { generateBuildHtmlReport, generateValidationHtmlReport } from './html-report.js';
 import { startMcpServer } from './mcp-server.js';
 import { startPreviewServer } from './preview-server.js';
 
@@ -70,8 +72,10 @@ Build Options:
   --ffmpeg-path <path>       Explicit ffmpeg executable path
   --no-sdk                   Disable automatic @cocos-pnp/playable-sdk bridge injection
   --no-compress              Disable pako deflate compression for single-HTML bundles
+  --encoding <mode>          base64 (default) | base122 (~14% smaller lossless payload) | auto
   --check                    Run compliance validation on every built artifact
   --static-only              When --check is set, skip headless browser runtime checks
+  --report <file.html>       Write a self-contained visual HTML audit report (includes runtime screenshots)
   --json                     Output machine-readable JSON
 
 Preview Options:
@@ -107,6 +111,7 @@ Check Options:
   --browser-path <path>      Explicit path to Chrome/Chromium executable
   --settle-ms <ms>           Wait duration after load before sampling render (default: 1200)
   --top <n>                  Number of top size contributors to show (default: 10)
+  --report <file.html>       Write a self-contained visual HTML audit report (includes runtime screenshots)
   -h, --help                 Show this help message
 `);
 }
@@ -121,7 +126,7 @@ const VALUE_FLAGS = new Set([
   '-c', '--channel', '--channels',
   '-o', '--out', '--output',
   '-p', '--port',
-  '--config', '--orientation', '--engine', '--name',
+  '--config', '--orientation', '--engine', '--name', '--encoding', '--report',
   '--ios-url', '--android-url',
   '--quality', '--max-size', '--target-size',
   '--audio-bitrate', '--audio-sample-rate',
@@ -422,6 +427,15 @@ export async function runCli(argv: string[]): Promise<number> {
             }
           : cfg.optimize;
 
+      const encoding = (
+        parsed.flags.encoding === 'base64' ||
+        parsed.flags.encoding === 'base122' ||
+        parsed.flags.encoding === 'auto'
+          ? parsed.flags.encoding
+          : cfg.encoding
+      ) as PayloadEncoding | undefined;
+      const reportPath = typeof parsed.flags.report === 'string' ? path.resolve(parsed.flags.report) : undefined;
+
       const result = await buildPlayable({
         ...cfg,
         inputPath,
@@ -432,6 +446,7 @@ export async function runCli(argv: string[]): Promise<number> {
         packageName:
           typeof parsed.flags.name === 'string' ? parsed.flags.name : cfg.packageName,
         compress: parsed.flags['no-compress'] ? false : cfg.compress,
+        encoding,
         optimize: optimizeFlag,
         targetSize,
         injectSdkBridge: parsed.flags['no-sdk'] ? false : cfg.injectSdkBridge,
@@ -442,18 +457,27 @@ export async function runCli(argv: string[]): Promise<number> {
             ? { androidUrl: parsed.flags['android-url'] }
             : {})
         },
-        validate: parsed.flags.check ? true : Boolean(cfg.validate),
+        validate: parsed.flags.check || Boolean(reportPath) ? true : Boolean(cfg.validate),
         staticOnly: parsed.flags['static-only'] ? true : Boolean(cfg.staticOnly),
+        captureScreenshots: Boolean(reportPath) && !parsed.flags['static-only'],
         browserPath:
           typeof parsed.flags['browser-path'] === 'string'
             ? parsed.flags['browser-path']
             : cfg.browserPath
       });
 
+      if (reportPath) {
+        await fs.mkdir(path.dirname(reportPath), { recursive: true });
+        await fs.writeFile(reportPath, generateBuildHtmlReport(result), 'utf-8');
+      }
+
       if (parsed.flags.json) {
-        console.log(JSON.stringify(result, null, 2));
+        console.log(JSON.stringify(reportPath ? { ...result, reportPath } : result, null, 2));
       } else {
         console.log(formatBuildResult(result));
+        if (reportPath) {
+          console.log(`HTML Report: ${reportPath}\n`);
+        }
       }
 
       return result.allValid ? 0 : 1;
@@ -478,6 +502,7 @@ export async function runCli(argv: string[]): Promise<number> {
       const topN =
         typeof parsed.flags.top === 'string' ? Number(parsed.flags.top) : undefined;
 
+      const reportPath = typeof parsed.flags.report === 'string' ? path.resolve(parsed.flags.report) : undefined;
       const report = await validatePlayable({
         inputPath: targetPath,
         channels,
@@ -485,13 +510,22 @@ export async function runCli(argv: string[]): Promise<number> {
         browserPath: typeof parsed.flags['browser-path'] === 'string' ? parsed.flags['browser-path'] : undefined,
         ctaSelector: typeof parsed.flags['cta-selector'] === 'string' ? parsed.flags['cta-selector'] : undefined,
         settleMs: Number.isFinite(settleMs) ? settleMs : undefined,
+        captureScreenshots: Boolean(reportPath) && !parsed.flags['static-only'],
         topN: Number.isFinite(topN) ? topN : undefined
       });
 
+      if (reportPath) {
+        await fs.mkdir(path.dirname(reportPath), { recursive: true });
+        await fs.writeFile(reportPath, generateValidationHtmlReport(report), 'utf-8');
+      }
+
       if (parsed.flags.json) {
-        console.log(JSON.stringify(report, null, 2));
+        console.log(JSON.stringify(reportPath ? { ...report, reportPath } : report, null, 2));
       } else {
         console.log(formatValidationReport(report));
+        if (reportPath) {
+          console.log(`HTML Report: ${reportPath}\n`);
+        }
       }
 
       return report.passed ? 0 : 1;

@@ -53,8 +53,8 @@ Requirements: Node.js `>= 20` (recommended `22+`) and `pnpm >= 9`. For headless 
 pnpm install
 pnpm run build:v2
 
-# 2. Build the included playable demo for all 8 networks (with --target-size auto budget compression) and validate in headless Chrome
-pnpm playable build examples/mini-playable -o ./playable-dist --channel all --target-size auto --check
+# 2. Build the included playable demo for all 8 networks (with --target-size auto, --encoding auto/base122 ~14% lossless payload savings, and --report offline HTML audit report with screenshots)
+pnpm playable build examples/mini-playable -o ./playable-dist --channel all --target-size auto --encoding auto --check --report ./playable-dist/report.html
 
 # 3. Launch the interactive 8-network local preview workbench (portrait/landscape/mute/viewable/CTA monitor)
 pnpm playable preview ./playable-dist/AppLovin.html --channel applovin

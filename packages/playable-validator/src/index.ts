@@ -32,7 +32,8 @@ export async function validatePlayable(options: ValidateOptions): Promise<Valida
         browserPath: options.browserPath,
         viewport,
         settleMs,
-        ctaSelector: options.ctaSelector
+        ctaSelector: options.ctaSelector,
+        captureScreenshots: options.captureScreenshots
       });
 
   const channelReports: ChannelValidationReport[] = [];

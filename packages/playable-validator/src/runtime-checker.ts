@@ -350,6 +350,7 @@ export interface RuntimeSessionOptions {
   viewport: { width: number; height: number };
   settleMs: number;
   ctaSelector?: string;
+  captureScreenshots?: boolean;
 }
 
 export interface RuntimeRunner {
@@ -522,6 +523,15 @@ export async function createRuntimeRunner(
       .catch(() => 0);
 
     const portraitRender = await sampleBlankScreen(page);
+    let portraitScreenshotDataUri: string | undefined;
+    if (options.captureScreenshots) {
+      try {
+        const buf = await page.screenshot({ type: 'jpeg', quality: 72 });
+        portraitScreenshotDataUri = `data:image/jpeg;base64,${buf.toString('base64')}`;
+      } catch {
+        // Non-fatal
+      }
+    }
 
     // Mark interaction start and attempt CTA probe
     await page.evaluate(() => {
@@ -619,6 +629,15 @@ export async function createRuntimeRunner(
       }
 
       const lsRender = await sampleBlankScreen(lsPage);
+      let lsScreenshotDataUri: string | undefined;
+      if (options.captureScreenshots) {
+        try {
+          const buf = await lsPage.screenshot({ type: 'jpeg', quality: 72 });
+          lsScreenshotDataUri = `data:image/jpeg;base64,${buf.toString('base64')}`;
+        } catch {
+          // Non-fatal
+        }
+      }
       await lsContext.close();
 
       landscapeCheck = {
@@ -627,7 +646,8 @@ export async function createRuntimeRunner(
         isBlankScreen: lsRender.isBlank,
         blankScreenDetails: lsRender.details,
         consoleErrors: lsConsoleErrors,
-        pageErrors: lsPageErrors
+        pageErrors: lsPageErrors,
+        screenshotDataUri: lsScreenshotDataUri
       };
     }
 
@@ -646,6 +666,7 @@ export async function createRuntimeRunner(
       isBlankScreen: portraitRender.isBlank,
       blankScreenDetails: portraitRender.details,
       viewport: options.viewport,
+      screenshotDataUri: portraitScreenshotDataUri,
       landscapeCheck
     };
 

@@ -31,7 +31,8 @@ export { cocos2xAdapter } from './adapters/cocos-2x.js';
 export { godot4Adapter } from './adapters/godot-4.js';
 export { unityWebglAdapter } from './adapters/unity-webgl.js';
 export { buildBrowserVfsShim } from './vfs/browser-shim.js';
-export { buildVfsPayloadScripts } from './vfs/payload.js';
+export { buildVfsPayloadScripts, type PayloadEncoding } from './vfs/payload.js';
+export { encodeBase122, decodeBase122, INLINE_BASE122_DECODER } from './vfs/base122.js';
 export { prepareGoogleZipFiles, splitSingleHtmlToSlimZip } from './vfs/html-utils.js';
 export { loadSource } from './source-loader.js';
 export { buildSingleHtml, emitChannelArtifact } from './channel-emitter.js';
@@ -215,7 +216,8 @@ export async function buildPlayable(options: BuildPlayableOptions): Promise<Buil
         inputPath: artifact.outputPath,
         channels: [artifact.channel],
         staticOnly: options.staticOnly,
-        browserPath: options.browserPath
+        browserPath: options.browserPath,
+        captureScreenshots: options.captureScreenshots
       });
       artifact.validation = report;
       if (!report.passed) {

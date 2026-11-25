@@ -1,5 +1,7 @@
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 import readline from 'node:readline';
-import { buildPlayable, optimizeDirectory, parseByteSize } from '@cocos-pnp/playable-core';
+import { buildPlayable, optimizeDirectory, parseByteSize, type PayloadEncoding } from '@cocos-pnp/playable-core';
 import {
   ALL_CHANNEL_IDS,
   analyzeSizeBreakdown,
@@ -9,6 +11,7 @@ import {
   validatePlayable,
   VALIDATOR_VERSION
 } from '@cocos-pnp/playable-validator';
+import { generateBuildHtmlReport, generateValidationHtmlReport } from './html-report.js';
 
 interface JsonRpcRequest {
   jsonrpc: '2.0';
@@ -103,6 +106,15 @@ const MCP_TOOLS = [
           type: 'boolean',
           description: 'Strip console.* calls during JS minification/tree-shaking.'
         },
+        encoding: {
+          type: 'string',
+          enum: ['base64', 'base122', 'auto'],
+          description: 'Payload encoding for pako-compressed VFS (base122 saves ~14% vs base64 losslessly).'
+        },
+        reportPath: {
+          type: 'string',
+          description: 'Optional file path to write a self-contained visual HTML audit report (includes runtime screenshots when validate=true).'
+        },
         staticOnly: {
           type: 'boolean',
           description: 'When validate=true, skip headless browser runtime checks.'
@@ -166,6 +178,10 @@ const MCP_TOOLS = [
         settleMs: {
           type: 'number',
           description: 'Milliseconds to wait after page load before sampling render/errors (default: 1200).'
+        },
+        reportPath: {
+          type: 'string',
+          description: 'Optional file path to write a self-contained visual HTML compliance report.'
         }
       }
     }
@@ -226,6 +242,12 @@ async function handleToolCall(name: string, args: Record<string, unknown>): Prom
       if (typeof args.fontSubsetChars === 'string') optPayload.fontSubsetChars = args.fontSubsetChars;
       if (args.dropConsole) optPayload.dropConsole = true;
       const hasOptPayload = Object.keys(optPayload).length > 0;
+      const encoding = (
+        args.encoding === 'base64' || args.encoding === 'base122' || args.encoding === 'auto'
+          ? args.encoding
+          : undefined
+      ) as PayloadEncoding | undefined;
+      const reportPath = typeof args.reportPath === 'string' ? path.resolve(args.reportPath) : undefined;
       const result = await buildPlayable({
         inputPath,
         outputDir,
@@ -240,15 +262,21 @@ async function handleToolCall(name: string, args: Record<string, unknown>): Prom
           iosUrl: typeof args.iosUrl === 'string' ? args.iosUrl : undefined,
           androidUrl: typeof args.androidUrl === 'string' ? args.androidUrl : undefined
         },
-        validate: Boolean(args.validate),
+        encoding,
+        validate: Boolean(args.validate) || Boolean(reportPath),
         optimize: hasOptPayload
           ? optPayload
           : Boolean(args.optimize) || targetSize !== undefined,
         targetSize,
-        staticOnly: Boolean(args.staticOnly)
+        staticOnly: Boolean(args.staticOnly),
+        captureScreenshots: Boolean(reportPath) && !args.staticOnly
       });
+      if (reportPath) {
+        await fs.mkdir(path.dirname(reportPath), { recursive: true });
+        await fs.writeFile(reportPath, generateBuildHtmlReport(result), 'utf-8');
+      }
       return {
-        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
+        content: [{ type: 'text', text: JSON.stringify(reportPath ? { ...result, reportPath } : result, null, 2) }]
       };
     }
 
@@ -290,15 +318,21 @@ async function handleToolCall(name: string, args: Record<string, unknown>): Prom
       if (!inputPath) {
         throw new Error('inputPath is required.');
       }
+      const reportPath = typeof args.reportPath === 'string' ? path.resolve(args.reportPath) : undefined;
       const report = await validatePlayable({
         inputPath,
         channels: Array.isArray(args.channels) ? args.channels.map(String) : undefined,
         staticOnly: Boolean(args.staticOnly),
         ctaSelector: typeof args.ctaSelector === 'string' ? args.ctaSelector : undefined,
-        settleMs: typeof args.settleMs === 'number' ? args.settleMs : undefined
+        settleMs: typeof args.settleMs === 'number' ? args.settleMs : undefined,
+        captureScreenshots: Boolean(reportPath) && !args.staticOnly
       });
+      if (reportPath) {
+        await fs.mkdir(path.dirname(reportPath), { recursive: true });
+        await fs.writeFile(reportPath, generateValidationHtmlReport(report), 'utf-8');
+      }
       return {
-        content: [{ type: 'text', text: JSON.stringify(report, null, 2) }]
+        content: [{ type: 'text', text: JSON.stringify(reportPath ? { ...report, reportPath } : report, null, 2) }]
       };
     }
 

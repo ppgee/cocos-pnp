@@ -87,6 +87,7 @@ export function buildSingleHtml(source: LoadedSource, options: BuildPlayableOpti
     entryHtmlPath: source.entryHtmlPath,
     fileMap,
     compress: options.compress,
+    encoding: options.encoding,
     adapterOptions
   });
 }
@@ -275,7 +276,8 @@ export async function emitChannelArtifact(
     }
   } else if (spec.id === 'google') {
     const prepared = prepareGoogleZipFiles(source, spec.allowedFileExtensions ?? [], {
-      compress: options.compress
+      compress: options.compress,
+      encoding: options.encoding
     });
     const finalHtml = applyChannelHtmlTransforms(prepared.html, spec, options);
     zip.file('index.html', finalHtml);

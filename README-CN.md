@@ -53,8 +53,8 @@
 pnpm install
 pnpm run build:v2
 
-# 2. 用内置可玩示例一键打包全部 8 渠道（支持 --target-size auto 自动按最严渠道红线逐级压包），并自动执行无头 Chrome 体检
-pnpm playable build examples/mini-playable -o ./playable-dist --channel all --target-size auto --check
+# 2. 用内置可玩示例一键打包全部 8 渠道（支持 --target-size auto 自动压包、--encoding base122 无损再省 ~14%、--report 输出带横竖屏截图的离线 HTML 体检报告）
+pnpm playable build examples/mini-playable -o ./playable-dist --channel all --target-size auto --encoding auto --check --report ./playable-dist/report.html
 
 # 3. 启动本地交互式 8 渠道预览调试台（竖屏/横屏/平板切换、静音与切后台模拟、实时 CTA 监视）
 pnpm playable preview ./playable-dist/AppLovin.html --channel applovin

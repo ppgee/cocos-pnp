@@ -1,5 +1,6 @@
 import type { CheerioAPI } from 'cheerio';
 import type { VirtualFile } from '../types.js';
+import type { PayloadEncoding } from '../vfs/payload.js';
 
 export interface AdapterTransformContext {
   /** Parsed cheerio DOM of the entry HTML */
@@ -10,6 +11,8 @@ export interface AdapterTransformContext {
   fileMap: Map<string, VirtualFile>;
   /** Enable pako deflate compression when beneficial */
   compress?: boolean;
+  /** Binary payload encoding for compressed VFS ('base64' | 'base122' | 'auto') */
+  encoding?: PayloadEncoding;
   /** Adapter-specific extra options */
   adapterOptions?: Record<string, unknown>;
 }

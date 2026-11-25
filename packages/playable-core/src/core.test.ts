@@ -8,7 +8,9 @@ import { promisify } from 'node:util';
 import { detectBrowserExecutable } from '@cocos-pnp/playable-validator';
 import {
   buildPlayable,
+  decodeBase122,
   detectFfmpegBinary,
+  encodeBase122,
   genericWebAdapter,
   loadPlayableConfig,
   optimizeDirectory,
@@ -796,5 +798,94 @@ document.getElementById('cta').addEventListener('click', () => window.playable.c
         `Subsetted TTF should shrink by >80% (${origFontBytes} -> ${outFont.byteLength})`
       );
     }
+  });
+
+  it('encodes/decodes Base122 losslessly across edge lengths and shrinks pako VFS payloads in headless Chrome', async () => {
+    // 1. Exhaustive round-trip across lengths 0..64 + all 256 byte values + 8KB pseudo-random binary
+    for (let len = 0; len <= 32; len++) {
+      const buf = new Uint8Array(len);
+      for (let i = 0; i < len; i++) buf[i] = (i * 37 + len * 13) & 0xff;
+      const enc = encodeBase122(buf);
+      assert.equal(/[\0\n\r"&\\]/.test(enc), false, `Base122 must never emit illegal chars (len=${len})`);
+      assert.deepEqual(decodeBase122(enc), buf, `Base122 round-trip failed for len=${len}`);
+    }
+    const allBytes = Uint8Array.from({ length: 256 }, (_, i) => i);
+    assert.deepEqual(decodeBase122(encodeBase122(allBytes)), allBytes);
+
+    const randBuf = new Uint8Array(8192);
+    for (let i = 0; i < randBuf.length; i++) randBuf[i] = (i * 1103515245 + 12345) >>> 16 & 0xff;
+    const enc122 = encodeBase122(randBuf);
+    assert.deepEqual(decodeBase122(enc122), randBuf);
+    const b122Utf8Bytes = Buffer.byteLength(enc122, 'utf-8');
+    const b64Bytes = Buffer.from(randBuf).toString('base64').length;
+    assert.ok(
+      b122Utf8Bytes < b64Bytes * 0.88,
+      `Base122 (${b122Utf8Bytes}B) should be >12% smaller than Base64 (${b64Bytes}B)`
+    );
+
+    // 2. End-to-end single-HTML build with Base122 vs Base64 & headless Chrome runtime decode verification
+    const srcDir = path.join(tmpDir, 'base122-vfs-game');
+    const outB64 = path.join(tmpDir, 'out-b64');
+    const outB122 = path.join(tmpDir, 'out-b122');
+    await fs.mkdir(srcDir, { recursive: true });
+
+    // Mix high-entropy pseudo-random binary blob (~60KB) + JSON so deflated payload is ~50KB
+    const binaryAsset = Buffer.alloc(60_000);
+    for (let i = 0; i < binaryAsset.length; i++) binaryAsset[i] = (i * 48271 + 17) & 0xff;
+    await fs.writeFile(path.join(srcDir, 'level.bin'), binaryAsset);
+    await fs.writeFile(
+      path.join(srcDir, 'index.html'),
+      `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><style>html,body{margin:0;width:100%;height:100%;background:#102040;}</style></head>
+<body>
+  <canvas id="c" width="390" height="400" style="width:100%;height:100%;display:block;"></canvas>
+  <button id="cta" data-playable-cta style="position:fixed;bottom:20px;left:20px;padding:12px 24px;">Install</button>
+  <script>
+    window.playable.init({
+      onStart: function () {
+        fetch('./level.bin').then(function (r) { return r.arrayBuffer(); }).then(function (ab) {
+          var ctx = document.getElementById('c').getContext('2d');
+          ctx.fillStyle = '#183060';
+          ctx.fillRect(0, 0, 390, 400);
+          ctx.fillStyle = ab.byteLength === 60000 ? '#00e676' : '#ff1744';
+          ctx.fillRect(40, 40, 280, 260);
+          window.playable.ready();
+        });
+      }
+    });
+    document.getElementById('cta').addEventListener('click', function () { window.playable.cta(); });
+  </script>
+</body>
+</html>`
+    );
+
+    const hasBrowser = Boolean(detectBrowserExecutable());
+    const resB64 = await buildPlayable({
+      inputPath: srcDir,
+      outputDir: outB64,
+      channels: ['applovin'],
+      compress: true,
+      encoding: 'base64',
+      validate: true,
+      staticOnly: true
+    });
+    const resB122 = await buildPlayable({
+      inputPath: srcDir,
+      outputDir: outB122,
+      channels: ['applovin'],
+      compress: true,
+      encoding: 'base122',
+      validate: true,
+      staticOnly: !hasBrowser
+    });
+
+    assert.equal(resB122.allValid, true);
+    assert.ok(
+      resB122.artifacts[0].bytes < resB64.artifacts[0].bytes,
+      `Base122 single HTML (${resB122.artifacts[0].bytes}B) should be strictly smaller than Base64 (${resB64.artifacts[0].bytes}B)`
+    );
+    const html122 = await fs.readFile(resB122.artifacts[0].outputPath, 'utf-8');
+    assert.ok(html122.includes('__PLAYABLE_VFS_B122__'), 'Base122 payload marker should be emitted');
   });
 });

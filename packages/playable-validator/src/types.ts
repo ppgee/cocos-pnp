@@ -158,6 +158,8 @@ export interface LandscapeCheckResult {
   blankScreenDetails?: string;
   consoleErrors: string[];
   pageErrors: string[];
+  /** Optional inline JPEG data URI captured when captureScreenshots=true */
+  screenshotDataUri?: string;
 }
 
 export interface RuntimeCheckResult {
@@ -176,6 +178,8 @@ export interface RuntimeCheckResult {
   isBlankScreen: boolean;
   blankScreenDetails?: string;
   viewport: { width: number; height: number };
+  /** Optional inline JPEG data URI captured when captureScreenshots=true */
+  screenshotDataUri?: string;
   landscapeCheck?: LandscapeCheckResult;
 }
 
@@ -216,6 +220,8 @@ export interface ValidateOptions {
   viewport?: { width: number; height: number };
   /** Wait duration after load before sampling render/errors (ms, default 1200) */
   settleMs?: number;
+  /** Capture portrait & landscape JPEG screenshots as data URIs for visual HTML reports (default: false) */
+  captureScreenshots?: boolean;
   /** Top N largest size contributors to include in report (default 10) */
   topN?: number;
 }

@@ -1,8 +1,12 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { promises as fs } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { detectBrowserExecutable, validatePlayable } from '@cocos-pnp/playable-validator';
+import { generateValidationHtmlReport } from './html-report.js';
 import { startPreviewServer } from './preview-server.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -134,6 +138,53 @@ describe('@cocos-pnp/playable-cli local interactive preview workbench', () => {
       assert.ok(sandboxHtml.includes('audioVolumeChange'));
     } finally {
       await handle.close();
+    }
+  });
+});
+
+describe('@cocos-pnp/playable-cli self-contained HTML audit report', () => {
+  it('generates offline HTML report with embedded portrait & landscape runtime screenshots', async () => {
+    const hasBrowser = Boolean(detectBrowserExecutable());
+    const report = await validatePlayable({
+      inputPath: VALID_FIXTURE,
+      channels: ['applovin'],
+      staticOnly: !hasBrowser,
+      settleMs: 250,
+      captureScreenshots: hasBrowser
+    });
+
+    assert.equal(report.passed, true);
+    const html = generateValidationHtmlReport(report);
+    assert.ok(html.startsWith('<!DOCTYPE html>'));
+    assert.ok(html.includes('Ad Network Compliance Matrix'));
+    assert.ok(html.includes('Size Breakdown'));
+    assert.ok(html.includes('ALL CHECKS PASSED'));
+
+    if (hasBrowser) {
+      assert.ok(report.channels[0].runtime.screenshotDataUri?.startsWith('data:image/jpeg;base64,'));
+      assert.ok(report.channels[0].runtime.landscapeCheck?.screenshotDataUri?.startsWith('data:image/jpeg;base64,'));
+      assert.ok(html.includes('Runtime Render Screenshots'));
+      assert.ok(html.includes('data:image/jpeg;base64,'));
+    }
+
+    // Verify CLI --report flag writes report file cleanly
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'playable-report-test-'));
+    try {
+      const reportFile = path.join(tmpDir, 'audit.html');
+      const exitCode = await new Promise<number>((resolve, reject) => {
+        const child = spawn(
+          process.execPath,
+          [CLI_ENTRY, 'check', VALID_FIXTURE, '--channel', 'applovin', '--static-only', '--report', reportFile],
+          { stdio: 'ignore' }
+        );
+        child.on('error', reject);
+        child.on('close', (code) => resolve(code ?? 1));
+      });
+      assert.equal(exitCode, 0);
+      const written = await fs.readFile(reportFile, 'utf-8');
+      assert.ok(written.includes('Playable Compliance Report'));
+    } finally {
+      await fs.rm(tmpDir, { recursive: true, force: true });
     }
   });
 });

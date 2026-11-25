@@ -86,7 +86,7 @@ export const genericWebAdapter: EngineAdapter = {
     }
 
     if (Object.keys(vfs).length > 0) {
-      const payload = buildVfsPayloadScripts(vfs, { compress });
+      const payload = buildVfsPayloadScripts(vfs, { compress, encoding: ctx.encoding });
       const vfsTags = [
         ...payload.scripts.map((blk) => `<script data-id="${blk.id}">${escapeInlineScript(blk.code)}</script>`),
         `<script data-id="playable-vfs-loader">${escapeInlineScript(buildBrowserVfsShim())}</script>`

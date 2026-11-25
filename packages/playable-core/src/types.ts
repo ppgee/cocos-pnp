@@ -2,6 +2,7 @@ import type { BridgeGeneratorOptions } from '@cocos-pnp/playable-sdk';
 import type { ChannelId, ValidationReport } from '@cocos-pnp/playable-validator';
 import type { EngineAdapter } from './adapters/types.js';
 import type { AssetOptimizeOptions, OptimizationSummary } from './optimizer/asset-optimizer.js';
+import type { PayloadEncoding } from './vfs/payload.js';
 
 export type OrientationMode = 'portrait' | 'landscape' | 'auto';
 
@@ -28,6 +29,8 @@ export interface BuildPlayableOptions {
   packageName?: string;
   /** Enable pako deflate compression for single-HTML bundles when beneficial (default: true) */
   compress?: boolean;
+  /** Binary payload encoding for compressed VFS ('base64' default | 'base122' ~14% smaller | 'auto') */
+  encoding?: PayloadEncoding;
   /** Enable zero-API-key offline local asset optimization (sharp images + ffmpeg audio/video + JSON/SVG/CSS minification) */
   optimize?: boolean | AssetOptimizeOptions;
   /**
@@ -49,6 +52,8 @@ export interface BuildPlayableOptions {
   validate?: boolean;
   /** When validate=true, skip headless browser runtime checks */
   staticOnly?: boolean;
+  /** When validate=true and staticOnly=false, embed portrait/landscape screenshots in validation report */
+  captureScreenshots?: boolean;
   /** Explicit Chrome/Chromium path for runtime validation */
   browserPath?: string;
 }
