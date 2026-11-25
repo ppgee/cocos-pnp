@@ -1,7 +1,13 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
-import { buildPlayable, optimizeDirectory, parseByteSize, type PayloadEncoding } from '@ppgee/playable-core';
+import {
+  buildPlayable,
+  normalizeVariants,
+  optimizeDirectory,
+  parseByteSize,
+  type PayloadEncoding
+} from '@ppgee/playable-core';
 import {
   ALL_CHANNEL_IDS,
   analyzeSizeBreakdown,
@@ -110,6 +116,21 @@ const MCP_TOOLS = [
           type: 'string',
           enum: ['base64', 'base122', 'auto'],
           description: 'Payload encoding for pako-compressed VFS (base122 saves ~14% vs base64 losslessly).'
+        },
+        variants: {
+          type: 'array',
+          description: 'Optional multi-variant matrix (each item has id, optional label, and config object injected as window.__PLAYABLE_CONFIG__).',
+          items: {
+            type: 'object',
+            required: ['id'],
+            properties: {
+              id: { type: 'string' },
+              label: { type: 'string' },
+              config: { type: 'object' },
+              channels: { type: 'array', items: { type: 'string' } },
+              orientation: { type: 'string', enum: ['portrait', 'landscape', 'auto'] }
+            }
+          }
         },
         reportPath: {
           type: 'string',
@@ -263,6 +284,7 @@ async function handleToolCall(name: string, args: Record<string, unknown>): Prom
           androidUrl: typeof args.androidUrl === 'string' ? args.androidUrl : undefined
         },
         encoding,
+        variants: normalizeVariants(args.variants),
         validate: Boolean(args.validate) || Boolean(reportPath),
         optimize: hasOptPayload
           ? optPayload

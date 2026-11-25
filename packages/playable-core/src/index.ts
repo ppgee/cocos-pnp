@@ -18,7 +18,9 @@ import type {
   BuildPlayableOptions,
   BuildPlayableResult,
   ChannelBuildArtifact,
-  LoadedSource
+  LoadedSource,
+  PlayableVariantConfig,
+  VariantBuildSummary
 } from './types.js';
 
 export * from './types.js';
@@ -84,9 +86,18 @@ export {
 export {
   DEFAULT_CONFIG_TEMPLATE,
   loadPlayableConfig,
+  normalizeVariants,
   type LoadedConfigResult,
   type PlayableConfigFile
 } from './config-loader.js';
+
+function sanitizeVariantDir(variantId: string): string {
+  const clean = variantId.trim().replace(/[^a-zA-Z0-9._-]/g, '_');
+  if (!clean || clean === '.' || clean === '..') {
+    throw new Error(`Invalid variant id "${variantId}".`);
+  }
+  return clean;
+}
 
 function effectiveChannelLimitBytes(spec: ChannelSpec): number {
   const rawLimit =
@@ -100,15 +111,18 @@ function effectiveChannelLimitBytes(spec: ChannelSpec): number {
 async function emitAllChannels(
   source: LoadedSource,
   resolvedChannels: ReturnType<typeof resolveChannels>,
-  normalizedOptions: BuildPlayableOptions
+  normalizedOptions: BuildPlayableOptions,
+  sharedGetSingleHtml?: () => string
 ): Promise<ChannelBuildArtifact[]> {
   let cachedSingleHtml: string | null = null;
-  const getCachedSingleHtml = () => {
-    if (cachedSingleHtml === null) {
-      cachedSingleHtml = buildSingleHtml(source, normalizedOptions);
-    }
-    return cachedSingleHtml;
-  };
+  const getCachedSingleHtml =
+    sharedGetSingleHtml ??
+    (() => {
+      if (cachedSingleHtml === null) {
+        cachedSingleHtml = buildSingleHtml(source, normalizedOptions);
+      }
+      return cachedSingleHtml;
+    });
 
   const artifacts: ChannelBuildArtifact[] = [];
   for (const item of resolvedChannels) {
@@ -118,6 +132,43 @@ async function emitAllChannels(
     artifacts.push(artifact);
   }
   return artifacts;
+}
+
+interface VariantBuildPlan {
+  variant: PlayableVariantConfig;
+  channels: ReturnType<typeof resolveChannels>;
+  options: BuildPlayableOptions;
+}
+
+async function emitForPlans(
+  source: LoadedSource,
+  baseChannels: ReturnType<typeof resolveChannels>,
+  normalizedOptions: BuildPlayableOptions,
+  variantPlans?: VariantBuildPlan[]
+): Promise<ChannelBuildArtifact[]> {
+  let cachedSingleHtml: string | null = null;
+  const getCachedSingleHtml = () => {
+    if (cachedSingleHtml === null) {
+      cachedSingleHtml = buildSingleHtml(source, normalizedOptions);
+    }
+    return cachedSingleHtml;
+  };
+
+  if (!variantPlans || variantPlans.length === 0) {
+    return emitAllChannels(source, baseChannels, normalizedOptions, getCachedSingleHtml);
+  }
+
+  const allArtifacts: ChannelBuildArtifact[] = [];
+  for (const plan of variantPlans) {
+    const variantArtifacts = await emitAllChannels(
+      source,
+      plan.channels,
+      plan.options,
+      getCachedSingleHtml
+    );
+    allArtifacts.push(...variantArtifacts);
+  }
+  return allArtifacts;
 }
 
 export async function buildPlayable(options: BuildPlayableOptions): Promise<BuildPlayableResult> {
@@ -132,6 +183,35 @@ export async function buildPlayable(options: BuildPlayableOptions): Promise<Buil
     ...options,
     outputDir
   };
+
+  const activeVariants =
+    Array.isArray(options.variants) && options.variants.length > 0 ? options.variants : undefined;
+
+  const variantPlans: VariantBuildPlan[] | undefined = activeVariants?.map((v) => {
+    const dirName = sanitizeVariantDir(v.id);
+    const variantOutDir = path.join(outputDir, dirName);
+    const vChannels = v.channels && v.channels.length > 0 ? resolveChannels(v.channels) : resolvedChannels;
+    return {
+      variant: v,
+      channels: vChannels,
+      options: {
+        ...normalizedOptions,
+        outputDir: variantOutDir,
+        orientation: v.orientation ?? normalizedOptions.orientation,
+        packageName: v.packageName ?? normalizedOptions.packageName,
+        storeUrls: v.storeUrls
+          ? { ...(normalizedOptions.storeUrls ?? {}), ...v.storeUrls }
+          : normalizedOptions.storeUrls,
+        variantId: v.id,
+        variantLabel: v.label,
+        runtimeConfig:
+          normalizedOptions.runtimeConfig || v.config
+            ? { ...(normalizedOptions.runtimeConfig ?? {}), ...(v.config ?? {}) }
+            : undefined,
+        variants: undefined
+      }
+    };
+  });
 
   const baseOptOpts: AssetOptimizeOptions =
     typeof options.optimize === 'object' ? { ...options.optimize } : {};
@@ -153,7 +233,10 @@ export async function buildPlayable(options: BuildPlayableOptions): Promise<Buil
 
   if (budgetMode) {
     const perChannelLimits = new Map<string, number>();
-    for (const item of resolvedChannels) {
+    const allSpecs = variantPlans
+      ? variantPlans.flatMap((p) => p.channels)
+      : resolvedChannels;
+    for (const item of allSpecs) {
       perChannelLimits.set(
         item.id,
         explicitTargetBytes ?? effectiveChannelLimitBytes(item.spec)
@@ -178,7 +261,12 @@ export async function buildPlayable(options: BuildPlayableOptions): Promise<Buil
       );
       const optRes = await optimizeVirtualFiles(rawSource.files, passOpts);
       const passSource: LoadedSource = { ...rawSource, files: optRes.files };
-      const passArtifacts = await emitAllChannels(passSource, resolvedChannels, normalizedOptions);
+      const passArtifacts = await emitForPlans(
+        passSource,
+        resolvedChannels,
+        normalizedOptions,
+        variantPlans
+      );
 
       artifacts = passArtifacts;
       const maxArtifactBytes = Math.max(...passArtifacts.map((a) => a.bytes), 0);
@@ -206,7 +294,7 @@ export async function buildPlayable(options: BuildPlayableOptions): Promise<Buil
       source = { ...rawSource, files: optRes.files };
       optimization = optRes.summary;
     }
-    artifacts = await emitAllChannels(source, resolvedChannels, normalizedOptions);
+    artifacts = await emitForPlans(source, resolvedChannels, normalizedOptions, variantPlans);
   }
 
   let allValid = true;
@@ -226,11 +314,24 @@ export async function buildPlayable(options: BuildPlayableOptions): Promise<Buil
     }
   }
 
+  const variantSummaries: VariantBuildSummary[] | undefined = variantPlans?.map((plan) => {
+    const vArts = artifacts.filter((a) => a.variant === plan.variant.id);
+    return {
+      id: plan.variant.id,
+      label: plan.variant.label,
+      config: plan.options.runtimeConfig,
+      outputDir: plan.options.outputDir,
+      artifactCount: vArts.length,
+      allValid: vArts.every((a) => (a.validation ? a.validation.passed : true))
+    };
+  });
+
   return {
     inputPath: rawSource.inputPath,
     outputDir,
     engine: rawSource.engineId,
     optimization,
+    ...(variantSummaries ? { variants: variantSummaries } : {}),
     artifacts,
     allValid
   };

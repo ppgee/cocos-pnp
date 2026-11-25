@@ -33,6 +33,8 @@ function channelLimitBytes(channel: ChannelId, format: 'single-html' | 'zip' | '
 }
 
 interface UnifiedRow {
+  variant?: string;
+  variantLabel?: string;
   channel: ChannelId;
   displayName: string;
   format: 'single-html' | 'zip' | 'directory';
@@ -154,7 +156,8 @@ function renderScreenshotsSection(rows: UnifiedRow[]): string {
       const lImg = r.landscapeShot
         ? `<figure><img src="${r.landscapeShot}" alt="${esc(r.channel)} landscape" /><figcaption>Landscape (${r.landscapeBlank ? 'BLANK' : 'OK'})</figcaption></figure>`
         : '';
-      return `<div class="shot-card"><div class="shot-title">${esc(r.displayName)} <span class="mono muted">(${esc(r.channel)})</span></div><div class="shot-pair">${pImg}${lImg}</div></div>`;
+      const vTag = r.variant ? `<span class="tag tag-kind">${esc(r.variant)}</span> ` : '';
+      return `<div class="shot-card"><div class="shot-title">${vTag}${esc(r.displayName)} <span class="mono muted">(${esc(r.channel)})</span></div><div class="shot-pair">${pImg}${lImg}</div></div>`;
     })
     .join('');
 
@@ -175,7 +178,8 @@ function renderDiagnosticsSection(rows: UnifiedRow[]): string {
         })
         .join('');
       const openAttr = r.errorCount > 0 || r.warningCount > 0 ? ' open' : '';
-      return `<details class="details-block"${openAttr}><summary>${esc(r.displayName)} (${esc(r.channel)}) — ${r.errorCount} error(s), ${r.warningCount} warning(s)</summary><div class="diag-list">${items}</div></details>`;
+      const vPrefix = r.variant ? `[${esc(r.variant)}] ` : '';
+      return `<details class="details-block"${openAttr}><summary>${vPrefix}${esc(r.displayName)} (${esc(r.channel)}) — ${r.errorCount} error(s), ${r.warningCount} warning(s)</summary><div class="diag-list">${items}</div></details>`;
     })
     .join('');
 
@@ -195,6 +199,8 @@ function renderDocument(params: {
 }): string {
   const passCount = params.rows.filter((r) => r.passed === true).length;
   const totalCount = params.rows.length;
+  const variantIds = Array.from(new Set(params.rows.map((r) => r.variant).filter((v): v is string => Boolean(v))));
+  const hasVariants = variantIds.length > 0;
   const maxBytes = Math.max(...params.rows.map((r) => r.bytes), 0);
   const totalErrors = params.rows.reduce((s, r) => s + r.errorCount, 0);
   const totalWarnings = params.rows.reduce((s, r) => s + r.warningCount, 0);
@@ -214,7 +220,11 @@ function renderDocument(params: {
         r.loadTimeMs !== undefined
           ? `${r.loadTimeMs}ms${r.landscapeBlank !== undefined ? (r.landscapeBlank ? ' · LS:BLANK' : ' · LS:OK') : ''}`
           : '<span class="muted">static</span>';
+      const variantCell = hasVariants
+        ? `<td><span class="tag tag-kind">${esc(r.variant || 'default')}</span>${r.variantLabel ? `<div class="muted" style="font-size:11px;margin-top:2px;">${esc(r.variantLabel)}</div>` : ''}</td>`
+        : '';
       return `<tr>
+        ${variantCell}
         <td><b>${esc(r.displayName)}</b> <span class="mono muted">${esc(r.channel)}</span></td>
         <td><span class="tag">${esc(r.format)}</span></td>
         <td>
@@ -317,17 +327,18 @@ function renderDocument(params: {
   </header>
 
   <section class="kpi-grid">
-    <div class="kpi"><div class="kpi-label">Channels Passed</div><div class="kpi-val ${passCount === totalCount ? 'ok' : 'err'}">${passCount} / ${totalCount}</div></div>
+    ${hasVariants ? `<div class="kpi"><div class="kpi-label">Variants</div><div class="kpi-val">${variantIds.length}</div></div>` : ''}
+    <div class="kpi"><div class="kpi-label">${hasVariants ? 'Artifacts Passed' : 'Channels Passed'}</div><div class="kpi-val ${passCount === totalCount ? 'ok' : 'err'}">${passCount} / ${totalCount}</div></div>
     <div class="kpi"><div class="kpi-label">Largest Artifact</div><div class="kpi-val">${esc(fmtBytes(maxBytes))}</div></div>
     <div class="kpi"><div class="kpi-label">Errors / Warnings</div><div class="kpi-val">${totalErrors > 0 ? `<span class="err">${totalErrors}</span>` : '<span class="ok">0</span>'} / ${totalWarnings}</div></div>
     <div class="kpi"><div class="kpi-label">Asset Savings</div><div class="kpi-val ${params.optimization && params.optimization.savedBytes > 0 ? 'ok' : ''}">${params.optimization && params.optimization.savedBytes > 0 ? `-${esc(fmtBytes(params.optimization.savedBytes))} (-${params.optimization.savedPercent}%)` : '—'}</div></div>
   </section>
 
   <section class="card">
-    <div class="section-head"><h2>Ad Network Compliance Matrix</h2></div>
+    <div class="section-head"><h2>${hasVariants ? 'Multi-Variant &amp; Ad Network Compliance Matrix' : 'Ad Network Compliance Matrix'}</h2></div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Network</th><th>Format</th><th>Package Size vs Limit</th><th>Status</th><th class="num">Err / Warn</th><th>Verified CTA</th><th>Runtime</th></tr></thead>
+        <thead><tr>${hasVariants ? '<th>Variant</th>' : ''}<th>Network</th><th>Format</th><th>Package Size vs Limit</th><th>Status</th><th class="num">Err / Warn</th><th>Verified CTA</th><th>Runtime</th></tr></thead>
         <tbody>${matrixRows}</tbody>
       </table>
     </div>
@@ -374,9 +385,15 @@ export function generateBuildHtmlReport(result: BuildPlayableResult): string {
   const rows: UnifiedRow[] = result.artifacts.map((art) => {
     const ch = art.validation?.channels[0];
     if (ch) {
-      return rowFromChannelReport(ch, art.format, art.bytes, art.outputPath);
+      return {
+        ...rowFromChannelReport(ch, art.format, art.bytes, art.outputPath),
+        variant: art.variant,
+        variantLabel: art.variantLabel
+      };
     }
     return {
+      variant: art.variant,
+      variantLabel: art.variantLabel,
       channel: art.channel,
       displayName: art.displayName,
       format: art.format,

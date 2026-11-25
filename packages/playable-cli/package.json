@@ -1,6 +1,6 @@
 {
   "name": "@ppgee/playable-cli",
-  "version": "2.0.0-alpha.0",
+  "version": "2.0.0",
   "description": "CLI, interactive preview workbench, offline HTML audit reporter, and MCP Server for HTML5 Playable Ads",
   "type": "module",
   "main": "./dist/index.js",

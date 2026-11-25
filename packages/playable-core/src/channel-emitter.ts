@@ -19,6 +19,15 @@ import type {
 
 const LEGACY_CHANNEL_PLACEHOLDER = '{{__adv_channels_adapter__}}';
 const V2_CHANNEL_PLACEHOLDER = '{{__playable_channel__}}';
+const V2_VARIANT_PLACEHOLDER = '{{__playable_variant__}}';
+
+function escapeInlineScriptJson(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
 
 const CHANNEL_FILE_LABEL: Record<ChannelId, string> = {
   applovin: 'AppLovin',
@@ -41,11 +50,12 @@ const MRAID_SCRIPT = '<script src="mraid.js"></script>';
 
 const TEXT_REWRITE_EXTS = new Set(['.js', '.mjs', '.cjs', '.css', '.html', '.htm', '.json']);
 
-function replacePlaceholders(content: string, channel: ChannelId): string {
+function replacePlaceholders(content: string, channel: ChannelId, variantId?: string): string {
   const legacyLabel = channel === 'meta' ? 'Facebook' : CHANNEL_FILE_LABEL[channel];
   return content
     .replaceAll(LEGACY_CHANNEL_PLACEHOLDER, legacyLabel)
-    .replaceAll(V2_CHANNEL_PLACEHOLDER, channel);
+    .replaceAll(V2_CHANNEL_PLACEHOLDER, channel)
+    .replaceAll(V2_VARIANT_PLACEHOLDER, variantId ?? '');
 }
 
 function sanitizeLowercaseAsciiPath(p: string): string {
@@ -97,7 +107,7 @@ function applyChannelHtmlTransforms(
   spec: ChannelSpec,
   options: BuildPlayableOptions
 ): string {
-  const htmlWithPlaceholders = replacePlaceholders(rawHtml, spec.id);
+  const htmlWithPlaceholders = replacePlaceholders(rawHtml, spec.id, options.variantId);
   const $ = loadHtml(htmlWithPlaceholders);
   const orientation: OrientationMode = options.orientation ?? 'auto';
   const custom = options.injectOptions?.[spec.id];
@@ -151,6 +161,24 @@ function applyChannelHtmlTransforms(
     $('head').prepend(custom.sdkScript);
   }
 
+  // Inject runtime variant config before game scripts execute
+  if (options.runtimeConfig !== undefined || options.variantId) {
+    const cfgParts: string[] = [];
+    if (options.variantId) {
+      cfgParts.push(`window.__PLAYABLE_VARIANT__=${escapeInlineScriptJson(options.variantId)};`);
+    }
+    if (options.runtimeConfig !== undefined) {
+      cfgParts.push(`window.__PLAYABLE_CONFIG__=${escapeInlineScriptJson(options.runtimeConfig)};`);
+    }
+    const cfgScript = `<script data-id="playable-variant-config">${cfgParts.join('')}</script>`;
+    const firstScript = $('head script').first();
+    if (firstScript.length > 0) {
+      firstScript.before(cfgScript);
+    } else {
+      $('head').prepend(cfgScript);
+    }
+  }
+
   // Inject zero-dependency, channel-isolated @ppgee/playable-sdk bridge
   if (options.injectSdkBridge !== false) {
     const bridgeCode = generateChannelBridgeScript(spec.id, options.storeUrls);
@@ -167,10 +195,10 @@ function applyChannelHtmlTransforms(
   return $.html();
 }
 
-function replaceTextInFiles(files: VirtualFile[], channel: ChannelId): VirtualFile[] {
+function replaceTextInFiles(files: VirtualFile[], channel: ChannelId, variantId?: string): VirtualFile[] {
   return files.map((f) => {
     if (TEXT_REWRITE_EXTS.has(f.ext)) {
-      const updated = replacePlaceholders(f.content.toString('utf-8'), channel);
+      const updated = replacePlaceholders(f.content.toString('utf-8'), channel, variantId);
       return { ...f, content: Buffer.from(updated, 'utf-8') };
     }
     return f;
@@ -246,7 +274,8 @@ export async function emitChannelArtifact(
       displayName: spec.displayName,
       format: 'single-html',
       outputPath: outPath,
-      bytes: buf.byteLength
+      bytes: buf.byteLength,
+      ...(options.variantId ? { variant: options.variantId, variantLabel: options.variantLabel } : {})
     };
   }
 
@@ -257,7 +286,11 @@ export async function emitChannelArtifact(
   if (spec.id === 'mintegral') {
     // Official Playturbo / Mintegral Reviewer restricts names to ASCII letters, digits, and underscores (no hyphens).
     const mtgBase = baseName.replace(/[^a-zA-Z0-9_]/g, '_');
-    const mtgName = `${mtgBase}_mintegral`;
+    const variantSuffix =
+      options.variantId && !options.packageName
+        ? `_${options.variantId.replace(/[^a-zA-Z0-9_]/g, '_')}`
+        : '';
+    const mtgName = `${mtgBase}${variantSuffix}_mintegral`;
     zipFileName = `${mtgName}.zip`;
     const finalHtml = applyChannelHtmlTransforms(getSingleHtml(), spec, options);
     zip.file(`${mtgName}/${mtgName}.html`, finalHtml);
@@ -281,7 +314,7 @@ export async function emitChannelArtifact(
     });
     const finalHtml = applyChannelHtmlTransforms(prepared.html, spec, options);
     zip.file('index.html', finalHtml);
-    for (const file of replaceTextInFiles(prepared.files, spec.id)) {
+    for (const file of replaceTextInFiles(prepared.files, spec.id, options.variantId)) {
       zip.file(file.path, file.content);
     }
   } else {
@@ -291,7 +324,8 @@ export async function emitChannelArtifact(
     }
     const otherFiles = replaceTextInFiles(
       source.files.filter((f) => f.path !== source.entryHtmlPath),
-      spec.id
+      spec.id,
+      options.variantId
     );
 
     let htmlContent = normalizeRelativePathsForZip(entryFile.content.toString('utf-8'));
@@ -351,6 +385,7 @@ export async function emitChannelArtifact(
     displayName: spec.displayName,
     format: 'zip',
     outputPath: outPath,
-    bytes: zipBuf.byteLength
+    bytes: zipBuf.byteLength,
+    ...(options.variantId ? { variant: options.variantId, variantLabel: options.variantLabel } : {})
   };
 }

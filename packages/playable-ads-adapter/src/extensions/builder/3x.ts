@@ -1,4 +1,5 @@
 import { shell } from 'electron'
+import { spawn } from 'child_process'
 import { IBuildTaskOption, Platform } from "~types/packages/builder/@types";
 import { run } from "node-cmd"
 import { BUILDER_NAME } from "@/extensions/constants";
@@ -6,6 +7,53 @@ import { checkOSPlatform, getAdapterConfig, getRCSkipBuild, getRealPath } from "
 import { exec3xAdapter } from 'playable-adapter-core'
 import workPath from '../worker/3x?worker'
 import { join } from 'path';
+
+const runV2CliBridge = (params: {
+  projectRootPath: string
+  originPkgPath: string
+  outputDir: string
+  extraArgs?: string[]
+}): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const isWin = process.platform === 'win32'
+    const cmd = isWin ? 'npx.cmd' : 'npx'
+    const args = [
+      '-y',
+      '@ppgee/playable-cli',
+      'build',
+      params.originPkgPath,
+      '-o',
+      params.outputDir,
+      '--target-size',
+      'auto',
+      '--encoding',
+      'auto',
+      '--check',
+      '--report',
+      join(params.outputDir, 'report.html'),
+      ...(Array.isArray(params.extraArgs) ? params.extraArgs : [])
+    ]
+    console.log(`${BUILDER_NAME} 已启用 useV2Cli，调用命令: ${cmd} ${args.join(' ')}`)
+    const child = spawn(cmd, args, {
+      cwd: params.projectRootPath,
+      shell: isWin
+    })
+    child.stdout?.on('data', (chunk: Buffer) => {
+      console.log(chunk.toString('utf-8').trimEnd())
+    })
+    child.stderr?.on('data', (chunk: Buffer) => {
+      console.warn(chunk.toString('utf-8').trimEnd())
+    })
+    child.on('error', (err) => reject(err))
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolve()
+      } else {
+        reject(new Error(`@ppgee/playable-cli exited with code ${code}`))
+      }
+    })
+  })
+}
 
 const setupWorker = (params: { buildFolderPath: string; adapterBuildConfig: TAdapterRC}, successCb: Function, failCb: Function) => {
   const { Worker } = require('worker_threads')
@@ -57,6 +105,7 @@ export const initBuildFinishedEvent = (options: Partial<IBuildTaskOption>) => {
     const {
       projectRootPath,
       projectBuildPath,
+      originPkgPath,
       adapterBuildConfig,
     } = getAdapterConfig()
 
@@ -74,6 +123,22 @@ export const initBuildFinishedEvent = (options: Partial<IBuildTaskOption>) => {
     const handleExportError = (err: string) => {
       console.error('适配失败')
       reject(err)
+    }
+
+    if (adapterBuildConfig?.useV2Cli) {
+      const inputDir = options.platform
+        ? join(buildFolderPath, options.platform)
+        : originPkgPath
+      const outputDir = join(buildFolderPath, 'playable-v2')
+      runV2CliBridge({
+        projectRootPath,
+        originPkgPath: inputDir,
+        outputDir,
+        extraArgs: adapterBuildConfig.v2CliArgs
+      })
+        .then(handleExportFinished)
+        .catch((err) => handleExportError(err instanceof Error ? err.message : String(err)))
+      return
     }
 
     const params = {

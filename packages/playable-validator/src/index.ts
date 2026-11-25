@@ -16,7 +16,7 @@ export { analyzeSizeBreakdown, loadArtifact } from './archive.js';
 export { runStaticChecks } from './static-checker.js';
 export { detectBrowserExecutable } from './runtime-checker.js';
 
-export const VALIDATOR_VERSION = '2.0.0-alpha.0';
+export const VALIDATOR_VERSION = '2.0.0';
 
 export async function validatePlayable(options: ValidateOptions): Promise<ValidationReport> {
   const resolvedChannels = resolveChannels(options.channels);

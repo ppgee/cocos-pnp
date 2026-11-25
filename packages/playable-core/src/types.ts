@@ -12,6 +12,32 @@ export interface CustomChannelInject {
   sdkScript?: string;
 }
 
+export interface PlayableVariantConfig {
+  /** Variant identifier used for output subfolder & Mintegral naming (e.g. "en_easy", "ja_hard") */
+  id: string;
+  /** Optional human-readable label shown in audit reports */
+  label?: string;
+  /** Runtime JSON parameters injected as `window.__PLAYABLE_CONFIG__` before game scripts run */
+  config?: Record<string, unknown>;
+  /** Optional per-variant channel subset override */
+  channels?: string[];
+  /** Optional per-variant orientation override */
+  orientation?: OrientationMode;
+  /** Optional per-variant storeUrls override */
+  storeUrls?: BridgeGeneratorOptions;
+  /** Optional per-variant packageName override */
+  packageName?: string;
+}
+
+export interface VariantBuildSummary {
+  id: string;
+  label?: string;
+  config?: Record<string, unknown>;
+  outputDir: string;
+  artifactCount: number;
+  allValid: boolean;
+}
+
 export interface BuildPlayableOptions {
   /** Input build directory (Vite/PixiJS/Three.js/PlayCanvas/Cocos/Godot/Laya/etc.) or single .html file */
   inputPath: string;
@@ -44,6 +70,14 @@ export interface BuildPlayableOptions {
   storeUrls?: BridgeGeneratorOptions;
   /** Optional per-channel custom HTML snippets (compatible with .adapterrc style) */
   injectOptions?: Partial<Record<ChannelId, CustomChannelInject>>;
+  /** Optional single-build variant identifier exposed as `window.__PLAYABLE_VARIANT__` */
+  variantId?: string;
+  /** Optional single-build human label for the variant */
+  variantLabel?: string;
+  /** Optional single-build runtime config injected as `window.__PLAYABLE_CONFIG__` */
+  runtimeConfig?: Record<string, unknown>;
+  /** Optional multi-variant matrix (builds each variant x channels into `<outputDir>/<variant.id>/`) */
+  variants?: PlayableVariantConfig[];
   /** Adapter-specific extra options (e.g. `{ disableSplash: true }` for Cocos 3.x) */
   adapterOptions?: Record<string, unknown>;
   /** @deprecated Pass via adapterOptions.disableSplash or keep for convenience */
@@ -81,6 +115,8 @@ export interface ChannelBuildArtifact {
   format: 'single-html' | 'zip';
   outputPath: string;
   bytes: number;
+  variant?: string;
+  variantLabel?: string;
   validation?: ValidationReport;
 }
 
@@ -91,6 +127,8 @@ export interface BuildPlayableResult {
   engine: string;
   /** Optional asset optimization summary when `optimize` is enabled */
   optimization?: OptimizationSummary;
+  /** Present when built with multi-variant matrix (`options.variants`) */
+  variants?: VariantBuildSummary[];
   artifacts: ChannelBuildArtifact[];
   allValid: boolean;
 }

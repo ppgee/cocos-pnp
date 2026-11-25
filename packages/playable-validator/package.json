@@ -1,6 +1,6 @@
 {
   "name": "@ppgee/playable-validator",
-  "version": "2.0.0-alpha.0",
+  "version": "2.0.0",
   "description": "Static and headless-runtime compliance validator & size analyzer for HTML5 Playable Ads across 8 major ad networks",
   "type": "module",
   "main": "./dist/index.js",

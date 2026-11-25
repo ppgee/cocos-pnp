@@ -1,5 +1,6 @@
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
+import os from 'node:os';
 import {
   ALL_CHANNEL_IDS,
   CHANNEL_SPECS,
@@ -11,6 +12,26 @@ import {
   type ValidationReport
 } from '@ppgee/playable-validator';
 import { generateValidationHtmlReport } from './html-report.js';
+import { renderQrSvg, renderQrTerminal } from './qrcode.js';
+
+export function detectLanIpv4Addresses(): string[] {
+  const nets = os.networkInterfaces();
+  const candidates: Array<{ ip: string; score: number }> = [];
+  for (const [iface, entries] of Object.entries(nets)) {
+    if (!entries) continue;
+    for (const info of entries) {
+      if (info.family !== 'IPv4' || info.internal) continue;
+      let score = 0;
+      if (/^(en0|eth0|wlan0|wi-fi)/i.test(iface)) score += 10;
+      if (info.address.startsWith('192.168.')) score += 5;
+      else if (info.address.startsWith('10.')) score += 4;
+      else if (/^172\.(1[6-9]|2\d|3[01])\./.test(info.address)) score += 3;
+      candidates.push({ ip: info.address, score });
+    }
+  }
+  candidates.sort((a, b) => b.score - a.score);
+  return candidates.map((c) => c.ip);
+}
 
 const MIME_MAP: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -54,7 +75,28 @@ function buildSandboxBridgeScript(channel: ChannelId): string {
   var muted=false;
   var listeners={};
 
+  function showMobileToast(kind,title,detail){
+    if(window.parent!==window) return;
+    if(kind!=='cta'&&kind!=='error'&&kind!=='audio'&&kind!=='network') return;
+    try{
+      var id='__playable_mobile_toast__';
+      var el=document.getElementById(id);
+      if(!el){
+        el=document.createElement('div');
+        el.id=id;
+        el.style.cssText='position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:2147483647;max-width:90vw;padding:8px 14px;border-radius:999px;font:600 12px/1.3 -apple-system,BlinkMacSystemFont,sans-serif;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,0.45);pointer-events:none;transition:opacity .25s;';
+        document.body&&document.body.appendChild(el);
+      }
+      el.style.background=kind==='cta'?'rgba(34,197,94,0.92)':'rgba(239,68,68,0.92)';
+      el.textContent=(kind==='cta'?'[CTA OK] ':'['+kind.toUpperCase()+'] ')+title+(detail?' - '+detail:'');
+      el.style.opacity='1';
+      clearTimeout(el.__t);
+      el.__t=setTimeout(function(){el.style.opacity='0';},3200);
+    }catch(_){}
+  }
+
   function emit(kind,title,detail){
+    showMobileToast(kind,title,detail);
     try{
       window.parent.postMessage({__playablePreview:true,kind:kind,channel:CHANNEL,title:title,detail:detail||'',ts:Date.now()},'*');
     }catch(_){}
@@ -181,7 +223,8 @@ function injectBridgeIntoHtml(html: string, channel: ChannelId): string {
 function buildWorkbenchHtml(
   artifact: LoadedArtifact,
   staticReport: ValidationReport,
-  initialChannel: ChannelId
+  initialChannel: ChannelId,
+  lanOrigin?: string
 ): string {
   const entryPath = (artifact.entryHtmlPath || 'index.html').replace(/^\/+/, '');
   const payload = JSON.stringify({
@@ -189,6 +232,7 @@ function buildWorkbenchHtml(
     format: artifact.format,
     entryPath,
     initialChannel,
+    lanOrigin: lanOrigin || null,
     sizeBytes: staticReport.sizeBreakdown.totalBytes,
     fileCount: staticReport.sizeBreakdown.fileCount,
     sizeBreakdown: staticReport.sizeBreakdown,
@@ -209,7 +253,11 @@ function buildWorkbenchHtml(
         diagnostics: ch?.diagnostics ?? []
       };
     })
-  });
+  })
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -263,6 +311,15 @@ function buildWorkbenchHtml(
     .quota-fill { height:100%; background:var(--ok); }
     .quota-fill.warn { background:var(--warn); }
     .quota-fill.err { background:var(--err); }
+    .qr-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.72); z-index:999; align-items:center; justify-content:center; padding:20px; }
+    .qr-backdrop.open { display:flex; }
+    .qr-modal { background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:20px; width:340px; max-width:95vw; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.65); }
+    .qr-modal h3 { margin:0 0 6px; font-size:15px; }
+    .qr-modal p { margin:0 0 12px; color:var(--muted); font-size:12px; }
+    .qr-box { background:#fff; border-radius:10px; padding:10px; width:210px; height:210px; margin:0 auto 12px; display:flex; align-items:center; justify-content:center; }
+    .qr-box img { width:100%; height:100%; display:block; image-rendering:pixelated; }
+    .qr-url { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; color:#79c0ff; background:#0d1117; border:1px solid var(--border); border-radius:6px; padding:7px 9px; word-break:break-all; margin-bottom:12px; }
+    .qr-actions { display:flex; gap:8px; justify-content:center; }
   </style>
 </head>
 <body>
@@ -276,9 +333,22 @@ function buildWorkbenchHtml(
       <button id="btnMute">Mute: OFF</button>
       <button id="btnViewable">Viewable: ON</button>
       <button id="btnReload">Reload</button>
+      <button id="btnPhoneQr" style="display:none;">Phone QR</button>
       <a href="/api/report.html" download="playable-audit-report.html" style="text-decoration:none;"><button type="button" id="btnExportReport">Export HTML Report</button></a>
       <span class="spacer"></span>
       <span id="metaInfo" style="color:var(--muted);font-size:12px;"></span>
+    </div>
+    <div id="qrBackdrop" class="qr-backdrop">
+      <div class="qr-modal">
+        <h3>Scan on Phone (LAN Device Preview)</h3>
+        <p id="qrCaption">Opens fullscreen playable with simulated channel SDK &amp; CTA toast on your phone.</p>
+        <div class="qr-box"><img id="qrImg" alt="LAN QR Code" /></div>
+        <div id="qrUrlText" class="qr-url"></div>
+        <div class="qr-actions">
+          <button id="btnQrMode" type="button">Switch to Workbench URL</button>
+          <button id="btnQrClose" type="button">Close</button>
+        </div>
+      </div>
     </div>
     <div class="main">
       <div class="stage-wrap">
@@ -344,10 +414,43 @@ function buildWorkbenchHtml(
     const metaInfo = document.getElementById('metaInfo');
     const btnMute = document.getElementById('btnMute');
     const btnViewable = document.getElementById('btnViewable');
+    const btnPhoneQr = document.getElementById('btnPhoneQr');
+    const qrBackdrop = document.getElementById('qrBackdrop');
+    const qrImg = document.getElementById('qrImg');
+    const qrUrlText = document.getElementById('qrUrlText');
+    const btnQrMode = document.getElementById('btnQrMode');
+    const btnQrClose = document.getElementById('btnQrClose');
 
     let currentChannel = DATA.initialChannel;
     let isMuted = false;
     let isViewable = true;
+    let qrMobileMode = true;
+
+    function updateQrModal() {
+      if (!DATA.lanOrigin) return;
+      const targetUrl = qrMobileMode
+        ? DATA.lanOrigin + '/sandbox/' + encodeURI(DATA.entryPath) + '?__preview_channel=' + encodeURIComponent(currentChannel)
+        : DATA.lanOrigin + '/';
+      qrUrlText.textContent = targetUrl;
+      qrImg.src = '/api/qr.svg?url=' + encodeURIComponent(targetUrl);
+      btnQrMode.textContent = qrMobileMode ? 'Switch to Workbench URL' : 'Switch to Fullscreen Playable';
+    }
+
+    if (DATA.lanOrigin) {
+      btnPhoneQr.style.display = 'inline-block';
+      btnPhoneQr.addEventListener('click', () => {
+        updateQrModal();
+        qrBackdrop.classList.add('open');
+      });
+      btnQrMode.addEventListener('click', () => {
+        qrMobileMode = !qrMobileMode;
+        updateQrModal();
+      });
+      btnQrClose.addEventListener('click', () => qrBackdrop.classList.remove('open'));
+      qrBackdrop.addEventListener('click', (ev) => {
+        if (ev.target === qrBackdrop) qrBackdrop.classList.remove('open');
+      });
+    }
 
     function fmtBytes(b) {
       if (b >= 1048576) return (b / 1048576).toFixed(2) + ' MB';
@@ -517,10 +620,15 @@ export interface PreviewServerOptions {
   channel?: string;
   port?: number;
   host?: string;
+  /** Bind to 0.0.0.0 and expose LAN IP + QR code for scanning on real phones */
+  lan?: boolean;
 }
 
 export interface PreviewServerHandle {
   url: string;
+  lanUrl?: string;
+  mobileUrl?: string;
+  qrTerminal?: string;
   port: number;
   close: () => Promise<void>;
 }
@@ -548,7 +656,11 @@ export async function startPreviewServer(
   }
 
   const entryRel = (artifact.entryHtmlPath || 'index.html').replace(/^\/+/, '');
-  const workbenchHtml = buildWorkbenchHtml(artifact, staticReport, initialChannel);
+  const host = options.host || (options.lan ? '0.0.0.0' : '127.0.0.1');
+  const port = options.port ?? 4173;
+  const lanIp = options.lan ? detectLanIpv4Addresses()[0] : undefined;
+
+  let workbenchHtml = '';
 
   const server = http.createServer((req, res) => {
     const parsedUrl = new URL(req.url || '/', 'http://127.0.0.1');
@@ -557,6 +669,18 @@ export async function startPreviewServer(
     if (pathname === '/' || pathname === '/index.html') {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(workbenchHtml);
+      return;
+    }
+
+    if (pathname === '/api/qr.svg') {
+      const target = parsedUrl.searchParams.get('url') || '';
+      if (!/^https?:\/\/\S+$/i.test(target) || target.length > 134) {
+        res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('Invalid or too-long URL for QR code.');
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'image/svg+xml; charset=utf-8' });
+      res.end(renderQrSvg(target));
       return;
     }
 
@@ -625,19 +749,36 @@ export async function startPreviewServer(
     res.end('Not found');
   });
 
-  const host = options.host || '127.0.0.1';
-  const port = options.port ?? 4173;
-
   await new Promise<void>((resolve, reject) => {
     server.once('error', reject);
     server.listen(port, host, () => resolve());
   });
 
   const addr = server.address() as AddressInfo;
-  const url = `http://${host}:${addr.port}/`;
+  const localHost = host === '0.0.0.0' ? '127.0.0.1' : host;
+  const url = `http://${localHost}:${addr.port}/`;
+  const lanOrigin = lanIp ? `http://${lanIp}:${addr.port}` : undefined;
+  const lanUrl = lanOrigin ? `${lanOrigin}/` : undefined;
+  const mobileUrl = lanOrigin
+    ? `${lanOrigin}/sandbox/${encodeURI(entryRel)}?__preview_channel=${encodeURIComponent(initialChannel)}`
+    : undefined;
+
+  workbenchHtml = buildWorkbenchHtml(artifact, staticReport, initialChannel, lanOrigin);
+
+  let qrTerminal: string | undefined;
+  if (mobileUrl) {
+    try {
+      qrTerminal = renderQrTerminal(mobileUrl);
+    } catch {
+      qrTerminal = lanUrl ? renderQrTerminal(lanUrl) : undefined;
+    }
+  }
 
   return {
     url,
+    lanUrl,
+    mobileUrl,
+    qrTerminal,
     port: addr.port,
     close: () =>
       new Promise<void>((resolve) => {
