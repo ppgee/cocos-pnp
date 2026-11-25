@@ -75,7 +75,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          PUBLISH_FLAGS="--access public --tag ${{ steps.meta.outputs.dist_tag }} --no-git-checks"
+          PUBLISH_FLAGS="--registry https://registry.npmjs.org/ --access public --tag ${{ steps.meta.outputs.dist_tag }} --no-git-checks"
           if [ "${{ steps.meta.outputs.dry_run }}" = "true" ]; then
             echo "Running dry-run publish..."
             pnpm --filter '@ppgee/playable-sdk' publish $PUBLISH_FLAGS --dry-run
