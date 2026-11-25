@@ -63,10 +63,17 @@ export const execTinify = async (): Promise<{ success: boolean, msg: string }> =
     const filePath = files[index];
     promiseList.push(postFileToRemote(filePath, readFileSync(filePath)))
   }
-  await Promise.all(promiseList)
+  const results = await Promise.allSettled(promiseList)
+  const failed = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+  if (failed.length > 0) {
+    failed.forEach((f) => console.warn('【TinyPng compression failed for an image】', f.reason))
+  }
 
   return {
-    success: true,
-    msg: 'Compression completed'
+    success: failed.length < results.length || results.length === 0,
+    msg:
+      failed.length === 0
+        ? 'Compression completed'
+        : `Compression completed with ${failed.length}/${results.length} failed image(s)`
   }
 }

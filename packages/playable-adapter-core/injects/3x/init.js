@@ -114,17 +114,52 @@ window.__adapter_init = function () {
     return window.__adapter_resource__[__adapter_get_res_path(url, window.__adapter_resource__)];
   }
 
+  // Guard against new URL(relPath, "blob:null/..." | "about:blank") throwing Invalid URL in AdWebViews (#22/#23)
+  if (typeof window.URL === 'function') {
+    const NativeURL = window.URL;
+    function SafeURL(input, base) {
+      if (arguments.length >= 2) {
+        try {
+          return new NativeURL(input, base);
+        } catch (_) {
+          const fallback = (typeof location !== 'undefined' && /^https?:\/\//i.test(location.href))
+            ? location.href
+            : 'https://playable.local/';
+          return new NativeURL(input, fallback);
+        }
+      }
+      return new NativeURL(input);
+    }
+    SafeURL.prototype = NativeURL.prototype;
+    SafeURL.createObjectURL = NativeURL.createObjectURL.bind(NativeURL);
+    SafeURL.revokeObjectURL = NativeURL.revokeObjectURL.bind(NativeURL);
+    if (NativeURL.canParse) SafeURL.canParse = NativeURL.canParse.bind(NativeURL);
+    try {
+      window.URL = SafeURL;
+    } catch (_) {}
+  }
+
   function __adapter_get_imports() {
-    const json = JSON.parse(__adapter_get_resource("src/import-map.json"))
-    return json.imports
+    const importMapKey = __adapter_get_path('src/import-map');
+    const json = JSON.parse(__adapter_get_resource(importMapKey));
+    return json.imports;
   }
 
   function __adapter_get_script(url) {
-    if (url.indexOf('bullet.wasm') !== -1) {
+    if (url.indexOf('.wasm') !== -1) {
+      const baseName = url.split('/').pop().replace(/\.[a-f0-9]+\.wasm$/i, '.wasm').replace(/\.wasm$/i, '');
       for (let k2 in window.__adapter_js__) {
-        if (k2.indexOf('bullet.cocos') !== -1) {
+        if (k2.indexOf('.wasm') !== -1 && k2.indexOf(baseName) !== -1) {
           url = k2;
           break;
+        }
+      }
+      if (url.indexOf('bullet.wasm') !== -1) {
+        for (let k2 in window.__adapter_js__) {
+          if (k2.indexOf('bullet.cocos') !== -1) {
+            url = k2;
+            break;
+          }
         }
       }
     }
@@ -193,8 +228,15 @@ window.__adapter_init = function () {
         return _createScript.call(this, url)
       }
 
-      const blob = new Blob([res], { type: 'text/javascript' });
-      return _createScript.call(this, URL.createObjectURL(blob))
+      // Use inline <script> instead of URL.createObjectURL(blob) to satisfy Google/Meta strict CSP (#16/#18/#26)
+      const script = document.createElement('script')
+      script.async = true
+      script.crossOrigin = 'anonymous'
+      script.text = res
+      setTimeout(() => {
+        script.dispatchEvent(new Event('load'))
+      }, 0)
+      return script
     };
   }
 
