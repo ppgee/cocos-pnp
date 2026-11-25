@@ -1,4 +1,4 @@
-name: CI (v2 Toolchain + v1 Core)
+name: CI (v2 Toolchain + Audit Report + npm Pack Check)
 
 on:
   push:
@@ -28,14 +28,68 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check local Chrome & FFmpeg availability
+        run: |
+          google-chrome --version || chromium --version || echo "No system Chrome"
+          ffmpeg -version | head -n 1 || echo "No system ffmpeg"
+
       - name: Build and test all v2 packages (SDK, Validator, Core, CLI, MCP)
         run: pnpm run test:v2
+
+      - name: Verify npm publish metadata, exports, bin, and packed tarballs
+        run: pnpm run pack:check
 
       - name: Build legacy v1 playable-adapter-core
         run: pnpm --filter playable-adapter-core build
 
-      - name: Smoke-test example playable across all 8 ad networks
+      - name: Build 8-channel example playable & generate visual HTML audit report
         run: |
-          TMP_OUT=$(mktemp -d)
-          pnpm playable build examples/mini-playable -o "$TMP_OUT" --channel all --check --name ci_demo
-          rm -rf "$TMP_OUT"
+          mkdir -p ./playable-dist
+          node packages/playable-cli/dist/cli.js build examples/mini-playable \
+            -o ./playable-dist \
+            --channel all \
+            --name ci_demo \
+            --target-size auto \
+            --encoding auto \
+            --check \
+            --report ./playable-dist/report.html \
+            --json > ./playable-dist/build-result.json
+
+      - name: Write 8-channel compliance summary to GitHub Step Summary
+        if: always()
+        run: |
+          node -e '
+          const fs = require("fs");
+          if (!fs.existsSync("./playable-dist/build-result.json")) process.exit(0);
+          const res = JSON.parse(fs.readFileSync("./playable-dist/build-result.json", "utf-8"));
+          const fmt = (b) => b >= 1048576 ? (b / 1048576).toFixed(2) + " MB" : (b / 1024).toFixed(1) + " KB";
+          const lines = [
+            "## Playable Ads 8-Channel Compliance Summary",
+            "",
+            `- **Engine**: \`${res.engine}\``,
+            `- **Overall**: ${res.allValid ? "PASS (8/8)" : "FAIL"}`,
+            res.optimization ? `- **Optimization**: saved ${fmt(res.optimization.savedBytes)} (-${res.optimization.savedPercent}%)` : "",
+            "",
+            "| Channel | Format | Size | Status | Verified CTA | Runtime |",
+            "| :--- | :--- | ---: | :--- | :--- | :--- |"
+          ].filter(Boolean);
+          for (const a of res.artifacts) {
+            const ch = a.validation?.channels?.[0];
+            const status = ch ? (ch.passed ? "PASS" : "FAIL") : "BUILT";
+            const cta = ch?.runtime?.ctaTriggered?.map((c) => "`" + c.api + "`").join(", ") || "—";
+            const rt = ch?.runtime?.executed ? `${ch.runtime.loadTimeMs ?? 0}ms` : "static";
+            lines.push(`| **${a.displayName}** (\`${a.channel}\`) | \`${a.format}\` | ${fmt(a.bytes)} | **${status}** | ${cta} | ${rt} |`);
+          }
+          lines.push("", "Download the full self-contained HTML audit report (including portrait & landscape screenshots) from the **playable-audit-report** workflow artifact.");
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
+          '
+
+      - name: Upload self-contained HTML audit report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playable-audit-report
+          path: |
+            playable-dist/report.html
+            playable-dist/build-result.json
+          retention-days: 14

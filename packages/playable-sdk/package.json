@@ -9,11 +9,46 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.test.js",
+    "!dist/**/*.test.d.ts",
+    "!dist/**/*.test.js.map",
+    "!dist/**/*.test.d.ts.map"
   ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ppgee/cocos-pnp.git",
+    "directory": "packages/playable-sdk"
+  },
+  "homepage": "https://github.com/ppgee/cocos-pnp#readme",
+  "bugs": {
+    "url": "https://github.com/ppgee/cocos-pnp/issues"
+  },
+  "keywords": [
+    "playable-ads",
+    "html5-games",
+    "mraid",
+    "applovin",
+    "unity-ads",
+    "google-ads",
+    "meta",
+    "tiktok",
+    "mintegral",
+    "moloco",
+    "liftoff"
+  ],
+  "author": "PGee",
+  "license": "ISC",
   "scripts": {
     "clean": "rm -rf dist",
     "build": "tsc -p tsconfig.json",
@@ -22,6 +57,5 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "typescript": "^5.8.0"
-  },
-  "license": "ISC"
+  }
 }

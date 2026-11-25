@@ -7,6 +7,7 @@
     "commit": "cz",
     "build:v2": "pnpm --filter @cocos-pnp/playable-sdk build && pnpm --filter @cocos-pnp/playable-validator build && pnpm --filter @cocos-pnp/playable-core build && pnpm --filter @cocos-pnp/playable-cli build",
     "test:v2": "pnpm run build:v2 && pnpm --filter @cocos-pnp/playable-sdk test && pnpm --filter @cocos-pnp/playable-validator test && pnpm --filter @cocos-pnp/playable-core test && pnpm --filter @cocos-pnp/playable-cli test",
+    "pack:check": "pnpm run build:v2 && node scripts/verify-packages.mjs",
     "build:validator": "pnpm --filter @cocos-pnp/playable-validator build && pnpm --filter @cocos-pnp/playable-cli build",
     "test:validator": "pnpm --filter @cocos-pnp/playable-validator test",
     "playable": "node packages/playable-cli/dist/cli.js",

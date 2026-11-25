@@ -5,6 +5,10 @@ export {
   formatOptimizeResult,
   formatValidationReport
 } from './formatter.js';
+export {
+  generateBuildHtmlReport,
+  generateValidationHtmlReport
+} from './html-report.js';
 export { startMcpServer } from './mcp-server.js';
 export {
   startPreviewServer,

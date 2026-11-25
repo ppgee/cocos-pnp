@@ -1,7 +1,7 @@
 {
   "name": "@cocos-pnp/playable-core",
   "version": "2.0.0-alpha.0",
-  "description": "Stateless multi-network Playable Ads packager for generic Web/HTML5 and Cocos Creator 3.x builds",
+  "description": "Engine-agnostic multi-network Playable Ads packager, Base122/pako VFS builder, and offline full-asset optimizer",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -9,11 +9,43 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.test.js",
+    "!dist/**/*.test.d.ts",
+    "!dist/**/*.test.js.map",
+    "!dist/**/*.test.d.ts.map"
   ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ppgee/cocos-pnp.git",
+    "directory": "packages/playable-core"
+  },
+  "homepage": "https://github.com/ppgee/cocos-pnp#readme",
+  "bugs": {
+    "url": "https://github.com/ppgee/cocos-pnp/issues"
+  },
+  "keywords": [
+    "playable-ads",
+    "packager",
+    "cocos-creator",
+    "playcanvas",
+    "godot",
+    "unity-webgl",
+    "base122",
+    "optimizer"
+  ],
+  "author": "PGee",
+  "license": "ISC",
   "scripts": {
     "clean": "rm -rf dist",
     "build": "tsc -p tsconfig.json",
@@ -38,6 +70,5 @@
     "@types/node": "^22.0.0",
     "@types/pako": "^2.0.3",
     "typescript": "^5.8.0"
-  },
-  "license": "ISC"
+  }
 }
