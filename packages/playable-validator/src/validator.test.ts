@@ -75,7 +75,6 @@ const VALID_GOOGLE_HTML = `<!DOCTYPE html>
 <head>
   <meta charset="utf-8" />
   <meta name="ad.orientation" content="portrait,landscape" />
-  <meta name="ad.size" content="width=320,height=480" />
   <script type="text/javascript" src="https://tpc.googlesyndication.com/pagead/gadgets/html5/api/exitapi.js"></script>
   <style>
     html, body { margin: 0; background: #222; }
@@ -290,8 +289,10 @@ describe('Static compliance & size breakdown checks (8 channels)', () => {
     assert.ok(codes.includes('CTA_FB_UNEXPECTED_ARGS'));
   });
 
-  it('catches Google Ads disallowed file types (.mp3/.wasm) and root-absolute paths', async () => {
-    const html = VALID_GOOGLE_HTML.replace('</body>', '<img src="/assets/hero.png" /></body>');
+  it('catches Google Ads disallowed file types (.mp3/.wasm), conflicting ad.orientation+ad.size, and root-absolute paths', async () => {
+    const html = VALID_GOOGLE_HTML
+      .replace('<meta name="ad.orientation"', '<meta name="ad.size" content="width=320,height=480" />\n  <meta name="ad.orientation"')
+      .replace('</body>', '<img src="/assets/hero.png" /></body>');
     const zipPath = path.join(tmpDir, 'google-bad-types.zip');
     await writeZip(zipPath, {
       'index.html': html,
@@ -308,6 +309,7 @@ describe('Static compliance & size breakdown checks (8 channels)', () => {
     assert.equal(report.passed, false);
     const codes = report.channels[0].diagnostics.map((d) => d.code);
     assert.ok(codes.includes('STRUCT_DISALLOWED_FILE_TYPE'));
+    assert.ok(codes.includes('META_CONFLICTING_GOOGLE_DIMENSIONS'));
     assert.ok(codes.includes('PATH_ABSOLUTE_REF'));
   });
 
@@ -345,7 +347,7 @@ describe('Static compliance & size breakdown checks (8 channels)', () => {
     assert.equal(goodReport.passed, true);
     assert.equal(goodReport.channels[0].warningCount, 0);
 
-    const badZip = path.join(tmpDir, 'missing_hooks.zip');
+    const badZip = path.join(tmpDir, 'missing-hooks.zip');
     await writeZip(badZip, {
       'index.html': '<!DOCTYPE html><html><head><script src="mraid.js"></script></head><body><button onclick="window.install()">Go</button></body></html>'
     });
@@ -356,6 +358,7 @@ describe('Static compliance & size breakdown checks (8 channels)', () => {
     });
     const codes = badReport.channels[0].diagnostics.map((d) => d.code);
     assert.equal(badReport.passed, false);
+    assert.ok(codes.includes('STRUCT_MINTEGRAL_INVALID_CHARS'));
     assert.ok(codes.includes('SDK_FORBIDDEN_MRAID'));
     assert.ok(codes.includes('LIFECYCLE_MISSING_HOOK'));
   });
@@ -376,10 +379,10 @@ describe('Static compliance & size breakdown checks (8 channels)', () => {
     assert.ok(codes.includes('CTA_SIGNATURE_NOT_FOUND'));
   });
 
-  it('validates Liftoff/Vungle ad.html root entry and rejects uppercase/spaced paths', async () => {
+  it('validates Liftoff/Vungle ad.html root entry and rejects uppercase/spaced paths and iframes', async () => {
     const badZip = path.join(tmpDir, 'liftoff-bad-paths.zip');
     await writeZip(badZip, {
-      'ad.html': VALID_LIFTOFF_HTML,
+      'ad.html': VALID_LIFTOFF_HTML.replace('</body>', '<iframe src="about:blank"></iframe></body>'),
       'Assets/Hero Banner.png': Buffer.from('fake')
     });
 
@@ -391,6 +394,7 @@ describe('Static compliance & size breakdown checks (8 channels)', () => {
     const codes = report.channels[0].diagnostics.map((d) => d.code);
     assert.equal(report.passed, false);
     assert.ok(codes.includes('PATH_INVALID_ASCII_CASE'));
+    assert.ok(codes.includes('STRUCT_LIFTOFF_FORBIDDEN_IFRAME'));
   });
 
   it('warns on Blob script loading for Google/Meta (#16/#18) and muted video autoplay for iOS (#45)', async () => {

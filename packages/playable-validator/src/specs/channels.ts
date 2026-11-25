@@ -78,7 +78,7 @@ export const CHANNEL_SPECS: Record<ChannelId, ChannelSpec> = {
     forbidLegacyDapi: true,
     forbidWindowRedirect: false,
     requiredFiles: [],
-    requiredMetaNames: ['ad.orientation', 'ad.size'],
+    requiredMetaNames: [],
     requiredSdkScriptPatterns: ['tpc.googlesyndication.com/pagead/gadgets/html5/api/exitapi.js'],
     ctaSignatures: ['ExitApi.exit'],
     requiredLifecycleHooks: [],
@@ -93,7 +93,7 @@ export const CHANNEL_SPECS: Record<ChannelId, ChannelSpec> = {
     notes: [
       'ZIP archive (<= 5 MB, <= 512 files) with index.html at the root and relative asset paths.',
       'Official allowed bare file types in ZIP: HTML, CSS, JS, PNG, JPG, JPEG, GIF, SVG (inline audio/fonts/WASM into JS/HTML).',
-      'Requires <meta name="ad.orientation">, <meta name="ad.size">, exitapi.js, and ExitApi.exit() for CTA.'
+      'Requires EITHER <meta name="ad.orientation" content="portrait,landscape"> (recommended for App Campaigns) OR <meta name="ad.size" content="width=320,height=480"> — declaring both causes "Ad Dimensions" error in Google HTML5 Validator. Also requires exitapi.js and ExitApi.exit().'
     ]
   },
   meta: {
@@ -182,7 +182,7 @@ export const CHANNEL_SPECS: Record<ChannelId, ChannelSpec> = {
     forbidAutoplayAudio: true,
     requireDualOrientation: false,
     notes: [
-      'ZIP archive (<= 5 MB). Classic Mintegral naming expects matching ZIP/folder/HTML names (e.g. demo.zip -> demo/demo.html), or root index.html.',
+      'ZIP archive (<= 5 MB). Classic Mintegral naming expects matching ZIP/folder/HTML names (e.g. demo.zip -> demo/demo.html), or root index.html; Playturbo Reviewer allows only letters, digits, and underscores (no hyphens).',
       'Does NOT use MRAID; requires proprietary lifecycle hooks: window.gameReady(), window.gameEnd(), and window.install() for CTA.',
       'Define window.gameStart / window.gameClose handlers so Mintegral container can control audio and lifecycle.'
     ]
@@ -239,9 +239,9 @@ export const CHANNEL_SPECS: Record<ChannelId, ChannelSpec> = {
     forbidAutoplayAudio: true,
     requireDualOrientation: false,
     notes: [
-      'ZIP archive or single HTML (<= 5 MB); ZIP root entry must be index.html or ad.html.',
+      'ZIP archive or single HTML (<= 5 MB); ZIP root entry must be index.html or ad.html. Liftoff Creative API v2 forbids <iframe> elements.',
       'All file/folder names must be lowercase ASCII with no spaces, using relative paths only.',
-      'Trigger CTA with parent.postMessage("download", "*") (or MRAID fallback), fire parent.postMessage("complete", "*") after genuine gameplay (never on click), and handle ad-event-pause / ad-event-resume.'
+      'Liftoff Accelerate (DSP) expects mraid.open() (preferred) or window.open(); Liftoff Monetize (Vungle) uses parent.postMessage("download", "*") + parent.postMessage("complete", "*") and ad-event-pause / ad-event-resume.'
     ]
   }
 };

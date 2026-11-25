@@ -88,6 +88,16 @@ function checkZipEntryLayout(artifact: LoadedArtifact, spec: ChannelSpec): Diagn
       });
     }
   } else if (spec.zipEntryLayout === 'matching-folder-or-root') {
+    // Official Playturbo / Mintegral Reviewer enforces letters, digits, and underscores only (no hyphens or spaces)
+    if (!/^[a-zA-Z0-9_]+$/.test(artifact.archiveBaseName)) {
+      diagnostics.push({
+        code: 'STRUCT_MINTEGRAL_INVALID_CHARS',
+        severity: 'error',
+        category: 'structure',
+        message: `Mintegral ZIP archive name "${artifact.archiveBaseName}" contains disallowed characters (only ASCII letters, digits, and underscores are allowed by Playturbo Reviewer).`,
+        suggestion: 'Rename the ZIP, inner folder, and HTML to use only [a-zA-Z0-9_] (replace hyphens or spaces with underscores).'
+      });
+    }
     // Mintegral allows classic matching naming: <name>.zip -> <name>/<name>.html, or root index.html
     const expectedClassic = `${artifact.archiveBaseName.toLowerCase()}/${artifact.archiveBaseName.toLowerCase()}.html`;
     if (lowerEntry !== 'index.html' && lowerEntry !== expectedClassic) {
@@ -293,7 +303,7 @@ export function runStaticChecks(
   const corpus = collectAllTextCorpus(artifact);
   const cleanCorpus = stripJsComments(corpus);
 
-  // 7. Required HTML <meta> tags (e.g. Google ad.orientation & ad.size)
+  // 7. Required HTML <meta> tags
   for (const metaName of spec.requiredMetaNames) {
     const metaEl = $(`meta[name="${metaName}"]`);
     if (metaEl.length === 0) {
@@ -302,15 +312,39 @@ export function runStaticChecks(
         severity: 'error',
         category: 'metadata',
         message: `Missing required <meta name="${metaName}"> tag in index.html for ${spec.displayName}.`,
-        suggestion:
-          metaName === 'ad.orientation'
-            ? 'Add <meta name="ad.orientation" content="portrait,landscape"> inside <head>.'
-            : metaName === 'ad.size'
-              ? 'Add <meta name="ad.size" content="width=320,height=480"> inside <head>.'
-              : `Add <meta name="${metaName}" content="..."> inside <head>.`
+        suggestion: `Add <meta name="${metaName}" content="..."> inside <head>.`
       });
-    } else if (metaName === 'ad.orientation') {
-      const content = (metaEl.attr('content') || '').trim().toLowerCase();
+    }
+  }
+
+  // 7b. Google Ads dimension meta tags (calibrated against official h5validator.appspot.com)
+  // App Campaigns require EITHER ad.orientation (recommended) OR ad.size — emitting both causes "Ad Dimensions" error.
+  if (spec.id === 'google') {
+    const orientEl = $('meta[name="ad.orientation"]');
+    const sizeEl = $('meta[name="ad.size"]');
+    const hasOrient = orientEl.length > 0;
+    const hasSize = sizeEl.length > 0;
+
+    if (!hasOrient && !hasSize) {
+      diagnostics.push({
+        code: 'META_MISSING_TAG',
+        severity: 'error',
+        category: 'metadata',
+        message: 'Missing required <meta name="ad.orientation"> (or <meta name="ad.size">) tag in index.html for Google Ads.',
+        suggestion: 'Add <meta name="ad.orientation" content="portrait,landscape"> inside <head> (do not combine with ad.size).'
+      });
+    } else if (hasOrient && hasSize) {
+      diagnostics.push({
+        code: 'META_CONFLICTING_GOOGLE_DIMENSIONS',
+        severity: 'error',
+        category: 'metadata',
+        message: 'Detected both <meta name="ad.orientation"> and <meta name="ad.size">; Google Ads HTML5 Validator rejects this combination with "Ad Dimensions: Invalid file dimensions".',
+        suggestion: 'Keep only <meta name="ad.orientation" content="portrait,landscape"> (recommended for App Campaigns) and remove <meta name="ad.size">.'
+      });
+    }
+
+    if (hasOrient) {
+      const content = (orientEl.attr('content') || '').trim().toLowerCase();
       const validValues = new Set(['portrait', 'landscape', 'portrait,landscape', 'landscape,portrait']);
       if (!validValues.has(content)) {
         diagnostics.push({
@@ -321,8 +355,10 @@ export function runStaticChecks(
           suggestion: 'Use "portrait", "landscape", or "portrait,landscape".'
         });
       }
-    } else if (metaName === 'ad.size') {
-      const content = (metaEl.attr('content') || '').trim();
+    }
+
+    if (hasSize) {
+      const content = (sizeEl.attr('content') || '').trim();
       if (!/width=\d+\s*,\s*height=\d+/i.test(content)) {
         diagnostics.push({
           code: 'META_INVALID_AD_SIZE',
@@ -333,6 +369,17 @@ export function runStaticChecks(
         });
       }
     }
+  }
+
+  // 7c. Liftoff Creative Integration API v2 forbids <iframe> elements
+  if (spec.id === 'liftoff' && $('iframe').length > 0) {
+    diagnostics.push({
+      code: 'STRUCT_LIFTOFF_FORBIDDEN_IFRAME',
+      severity: 'error',
+      category: 'structure',
+      message: `Found ${$('iframe').length} <iframe> element(s), which are forbidden by Liftoff Creative Integration API v2.`,
+      suggestion: 'Remove <iframe> tags and render all playable UI directly inside the root document.'
+    });
   }
 
   // 8. MRAID, MRAID lifecycle gate & legacy DAPI checks

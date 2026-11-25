@@ -32,5 +32,6 @@ describe('@cocos-pnp/playable-sdk bridge generator', () => {
     const liftoff = generateChannelBridgeScript('liftoff');
     assert.ok(liftoff.includes("postMessage('download'"));
     assert.ok(liftoff.includes("postMessage('complete'"));
+    assert.ok(liftoff.includes('mraid.open'));
   });
 });

@@ -45,7 +45,7 @@ export function generateChannelBridgeScript(
 
     case 'liftoff':
       return commonShell(
-        `var C=false;window.addEventListener('ad-event-pause',function(){emitPause()});window.addEventListener('ad-event-resume',function(){emitResume()});var B={channel:'liftoff',init:function(h){H=h||{};bindResize();emitStart()},ready:function(){},cta:function(){if(window.parent&&typeof window.parent.postMessage==='function'){window.parent.postMessage('download','*')}},complete:function(){if(C)return;C=true;if(window.parent&&typeof window.parent.postMessage==='function'){window.parent.postMessage('complete','*')}},gameEnd:function(){B.complete()},isMuted:function(){return M}};`
+        `var C=false;window.addEventListener('ad-event-pause',function(){emitPause()});window.addEventListener('ad-event-resume',function(){emitResume()});var B={channel:'liftoff',init:function(h){H=h||{};bindResize();emitStart()},ready:function(){},cta:function(u){var url=resolveUrl(u);if(window.parent&&typeof window.parent.postMessage==='function'){window.parent.postMessage('download','*')}if(window.mraid&&typeof mraid.open==='function'){mraid.open(url||'https://liftoff.io')}},complete:function(){if(C)return;C=true;if(window.parent&&typeof window.parent.postMessage==='function'){window.parent.postMessage('complete','*')}},gameEnd:function(){B.complete()},isMuted:function(){return M}};`
       );
   }
 }

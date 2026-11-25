@@ -126,13 +126,12 @@ function applyChannelHtmlTransforms(
         : orientation === 'landscape'
           ? 'landscape'
           : 'portrait,landscape';
-    const sizeVal = orientation === 'landscape' ? 'width=480,height=320' : 'width=320,height=480';
 
-    if ($('meta[name="ad.orientation"]').length === 0) {
+    // Official Google Ads HTML5 Validator (h5validator.appspot.com) fails with
+    // "Ad Dimensions: Invalid file dimensions" if BOTH ad.orientation AND ad.size are emitted.
+    // Emit only ad.orientation when no dimension meta tag is already declared.
+    if ($('meta[name="ad.orientation"]').length === 0 && $('meta[name="ad.size"]').length === 0) {
       $('head').prepend(`<meta name="ad.orientation" content="${orientationVal}">`);
-    }
-    if ($('meta[name="ad.size"]').length === 0) {
-      $('head').prepend(`<meta name="ad.size" content="${sizeVal}">`);
     }
     const hasExitApi = $('script[src]').toArray().some((el) =>
       ($(el).attr('src') || '').toLowerCase().includes('exitapi.js')
@@ -255,7 +254,9 @@ export async function emitChannelArtifact(
   let zipFileName = `${label}.zip`;
 
   if (spec.id === 'mintegral') {
-    const mtgName = `${baseName}_mintegral`;
+    // Official Playturbo / Mintegral Reviewer restricts names to ASCII letters, digits, and underscores (no hyphens).
+    const mtgBase = baseName.replace(/[^a-zA-Z0-9_]/g, '_');
+    const mtgName = `${mtgBase}_mintegral`;
     zipFileName = `${mtgName}.zip`;
     const finalHtml = applyChannelHtmlTransforms(getSingleHtml(), spec, options);
     zip.file(`${mtgName}/${mtgName}.html`, finalHtml);

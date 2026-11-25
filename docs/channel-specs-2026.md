@@ -10,12 +10,12 @@
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **AppLovin** (`applovin`) | 仅单 HTML | <= 5 MB（建议 2-4 MB） | 零外链，全资源内联 | 必选（v2.0） | `mraid.open()` | 必须支持横竖屏；等 `mraid` ready；禁止首触即跳；交互前静音 |
 | **Unity Ads / LevelPlay** (`unity`) | 仅单 HTML | <= 5 MB（建议 <= 4 MB） | 零外链，全资源内联 | 必选（v3.0，兼容 2.0） | `mraid.open()` | ironSource 直投已于 2026-04 并入 LevelPlay，**弃用旧版 DAPI**；需等 `ready` + `viewableChange` 才启游戏/音频；必须支持横竖屏 |
-| **Google Ads** (`google`) | 仅 ZIP | <= 5 MB | <= 512 文件；根目录 `index.html`；相对路径；**仅允许 html/css/js/png/jpg/jpeg/gif/svg** | 禁止 | `ExitApi.exit()` | 必须含 `<meta name="ad.orientation">`、`<meta name="ad.size">` 与官方 `exitapi.js`；严格 CSP；音频/字体/WASM 需内联 |
+| **Google Ads** (`google`) | 仅 ZIP | <= 5 MB | <= 512 文件；根目录 `index.html`；相对路径；**仅允许 html/css/js/png/jpg/jpeg/gif/svg** | 禁止 | `ExitApi.exit()` | 必须含 `<meta name="ad.orientation">` **或** `<meta name="ad.size">`（**二者不可同时输出**，否则官方 Validator 报 `Ad Dimensions` 错误）；需引入官方 `exitapi.js`；严格 CSP；音频/字体/WASM 需内联 |
 | **Meta** (`meta`, `facebook`) | 单 HTML 或 ZIP | 单 HTML <= 2 MB；ZIP <= 5 MB 且 **ZIP 内 `index.html` 仍须 <= 2 MB** | ZIP <= 100 文件；根目录 `index.html` | 禁止 | `FbPlayableAd.onCTAClick()`（**无参**） | 禁止 `mraid.js`、零外链、禁止 `window.open`/`location` 原生跳转 |
 | **TikTok / Pangle** (`tiktok`, `pangle`) | 仅 ZIP | <= 5 MB | 根目录 `index.html` + `config.json`（禁止嵌套目录） | 禁止 | `window.openAppStore()` | 必须引入 `playable-sdk.js`；`config.json` 需含 `playable_orientation`（`0` 双屏 / `1` 竖屏推荐 / `2` 横屏）；禁止硬编码跳转 |
-| **Mintegral** (`mintegral`, `mtg`) | ZIP（推荐）或单 HTML | <= 5 MB | 经典同名结构 `<name>.zip -> <name>/<name>.html`，或根目录 `index.html` | 禁止 | `window.install()` | 必须调用 `window.gameReady()`（加载完成）和 `window.gameEnd()`（游玩结束）；建议定义 `window.gameStart` / `window.gameClose` |
+| **Mintegral** (`mintegral`, `mtg`) | ZIP（推荐）或单 HTML | <= 5 MB | 经典同名结构 `<name>.zip -> <name>/<name>.html`，或根目录 `index.html`；**名称仅允许字母、数字和下划线（禁止 `-`）** | 禁止 | `window.install()` | 必须调用 `window.gameReady()`（加载完成）和 `window.gameEnd()`（游玩结束）；建议定义 `window.gameStart` / `window.gameClose` |
 | **Moloco** (`moloco`) | 仅单 HTML | <= 5 MB | 零外链，全资源内联；拒收 ZIP | 禁止 | `FbPlayableAd.onCTAClick()`（**无参**） | 禁止 `mraid.js` 和原生 JS 跳转；必须支持横竖屏 |
-| **Liftoff / Vungle** (`liftoff`, `vungle`) | ZIP（推荐）或单 HTML | <= 5 MB | 根目录 `index.html` 或 `ad.html`；**所有路径仅小写 ASCII 且无空格**；仅相对路径 | 可选 | `parent.postMessage('download', '*')`（或 MRAID fallback） | 真实游玩完成后发 `parent.postMessage('complete', '*')`（禁止绑定在点击上）；监听 `ad-event-pause` / `ad-event-resume` |
+| **Liftoff / Vungle** (`liftoff`, `vungle`) | ZIP（推荐）或单 HTML | <= 5 MB | 根目录 `index.html` 或 `ad.html`；**所有路径仅小写 ASCII 且无空格**；仅相对路径；**禁止 `<iframe>`** | 可选 | `mraid.open()`（Accelerate DSP 优先）+ `parent.postMessage('download', '*')`（Vungle/Monetize） | 真实游玩完成后发 `parent.postMessage('complete', '*')`（禁止绑定在点击上）；监听 `ad-event-pause` / `ad-event-resume` |
 
 ---
 
