@@ -902,4 +902,89 @@ document.getElementById('cta').addEventListener('click', () => window.playable.c
     const html122 = await fs.readFile(resB122.artifacts[0].outputPath, 'utf-8');
     assert.ok(html122.includes('__PLAYABLE_VFS_B122__'), 'Base122 payload marker should be emitted');
   });
+
+  it('builds multi-variant matrix (variants x channels) with escaped __PLAYABLE_CONFIG__ and distinct Mintegral names', async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'playable-variants-'));
+    const outDir = path.join(tmpDir, 'dist');
+    const demoDir = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../../examples/mini-playable');
+    const hasBrowser = Boolean(detectBrowserExecutable());
+
+    try {
+      const result = await buildPlayable({
+        inputPath: demoDir,
+        outputDir: outDir,
+        channels: ['applovin', 'mintegral'],
+        variants: [
+          {
+            id: 'en_easy',
+            label: 'English Easy',
+            config: { lang: 'en', cta: 'Play Now', note: '</script>safe' }
+          },
+          {
+            id: 'ja_hard',
+            label: 'Japanese Hard',
+            config: { lang: 'ja', cta: '今すぐプレイ', difficulty: 3 }
+          }
+        ],
+        validate: true,
+        staticOnly: !hasBrowser
+      });
+
+      assert.equal(result.allValid, true);
+      assert.equal(result.variants?.length, 2);
+      assert.equal(result.artifacts.length, 4);
+
+      const enApplovin = result.artifacts.find((a) => a.variant === 'en_easy' && a.channel === 'applovin');
+      const jaMtg = result.artifacts.find((a) => a.variant === 'ja_hard' && a.channel === 'mintegral');
+      assert.ok(enApplovin, 'en_easy applovin artifact missing');
+      assert.ok(jaMtg, 'ja_hard mintegral artifact missing');
+      assert.ok(enApplovin.outputPath.includes(`${path.sep}en_easy${path.sep}`));
+      assert.ok(jaMtg.outputPath.endsWith('mini_playable_ja_hard_mintegral.zip'));
+
+      const enHtml = await fs.readFile(enApplovin.outputPath, 'utf-8');
+      assert.ok(enHtml.includes('window.__PLAYABLE_VARIANT__="en_easy"'));
+      assert.ok(enHtml.includes('window.__PLAYABLE_CONFIG__='));
+      assert.ok(enHtml.includes('\\u003c/script\\u003esafe'), 'script tags inside config JSON must be escaped');
+    } finally {
+      await fs.rm(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('inlines CSS url() and media src referencing non-whitelisted assets inside Google Ads ZIP without 404s', async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'playable-google-css-'));
+    const srcDir = path.join(tmpDir, 'src');
+    const outDir = path.join(tmpDir, 'dist');
+    await fs.mkdir(path.join(srcDir, 'assets'), { recursive: true });
+
+    try {
+      // Non-whitelisted .ttf font referenced from both <style> and external style.css
+      await fs.writeFile(path.join(srcDir, 'assets/custom.ttf'), Buffer.from('fake-ttf-bytes'));
+      await fs.writeFile(
+        path.join(srcDir, 'style.css'),
+        `@font-face { font-family: "ExtFont"; src: url("./assets/custom.ttf") format("truetype"); } body { margin:0; background:#111827; }`
+      );
+      await fs.writeFile(
+        path.join(srcDir, 'index.html'),
+        `<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="./style.css"><style>@font-face{font-family:"InlineFont";src:url("./assets/custom.ttf") format("truetype");}</style></head><body><canvas id="c" width="320" height="320"></canvas><button data-playable-cta onclick="window.playable&&window.playable.cta()">Go</button><script>var ctx=document.getElementById('c').getContext('2d');ctx.fillStyle='#fbbf24';ctx.fillRect(0,0,320,320);</script></body></html>`
+      );
+
+      const res = await buildPlayable({
+        inputPath: srcDir,
+        outputDir: outDir,
+        channels: ['google'],
+        validate: true,
+        staticOnly: true
+      });
+      assert.equal(res.allValid, true);
+      const JSZip = (await import('jszip')).default;
+      const zip = await JSZip.loadAsync(await fs.readFile(res.artifacts[0].outputPath));
+      assert.equal(zip.file('assets/custom.ttf'), null, '.ttf must not exist as raw file in Google ZIP');
+      const indexHtml = await zip.file('index.html')!.async('string');
+      const styleCss = await zip.file('style.css')!.async('string');
+      assert.ok(indexHtml.includes('data:font/ttf;base64,'), 'inline <style> font url should be rewritten to data URI');
+      assert.ok(styleCss.includes('data:font/ttf;base64,'), 'external style.css font url should be rewritten to data URI');
+    } finally {
+      await fs.rm(tmpDir, { recursive: true, force: true });
+    }
+  });
 });

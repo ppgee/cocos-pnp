@@ -132,6 +132,13 @@ export function formatBuildResult(result: BuildPlayableResult): string {
   lines.push(`${c.bold('Playable Multi-Channel Build')}  ${c.dim(`(engine: ${result.engine})`)}`);
   lines.push(c.dim(`Input:  ${result.inputPath}`));
   lines.push(c.dim(`Output: ${result.outputDir}`));
+  if (result.variants && result.variants.length > 0) {
+    lines.push(
+      c.cyan(
+        `Matrix: ${result.variants.length} variant(s) [${result.variants.map((v) => v.id).join(', ')}] -> ${result.artifacts.length} artifact(s)`
+      )
+    );
+  }
   if (result.optimization && result.optimization.processedCount > 0) {
     const opt = result.optimization;
     const kindParts: string[] = [];
@@ -166,8 +173,9 @@ export function formatBuildResult(result: BuildPlayableResult): string {
         ? c.green('[PASS]')
         : c.red('[FAIL]')
       : c.cyan('[BUILT]');
+    const variantCol = item.variant ? `${c.cyan(`[${item.variant}]`)} ` : '';
     lines.push(
-      `  ${status} ${c.bold(item.channel.padEnd(10))} ${formatBytes(item.bytes).padStart(9)}  ${item.outputPath}`
+      `  ${status} ${variantCol}${c.bold(item.channel.padEnd(10))} ${formatBytes(item.bytes).padStart(9)}  ${item.outputPath}`
     );
     if (item.validation && !item.validation.passed) {
       for (const ch of item.validation.channels) {

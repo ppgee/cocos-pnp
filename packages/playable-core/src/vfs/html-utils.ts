@@ -98,6 +98,7 @@ export function prepareGoogleZipFiles(
   const allowedSet = new Set(allowedExtensions.map((e) => e.toLowerCase()));
   const keptFiles: VirtualFile[] = [];
   const inlinedVfs: Record<string, string> = {};
+  const inlinedFileMap = new Map<string, VirtualFile>();
 
   let entryHtml = '';
   for (const file of source.files) {
@@ -109,6 +110,7 @@ export function prepareGoogleZipFiles(
     if (allowedSet.has(file.ext)) {
       keptFiles.push(file);
     } else {
+      inlinedFileMap.set(file.path, file);
       inlinedVfs[file.path] = TEXT_EXTENSIONS.has(file.ext)
         ? file.content.toString('utf-8')
         : toDataUri(file);
@@ -116,6 +118,36 @@ export function prepareGoogleZipFiles(
   }
 
   const $ = loadHtml(entryHtml);
+
+  // Rewrite CSS url(...) inside <style> tags and kept .css files when referencing stripped non-whitelisted assets (e.g. .ttf/.woff/.webp)
+  if (inlinedFileMap.size > 0) {
+    $('style').each((_i, el) => {
+      const css = $(el).html() || '';
+      const rewritten = inlineCssUrls(css, source.entryHtmlPath, inlinedFileMap);
+      if (rewritten !== css) {
+        $(el).html(rewritten);
+      }
+    });
+    for (let i = 0; i < keptFiles.length; i++) {
+      if (keptFiles[i].ext === '.css') {
+        const css = keptFiles[i].content.toString('utf-8');
+        const rewritten = inlineCssUrls(css, keptFiles[i].path, inlinedFileMap);
+        if (rewritten !== css) {
+          keptFiles[i] = { ...keptFiles[i], content: Buffer.from(rewritten, 'utf-8') };
+        }
+      }
+    }
+
+    // Inline static HTML media tags referencing stripped non-whitelisted assets (e.g. .webp/.wav/.mp4)
+    $('img[src], audio[src], video[src], source[src]').each((_i, el) => {
+      const src = $(el).attr('src') || '';
+      const resolved = resolveRelPath(source.entryHtmlPath, src);
+      if (!resolved) return;
+      const hit = inlinedFileMap.get(resolved);
+      if (!hit) return;
+      $(el).attr('src', toDataUri(hit));
+    });
+  }
 
   // Inline any <script src> referencing a stripped non-whitelisted file (e.g. import-map .json)
   $('script[src]').each((_i, el) => {

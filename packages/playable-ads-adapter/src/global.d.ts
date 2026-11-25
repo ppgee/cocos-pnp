@@ -471,6 +471,8 @@ type TChannelRC = {
 type TAdapterRC = {
   buildPlatform?: Platform
   skipBuild?: boolean
+  useV2Cli?: boolean
+  v2CliArgs?: string[]
   orientation?: TWebOrientations
   exportChannels?: TChannel[]
   injectOptions?: {

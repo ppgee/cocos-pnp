@@ -1,80 +1,130 @@
-# cocos-pnp v2 — HTML5 & Cocos Playable Ads Packager, Validator & MCP Toolchain
+# cocos-pnp
 
 [中文文档](./README-CN.md)
 
-**An engine-agnostic multi-network Playable Ads packager, size analyzer, and headless-browser compliance validator for HTML5 (Vite, PixiJS, Three.js, AI-generated H5) and Cocos Creator 3.x builds.**
+[![npm version](https://img.shields.io/npm/v/%40ppgee%2Fplayable-cli?label=%40ppgee%2Fplayable-cli&color=2563eb)](https://www.npmjs.com/package/@ppgee/playable-cli)
+[![CI](https://github.com/ppgee/cocos-pnp/actions/workflows/ci-v2.yml/badge.svg)](https://github.com/ppgee/cocos-pnp/actions/workflows/ci-v2.yml)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D20-3fb950)](https://nodejs.org/)
+[![License: ISC](https://img.shields.io/badge/license-ISC-8b949e)](./package.json)
 
-Write your playable once, build submission-ready `.html` / `.zip` packages for **8 major ad networks (2026 specs)** in a single command, and automatically verify every artifact in headless Chrome (portrait & landscape blank-screen detection, unauthorized external request blocking, pre-interaction audio detection, and live CTA trigger verification). Includes a built-in **MCP Server** and **Agent Skill** for autonomous AI Coding Agent workflows.
+**Package, shrink, preview, and test HTML5 Playable Ads for 8 major ad networks in one command.**
 
----
+If you have ever shipped Playable Ads to AppLovin, Unity, Google, Meta, TikTok, Mintegral, Moloco, and Liftoff, you know the drill: every network wants a different file structure, different CTA hook, different size limit, and uploading a build often ends in a mysterious black screen, a CSP `blob:` error, an Android Spine/WASM crash, or a 5 MB rejection.
 
-## Highlights
-
-1. **8 Major Ad Networks Aligned with 2026 Specs** (see [docs/channel-specs-2026.md](./docs/channel-specs-2026.md))
-   - `AppLovin`, `Unity Ads / LevelPlay` (migrated from sunset ironSource DAPI), `Google Ads`, `Meta (Facebook)`, `TikTok / Pangle`, `Mintegral`, `Moloco`, and `Liftoff / Vungle`.
-2. **Static + Headless Chrome Runtime Validation (`@ppgee/playable-validator`)**
-   - Automatically reuses your locally installed Chrome/Chromium/Edge (no 300MB browser download required), with `--static-only` for zero-browser CI fast checks.
-   - Audits size ceilings (including Meta's `index.html <= 2 MB` inside 5 MB ZIP & 100-file limit), Google's allowed extension whitelist, TikTok `config.json` & `playable-sdk.js`, Mintegral matching-folder layout & `gameReady`/`gameEnd`, Liftoff lowercase ASCII path naming, and inline Base64 overhead attribution.
-   - Verifies runtime behavior in mocked network hosts: uncaught exceptions, console errors, blocked external requests, portrait + landscape dual-orientation rendering, pre-interaction audio playback, and CTA API invocation.
-3. **Engine-Agnostic Core + Pluggable `EngineAdapter` + Zero-Leak Runtime SDK (`@ppgee/playable-core` + `@ppgee/playable-sdk`)**
-   - Shared 7-entry browser VFS shim (`SafeURL`, `fetch`, `XMLHttpRequest`, `WebAssembly.instantiateStreaming`, `Image.src`, `Audio/Media.src`, `FontFace`);
-   - 6 built-in auto-detected engine adapters (`cocos-3x`, `cocos-2x`, `playcanvas`, `godot-4`, `unity-webgl`, and `generic-web` for Vite/PixiJS/Three.js/Phaser/AI H5), plus custom adapter plugin registration via `options.adapters`;
-   - Native `playable.config.json` support with transparent fallback for legacy v1 `.adapterrc` files;
-   - Channel-isolated bridge generation guarantees zero `mraid` references on non-MRAID networks (Google, Meta, TikTok, Mintegral, Moloco);
-   - Net-benefit `pako` deflate compression and slim-ZIP externalization to stay under Meta/Google/Liftoff caps.
-4. **AI Agent Ready (CLI + MCP Server + Skill)**
-   - `--json` output across all CLI commands;
-   - `playable mcp` runs a zero-dependency stdio MCP Server exposing `get_channel_specs`, `build_playable`, `check_playable`, and `inspect_playable_size`;
-   - Reusable Agent Skill at [skills/playable-ads-workflow/SKILL.md](./skills/playable-ads-workflow/SKILL.md).
+`cocos-pnp` started as a Cocos Creator plugin. Starting with **v2.0**, it is a standalone CLI (while still shipping the legacy Cocos 2.x/3.x editor plugins): build your game once with Cocos Creator, Vite, PixiJS, Three.js, PlayCanvas, Godot 4, Unity WebGL, or plain HTML5, run one command to export all 8 networks, automatically compress assets when you're over 5 MB / 2 MB, and verify everything in your local Chrome before uploading.
 
 ---
 
-## Supported Ad Networks (2026 Baseline)
+## What It Looks Like
 
-| Network | Format | Size Ceiling | MRAID | CTA API | Key Constraints |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **AppLovin** (`applovin`) | Single HTML | <= 5 MB | Required v2.0 | `mraid.open()` | Zero external requests; dual orientation |
-| **Unity / LevelPlay** (`unity`) | Single HTML | <= 5 MB | Required v3.0 | `mraid.open()` | Legacy ironSource DAPI deprecated; `ready` + `viewableChange` gating; dual orientation |
-| **Google Ads** (`google`) | ZIP | <= 5 MB | Forbidden | `ExitApi.exit()` | <= 512 files; `ad.orientation` **or** `ad.size` (never both) + `exitapi.js`; strict extension whitelist |
-| **Meta** (`meta`, `facebook`) | ZIP / Single HTML | ZIP <= 5 MB & `index.html` <= 2 MB | Forbidden | `FbPlayableAd.onCTAClick()` | <= 100 files; zero-arg CTA; no raw JS redirects |
-| **TikTok / Pangle** (`tiktok`, `pangle`) | ZIP | <= 5 MB | Forbidden | `window.openAppStore()` | Root `index.html` + `config.json`; `playable-sdk.js` required |
-| **Mintegral** (`mintegral`, `mtg`) | ZIP / Single HTML | <= 5 MB | Forbidden | `window.install()` | Classic `<name>.zip -> <name>/<name>.html` (`[a-zA-Z0-9_]` only); `gameReady()` & `gameEnd()` required |
-| **Moloco** (`moloco`) | Single HTML | <= 5 MB | Forbidden | `FbPlayableAd.onCTAClick()` | Rejects ZIP; zero-arg CTA; dual orientation |
-| **Liftoff / Vungle** (`liftoff`, `vungle`) | ZIP / Single HTML | <= 5 MB | Optional | `mraid.open()` + `postMessage('download')` | Root `index.html`/`ad.html`; lowercase ASCII paths; no `<iframe>`; `complete` lifecycle |
+**1. 8-network build & verification report (single offline HTML file you can send straight to QA / UA):**
+
+![Playable Build & Compliance Report](./docs/assets/audit-report.png)
+
+**2. Local preview workbench (switch ad networks, portrait/landscape/tablet, mute/background simulation, or scan a QR code on your phone):**
+
+![Interactive Preview Workbench](./docs/assets/preview-workbench.png)
 
 ---
 
-## Quick Start
+## Pick Your Setup
 
-Requirements: Node.js `>= 20` (recommended `22+`) and `pnpm >= 9`. For headless runtime checks, a local Chrome/Chromium/Edge binary is auto-detected (or pass `--browser-path`).
+Requires **Node.js >= 20**. No need to clone this repo—`npx` works out of the box. Runtime checks automatically use your installed Chrome/Chromium/Edge (no giant browser download).
+
+### Option 1: Existing Cocos Creator Users (2.x / 3.x)
+
+- **Recommended (especially for Cocos 3.8+)**: Build `web-mobile` in Cocos Creator as usual, then run this in your project root:
+  ```bash
+  npx @ppgee/playable-cli build ./build/web-mobile -o ./playable-dist --channel all --target-size auto --check --report ./playable-dist/report.html
+  ```
+  It reads your existing v1 `.adapterrc` automatically and fixes the common Cocos 3.8.x pain points (Facebook/Google CSP `blob:` black screens, Android Spine/Bullet WASM errors, and MD5 cache builds).
+- **Prefer clicking Build inside Cocos Creator?**: Grab `playable-3x.zip` or `playable-2x.zip` from [GitHub Releases](https://github.com/ppgee/cocos-pnp/releases).
+  > On Cocos 3.x, you can also add `"useV2Cli": true` to your `.adapterrc` so the editor's Build hook automatically runs the v2 CLI after export.
+
+### Option 2: Vite / PixiJS / Three.js / PlayCanvas / Godot / Unity WebGL / Plain HTML5
+
+Build your web output directory (e.g. `./dist`), then run:
 
 ```bash
-# 1. Install dependencies & build v2 packages
-pnpm install
-pnpm run build:v2
-
-# 2. Build the included playable demo for all 8 networks (with --target-size auto, --encoding auto/base122 ~14% lossless payload savings, and --report offline HTML audit report with screenshots)
-pnpm playable build examples/mini-playable -o ./playable-dist --channel all --target-size auto --encoding auto --check --report ./playable-dist/report.html
-
-# 3. Launch the interactive 8-network local preview workbench (portrait/landscape/mute/viewable/CTA monitor)
-pnpm playable preview ./playable-dist/AppLovin.html --channel applovin
-
-# 4. Run offline full-asset optimization (sharp images + ffmpeg audio/video with MP4 faststart + HarfBuzz font subsetting + SVGO / icon vectorization + esbuild JS tree-shaking & minification)
-pnpm playable optimize ./your-dist --target-size 4MB --vectorize-icons --dry-run
-
-# 5. Validate any existing .html, .zip, or build directory
-pnpm playable check ./playable-dist/Google.zip --channel google
-pnpm playable check ./build/web-mobile --channel applovin,unity --static-only
-
-# 6. Inspect 2026 network specs, built-in engine adapters, or scaffold playable.config.json
-pnpm playable specs
-pnpm playable engines
-pnpm playable init
+npx @ppgee/playable-cli build ./dist -o ./playable-dist \
+  --channel all --target-size auto --encoding auto --check --report ./playable-dist/report.html
 ```
 
-### Unified Runtime SDK Example
+Outputs land in `./playable-dist/` (`AppLovin.html`, `Unity.html`, `Moloco.html`, `Google.zip`, `Meta.zip`, `TikTok.zip`, `<name>_mintegral.zip`, `Liftoff.zip`) plus an offline `report.html`.
 
-No channel `if/else` branches needed in game code (full example in [examples/mini-playable/game.js](./examples/mini-playable/game.js)):
+### Option 3: Starting From Scratch
+
+Generate a ready-to-build starter project (`canvas`, `pixijs`, or `threejs`):
+
+```bash
+npx @ppgee/playable-cli create ./my-playable --template canvas
+cd my-playable
+npx @ppgee/playable-cli build --report ./playable-dist/report.html
+```
+
+---
+
+## Everyday Commands
+
+### 1. Build, auto-shrink to fit 5 MB / 2 MB, and verify
+
+```bash
+npx @ppgee/playable-cli build ./dist -o ./playable-dist \
+  --channel applovin,unity,google,meta \
+  --target-size auto \
+  --encoding auto \
+  --check \
+  --report ./playable-dist/report.html
+```
+
+- `--target-size auto`: Automatically shrinks images (`sharp`), audio/video (local `ffmpeg`, H.264 faststart for iOS WebView), fonts (glyph subsetting), SVGs (`svgo`), and JS (`esbuild`) until every output fits under its network limit.
+- `--encoding auto`: Uses lossless Base122 for single-HTML bundles—about 14% smaller than Base64.
+- `--check`: Runs static rules + headless Chrome checks (blank screen in portrait & landscape, uncaught errors, external requests, pre-interaction audio, and CTA trigger). Pass `--static-only` in browser-less CI.
+
+### 2. Local preview + scan QR on a real phone
+
+```bash
+npx @ppgee/playable-cli preview ./playable-dist/AppLovin.html --channel applovin --lan
+```
+
+Test all 8 simulated ad-network environments locally without `mraid is not defined` errors. Adding `--lan` prints a QR code in your terminal (and adds a `Phone QR` button in the toolbar) so anyone on the same Wi-Fi can scan and test fullscreen on iOS/Android.
+
+### 3. Build multi-language / A/B creative variants in one run
+
+Add `variants` to `playable.config.json` (or pass `--variants variants.json`):
+
+```json
+{
+  "inputPath": "./dist",
+  "outputDir": "./playable-dist",
+  "variants": [
+    { "id": "en_easy", "config": { "lang": "en", "ctaText": "Play Now" } },
+    { "id": "ja_hard", "config": { "lang": "ja", "ctaText": "今すぐプレイ" } }
+  ]
+}
+```
+
+Each variant injects its parameters into `window.__PLAYABLE_CONFIG__`, writes to `./playable-dist/<variantId>/`, and rolls up into a single matrix `report.html`.
+
+### 4. Optimize assets only (no packaging)
+
+```bash
+npx @ppgee/playable-cli optimize ./dist -o ./dist-small --target-size 4MB
+```
+
+Add `--dry-run` to preview byte savings without writing files.
+
+### 5. Check an existing `.html`, `.zip`, or build folder
+
+```bash
+npx @ppgee/playable-cli check ./some-ad/Google.zip --channel google
+```
+
+---
+
+## Wiring Up the CTA Button in Game Code
+
+You don't need per-network `if/else` branches in your game. Call the injected `window.playable` helper (full example in [examples/mini-playable/game.js](./examples/mini-playable/game.js)):
 
 ```js
 window.playable.init({
@@ -87,47 +137,72 @@ window.playable.init({
   onResize: ({ width, height }) => resizeCanvas(width, height)
 });
 
-// Call when the playable loop finishes (required by Mintegral & Liftoff)
+// Call when gameplay finishes (required by Mintegral & Liftoff)
 window.playable.gameEnd();
 
-// Call on explicit CTA click (mark button with data-playable-cta for automated runtime verification)
+// Call on store CTA click (add data-playable-cta to the button for automated click verification)
 ctaButton.addEventListener('click', () => {
   window.playable.cta();
 });
 ```
 
+Each network build only receives its own bridge—no stray `mraid` references leak into Google, Meta, TikTok, Mintegral, or Moloco packages.
+
 ---
 
-## MCP Server Setup (for Claude / Cursor / Antigravity / Codex)
+## Supported Ad Networks (2026 Specs)
+
+Verified directly against the live official validators for AppLovin, Google Ads App Campaigns, Mintegral (Playturbo), and Liftoff Accelerate (0 errors):
+
+| Network | CLI ID | Format | Size Limit | CTA API | Handled Automatically |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **AppLovin** | `applovin` | Single HTML | <= 5 MB | `mraid.open()` | Zero external requests, portrait + landscape |
+| **Unity / LevelPlay** | `unity` | Single HTML | <= 5 MB | `mraid.open()` | Migrated off sunset ironSource DAPI to MRAID 3.0 + `viewableChange` |
+| **Google Ads** | `google` | ZIP | <= 5 MB | `ExitApi.exit()` | `ad.orientation` without conflicting `ad.size`; disallowed `.ttf/.wav/.wasm` auto-inlined |
+| **Meta (Facebook)** | `meta` / `facebook` | ZIP | ZIP <= 5 MB & `index.html` <= 2 MB | `FbPlayableAd.onCTAClick()` | <= 100 files; zero-arg CTA; auto-splits large inline JS when needed |
+| **TikTok / Pangle** | `tiktok` / `pangle` | ZIP | <= 5 MB | `window.openAppStore()` | Root `index.html` + `config.json` + `playable-sdk.js` |
+| **Mintegral** | `mintegral` / `mtg` | ZIP | <= 5 MB | `window.install()` | `<name>.zip -> <name>/<name>.html` (`[a-zA-Z0-9_]` only) + `gameReady`/`gameEnd` |
+| **Moloco** | `moloco` | Single HTML | <= 5 MB | `FbPlayableAd.onCTAClick()` | Single HTML only, no `mraid`, dual orientation |
+| **Liftoff / Vungle** | `liftoff` / `vungle` | ZIP | <= 5 MB | `mraid.open()` + `postMessage('download')` | Lowercase ASCII paths, no `<iframe>`, `complete` signal |
+
+Detailed spec notes: [docs/channel-specs-2026.md](./docs/channel-specs-2026.md) · v1 migration notes: [docs/v2-migration.md](./docs/v2-migration.md).
+
+---
+
+## Optional: Using With AI Coding Tools (MCP)
+
+> Skip this section if you don't use AI coding agents—the CLI works completely standalone.
+
+If you build playables with Claude Code, Cursor, Codex, or Antigravity, you can register the built-in MCP server so your agent can build, shrink, and verify packages directly:
 
 ```json
 {
   "mcpServers": {
     "cocos-pnp-playable": {
-      "command": "node",
-      "args": ["/absolute/path/to/cocos-pnp/packages/playable-cli/dist/cli.js", "mcp"]
+      "command": "npx",
+      "args": ["-y", "@ppgee/playable-cli", "mcp"]
     }
   }
 }
 ```
 
-Exposed tools: `get_channel_specs`, `build_playable`, `optimize_playable_assets`, `check_playable`, and `inspect_playable_size`.
+A reusable workflow prompt is also included at [skills/playable-ads-workflow/SKILL.md](./skills/playable-ads-workflow/SKILL.md).
 
 ---
 
-## Running Tests
+## Contributing & Local Development
 
 ```bash
-pnpm run test:v2
+pnpm install
+pnpm run test:v2      # Build all 4 v2 packages and run unit + headless E2E tests
+pnpm run pack:check   # Verify npm tarballs, exports, and bin permissions
 ```
 
----
-
-## Legacy v1 Cocos Creator Editor Plugin
-
-- **Migration guide (v1 -> v2)**: [docs/v2-migration.md](./docs/v2-migration.md)
-- **Legacy v1 plugin downloads** (Cocos Creator 2.4.x / 3.8.2): [GitHub Releases](https://github.com/ppgee/cocos-pnp/releases?q=playable-ads-adapter&expanded=true)
-- `packages/playable-adapter-core` and `packages/playable-ads-adapter` remain untouched for legacy 2.x/3.x editor workflows. For Cocos 3.8.5+ and new projects, use the v2 CLI directly on your `web-mobile` output.
+- `packages/playable-cli` (`@ppgee/playable-cli`): CLI, preview server, HTML report, project scaffolding, MCP server
+- `packages/playable-core` (`@ppgee/playable-core`): multi-network packager, engine adapters, asset optimizer, Base122
+- `packages/playable-validator` (`@ppgee/playable-validator`): 8-network static checks, size breakdown, Chrome runtime verifier
+- `packages/playable-sdk` (`@ppgee/playable-sdk`): channel-isolated `window.playable` runtime bridge
+- `packages/playable-adapter-core` & `packages/playable-ads-adapter`: Cocos Creator 2.x/3.x editor plugins
 
 ### [Contributors](https://github.com/ppgee/cocos-pnp/graphs/contributors)
 

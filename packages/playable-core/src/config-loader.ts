@@ -2,9 +2,86 @@ import { existsSync } from 'node:fs';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { resolveChannel, type ChannelId } from '@ppgee/playable-validator';
-import type { BuildPlayableOptions, CustomChannelInject, OrientationMode } from './types.js';
+import type {
+  BuildPlayableOptions,
+  CustomChannelInject,
+  OrientationMode,
+  PlayableVariantConfig
+} from './types.js';
 
 export type PlayableConfigFile = Partial<Omit<BuildPlayableOptions, 'adapters'>>;
+
+export function normalizeVariants(raw: unknown): PlayableVariantConfig[] | undefined {
+  if (!raw) return undefined;
+  if (Array.isArray(raw)) {
+    const out: PlayableVariantConfig[] = [];
+    for (const item of raw) {
+      if (!item || typeof item !== 'object') continue;
+      const obj = item as Record<string, unknown>;
+      const id = String(obj.id || '').trim();
+      if (!id) continue;
+      out.push({
+        id,
+        label: typeof obj.label === 'string' ? obj.label : undefined,
+        config:
+          obj.config && typeof obj.config === 'object' && !Array.isArray(obj.config)
+            ? (obj.config as Record<string, unknown>)
+            : undefined,
+        channels: Array.isArray(obj.channels) ? obj.channels.map(String) : undefined,
+        orientation:
+          obj.orientation === 'portrait' ||
+          obj.orientation === 'landscape' ||
+          obj.orientation === 'auto'
+            ? obj.orientation
+            : undefined,
+        storeUrls:
+          obj.storeUrls && typeof obj.storeUrls === 'object'
+            ? (obj.storeUrls as PlayableVariantConfig['storeUrls'])
+            : undefined,
+        packageName: typeof obj.packageName === 'string' ? obj.packageName : undefined
+      });
+    }
+    return out.length > 0 ? out : undefined;
+  }
+
+  // Also allow shorthand map: { "en_easy": { "lang": "en", "cta": "Play" }, "ja_hard": { ... } }
+  if (typeof raw === 'object') {
+    const out: PlayableVariantConfig[] = [];
+    for (const [id, val] of Object.entries(raw as Record<string, unknown>)) {
+      if (!id.trim() || !val || typeof val !== 'object' || Array.isArray(val)) continue;
+      const obj = val as Record<string, unknown>;
+      const hasStructuredKeys =
+        'config' in obj || 'channels' in obj || 'orientation' in obj || 'label' in obj || 'storeUrls' in obj;
+      if (hasStructuredKeys) {
+        out.push({
+          id: id.trim(),
+          label: typeof obj.label === 'string' ? obj.label : undefined,
+          config:
+            obj.config && typeof obj.config === 'object' && !Array.isArray(obj.config)
+              ? (obj.config as Record<string, unknown>)
+              : undefined,
+          channels: Array.isArray(obj.channels) ? obj.channels.map(String) : undefined,
+          orientation:
+            obj.orientation === 'portrait' ||
+            obj.orientation === 'landscape' ||
+            obj.orientation === 'auto'
+              ? obj.orientation
+              : undefined,
+          storeUrls:
+            obj.storeUrls && typeof obj.storeUrls === 'object'
+              ? (obj.storeUrls as PlayableVariantConfig['storeUrls'])
+              : undefined,
+          packageName: typeof obj.packageName === 'string' ? obj.packageName : undefined
+        });
+      } else {
+        out.push({ id: id.trim(), config: obj });
+      }
+    }
+    return out.length > 0 ? out : undefined;
+  }
+
+  return undefined;
+}
 
 interface LegacyAdapterRC {
   orientation?: OrientationMode;
@@ -46,6 +123,7 @@ function normalizeConfigPayload(raw: Record<string, unknown>, isLegacyRc: boolea
     const cfg = raw as PlayableConfigFile;
     return {
       ...cfg,
+      variants: normalizeVariants(cfg.variants),
       injectOptions: normalizeInjectOptions(cfg.injectOptions as Record<string, CustomChannelInject> | undefined)
     };
   }

@@ -6,8 +6,10 @@ import path from 'node:path';
 import { describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { detectBrowserExecutable, validatePlayable } from '@ppgee/playable-validator';
-import { generateValidationHtmlReport } from './html-report.js';
+import { generateBuildHtmlReport, generateValidationHtmlReport } from './html-report.js';
 import { startPreviewServer } from './preview-server.js';
+import { encodeQrMatrix, renderQrSvg, renderQrTerminal } from './qrcode.js';
+import { scaffoldPlayableProject } from './scaffold.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CLI_ENTRY = path.resolve(__dirname, 'cli.js');
@@ -123,6 +125,10 @@ describe('@ppgee/playable-cli local interactive preview workbench', () => {
       assert.ok(uiHtml.includes('Landscape 844x390'));
       assert.ok(uiHtml.includes('Export HTML Report'));
       assert.ok(uiHtml.includes('Package Quota &amp; Breakdown'));
+      // Ensure embedded DATA JSON escapes </script> tags so diagnostic suggestions never terminate inline script
+      const scriptBlocks = uiHtml.match(/<script>[\s\S]*?<\/script>/g) ?? [];
+      assert.equal(scriptBlocks.length, 1);
+      assert.ok(scriptBlocks[0].includes('loadChannel(currentChannel);'));
 
       const reportResp = await fetch(`${handle.url}api/report.html`);
       assert.equal(reportResp.status, 200);
@@ -190,6 +196,101 @@ describe('@ppgee/playable-cli self-contained HTML audit report', () => {
       assert.equal(exitCode, 0);
       const written = await fs.readFile(reportFile, 'utf-8');
       assert.ok(written.includes('Playable Compliance Report'));
+    } finally {
+      await fs.rm(tmpDir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('@ppgee/playable-cli LAN QR device preview & scaffold templates', () => {
+  it('generates valid ISO 18004 QR matrices, terminal/SVG output, and serves /api/qr.svg with --lan', async () => {
+    const url = 'http://192.168.1.42:4173/sandbox/index.html?__preview_channel=applovin';
+    const matrix = encodeQrMatrix(url);
+    assert.equal(matrix.length, matrix[0].length);
+    assert.ok(matrix.length >= 21 && matrix.length <= 41);
+    // Verify top-left 7x7 finder pattern border & 3x3 center
+    assert.equal(matrix[0][0], true);
+    assert.equal(matrix[0][6], true);
+    assert.equal(matrix[1][1], false);
+    assert.equal(matrix[3][3], true);
+
+    const svg = renderQrSvg(url);
+    assert.ok(svg.startsWith('<svg ') && svg.includes('<path '));
+    const term = renderQrTerminal(url);
+    assert.ok(term.includes('█'));
+
+    const handle = await startPreviewServer({
+      inputPath: VALID_FIXTURE,
+      channel: 'applovin',
+      port: 0,
+      lan: true
+    });
+    try {
+      const qrResp = await fetch(`${handle.url}api/qr.svg?url=${encodeURIComponent(url)}`);
+      assert.equal(qrResp.status, 200);
+      assert.ok((qrResp.headers.get('content-type') || '').includes('image/svg+xml'));
+      const qrBody = await qrResp.text();
+      assert.ok(qrBody.includes('<svg'));
+    } finally {
+      await handle.close();
+    }
+  });
+
+  it('scaffolds canvas, pixijs, and threejs projects and builds+validates the canvas multi-variant template', async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'playable-scaffold-test-'));
+    try {
+      const canvasDir = path.join(tmpDir, 'demo-canvas');
+      const pixiDir = path.join(tmpDir, 'demo-pixi');
+      const threeDir = path.join(tmpDir, 'demo-three');
+
+      const cRes = await scaffoldPlayableProject({ targetDir: canvasDir, template: 'canvas' });
+      const pRes = await scaffoldPlayableProject({ targetDir: pixiDir, template: 'pixijs' });
+      const tRes = await scaffoldPlayableProject({ targetDir: threeDir, template: 'threejs' });
+
+      assert.ok(cRes.files.includes('src/index.html'));
+      assert.ok(cRes.files.includes('playable.config.json'));
+      assert.ok(pRes.files.includes('package.json') && pRes.files.includes('src/main.js'));
+      assert.ok(tRes.files.includes('package.json') && tRes.files.includes('src/main.js'));
+
+      // Run CLI build on the scaffolded canvas project with its 2-variant playable.config.json + HTML report
+      const reportFile = path.join(canvasDir, 'playable-dist', 'matrix-report.html');
+      const hasBrowser = Boolean(detectBrowserExecutable());
+      const args = [
+        CLI_ENTRY,
+        'build',
+        '--config',
+        path.join(canvasDir, 'playable.config.json'),
+        '--channel',
+        'applovin,google',
+        '--check',
+        ...(hasBrowser ? [] : ['--static-only']),
+        '--report',
+        reportFile,
+        '--json'
+      ];
+      const { code, stdout, stderr } = await new Promise<{ code: number; stdout: string; stderr: string }>(
+        (resolve, reject) => {
+          const child = spawn(process.execPath, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+          let out = '';
+          let err = '';
+          child.stdout.on('data', (d: Buffer) => { out += d.toString('utf-8'); });
+          child.stderr.on('data', (d: Buffer) => { err += d.toString('utf-8'); });
+          child.on('error', reject);
+          child.on('close', (c) => resolve({ code: c ?? 1, stdout: out, stderr: err }));
+        }
+      );
+
+      assert.equal(code, 0, `Scaffold build failed: ${stderr}`);
+      const parsed = JSON.parse(stdout) as { allValid: boolean; variants: unknown[]; artifacts: unknown[] };
+      assert.equal(parsed.allValid, true);
+      assert.equal(parsed.variants.length, 2);
+      assert.equal(parsed.artifacts.length, 4);
+
+      const matrixHtml = await fs.readFile(reportFile, 'utf-8');
+      assert.ok(matrixHtml.includes('Multi-Variant &amp; Ad Network Compliance Matrix'));
+      assert.ok(matrixHtml.includes('en_default'));
+      assert.ok(matrixHtml.includes('ja_default'));
+      void generateBuildHtmlReport;
     } finally {
       await fs.rm(tmpDir, { recursive: true, force: true });
     }

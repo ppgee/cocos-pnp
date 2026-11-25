@@ -7,11 +7,13 @@ import {
   DEFAULT_CONFIG_TEMPLATE,
   DEFAULT_ENGINE_ADAPTERS,
   loadPlayableConfig,
+  normalizeVariants,
   optimizeDirectory,
   parseByteSize,
   type AssetOptimizeOptions,
   type OrientationMode,
-  type PayloadEncoding
+  type PayloadEncoding,
+  type PlayableVariantConfig
 } from '@ppgee/playable-core';
 import {
   ALL_CHANNEL_IDS,
@@ -29,26 +31,34 @@ import {
 import { generateBuildHtmlReport, generateValidationHtmlReport } from './html-report.js';
 import { startMcpServer } from './mcp-server.js';
 import { startPreviewServer } from './preview-server.js';
+import { scaffoldPlayableProject, type ScaffoldTemplateId } from './scaffold.js';
 
 function printHelp(): void {
   console.log(`
 playable v${VALIDATOR_VERSION} - Engine-Agnostic HTML5 Playable Ads Packager, Validator, Previewer & MCP Server
 
 Usage:
+  playable create [dir] [options]               Scaffold a ready-to-build playable (canvas | pixijs | threejs)
   playable build [input] [options]              Package any Web/Game Engine build for ad networks
   playable check <path> [options]               Validate a .html, .zip, or build directory
-  playable preview <path> [options]             Launch interactive 8-network local preview workbench
+  playable preview <path> [options]             Launch interactive 8-network local preview workbench (with --lan QR)
   playable optimize <dir> [options]             Offline image/audio/video/text compression + auto size budget
   playable specs [channel] [--json]             Show 2026 ad network specifications (8 channels)
   playable engines [--json]                     List built-in engine adapters
   playable init [dir]                           Generate a playable.config.json starter file
   playable mcp                                  Start stdio MCP server for AI Coding Agents
 
+Create Options:
+  -t, --template <id>        canvas (default) | pixijs | threejs
+  --name <pkgName>           Project name (default: directory name)
+  --force                    Overwrite non-empty target directory
+
 Build Options:
   -o, --out <dir>            Output directory (default: config.outputDir or ./playable-dist)
   -c, --channel <list>       Target channel(s), comma-separated or "all"
                              Supported: ${ALL_CHANNEL_IDS.join(', ')}
   --config <path>            Explicit playable.config.json or legacy .adapterrc path
+  --variants <file|json|ids> Multi-variant matrix JSON file, inline JSON, or comma-separated variant IDs from config
   --engine <id>              auto | ${DEFAULT_ENGINE_ADAPTERS.map((a) => a.id).join(' | ')}
   --orientation <mode>       portrait | landscape | auto (default: auto)
   --name <pkgName>           Base name (used for Mintegral matching folder/HTML naming)
@@ -81,6 +91,7 @@ Build Options:
 Preview Options:
   -c, --channel <id>         Initial simulated ad network (default: applovin)
   -p, --port <port>          HTTP port (default: 4173)
+  --lan                      Bind to 0.0.0.0 and print LAN URL + scannable QR code for phone testing
 
 Optimize Options:
   -o, --out <dir>            Output directory (default: <dir>-optimized)
@@ -126,7 +137,8 @@ const VALUE_FLAGS = new Set([
   '-c', '--channel', '--channels',
   '-o', '--out', '--output',
   '-p', '--port',
-  '--config', '--orientation', '--engine', '--name', '--encoding', '--report',
+  '-t', '--template',
+  '--config', '--variants', '--orientation', '--engine', '--name', '--encoding', '--report',
   '--ios-url', '--android-url',
   '--quality', '--max-size', '--target-size',
   '--audio-bitrate', '--audio-sample-rate',
@@ -141,6 +153,7 @@ const BOOLEAN_FLAGS = new Set([
   '--static-only',
   '--json',
   '--check',
+  '--lan',
   '--no-sdk',
   '--no-compress',
   '--optimize',
@@ -227,7 +240,9 @@ function parseArgv(argv: string[]): ParsedArgs {
             ? 'out'
             : token === '-p'
               ? 'port'
-              : token.slice(2);
+              : token === '-t'
+                ? 'template'
+                : token.slice(2);
       flags[key] = next;
       i++;
     } else if (token.startsWith('--') && token.includes('=')) {
@@ -269,6 +284,42 @@ export async function runCli(argv: string[]): Promise<number> {
     return 0;
   }
 
+  if (parsed.command === 'create') {
+    const targetDir = parsed.positionals[0] || './my-playable';
+    try {
+      const template = (
+        typeof parsed.flags.template === 'string' ? parsed.flags.template : 'canvas'
+      ) as ScaffoldTemplateId;
+      const result = await scaffoldPlayableProject({
+        targetDir,
+        template,
+        name: typeof parsed.flags.name === 'string' ? parsed.flags.name : undefined,
+        force: Boolean(parsed.flags.force)
+      });
+      if (parsed.flags.json) {
+        console.log(JSON.stringify(result, null, 2));
+      } else {
+        console.log(`\nCreated ${result.template} playable project at ${result.targetDir}`);
+        for (const f of result.files) {
+          console.log(`  + ${f}`);
+        }
+        console.log('\nNext steps:');
+        if (result.template === 'canvas') {
+          console.log(`  cd ${path.relative(process.cwd(), result.targetDir) || '.'}`);
+          console.log('  npx @ppgee/playable-cli build --report ./playable-dist/report.html');
+          console.log('  npx @ppgee/playable-cli preview ./playable-dist/en_default/AppLovin.html --lan\n');
+        } else {
+          console.log(`  cd ${path.relative(process.cwd(), result.targetDir) || '.'}`);
+          console.log('  npm install && npm run build:playable\n');
+        }
+      }
+      return 0;
+    } catch (err) {
+      console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
+      return 2;
+    }
+  }
+
   if (parsed.command === 'preview') {
     const targetPath = parsed.positionals[0];
     if (!targetPath) {
@@ -277,13 +328,27 @@ export async function runCli(argv: string[]): Promise<number> {
     }
     try {
       const port = typeof parsed.flags.port === 'string' ? Number(parsed.flags.port) : 4173;
+      const lan = Boolean(parsed.flags.lan);
       const handle = await startPreviewServer({
         inputPath: targetPath,
         channel: typeof parsed.flags.channel === 'string' ? parsed.flags.channel : 'applovin',
-        port: Number.isFinite(port) ? port : 4173
+        port: Number.isFinite(port) ? port : 4173,
+        lan
       });
-      console.log(`\nPlayable Preview Workbench running at: ${handle.url}`);
-      console.log('Press Ctrl+C to stop.\n');
+      console.log(`\nPlayable Preview Workbench (Local): ${handle.url}`);
+      if (handle.lanUrl) {
+        console.log(`Playable Preview Workbench (LAN):   ${handle.lanUrl}`);
+      }
+      if (handle.mobileUrl) {
+        console.log(`Mobile Direct Fullscreen URL:       ${handle.mobileUrl}`);
+      }
+      if (handle.qrTerminal) {
+        console.log('\nScan on your phone (same Wi-Fi):\n');
+        console.log(handle.qrTerminal);
+      } else if (lan) {
+        console.log('Warning: No active LAN IPv4 interface detected; bound to 0.0.0.0.');
+      }
+      console.log('\nPress Ctrl+C to stop.\n');
 
       await new Promise<void>((resolve) => {
         const stop = () => {
@@ -436,11 +501,36 @@ export async function runCli(argv: string[]): Promise<number> {
       ) as PayloadEncoding | undefined;
       const reportPath = typeof parsed.flags.report === 'string' ? path.resolve(parsed.flags.report) : undefined;
 
+      // Resolve multi-variant matrix: --variants <json-file | inline-json | comma-separated-ids-from-config>
+      let resolvedVariants: PlayableVariantConfig[] | undefined = cfg.variants;
+      if (typeof parsed.flags.variants === 'string') {
+        const rawFlag = parsed.flags.variants.trim();
+        if (rawFlag.startsWith('[') || rawFlag.startsWith('{')) {
+          resolvedVariants = normalizeVariants(JSON.parse(rawFlag));
+        } else if (existsSync(path.resolve(rawFlag))) {
+          const text = await fs.readFile(path.resolve(rawFlag), 'utf-8');
+          resolvedVariants = normalizeVariants(JSON.parse(text));
+        } else if (cfg.variants && cfg.variants.length > 0) {
+          const wanted = new Set(rawFlag.split(',').map((s) => s.trim()).filter(Boolean));
+          resolvedVariants = cfg.variants.filter((v) => wanted.has(v.id));
+          if (resolvedVariants.length === 0) {
+            throw new Error(
+              `No variants matched "${rawFlag}". Available in config: ${cfg.variants.map((v) => v.id).join(', ')}`
+            );
+          }
+        } else {
+          throw new Error(
+            `--variants "${rawFlag}" is neither a readable JSON file nor inline JSON, and no "variants" were found in playable.config.json.`
+          );
+        }
+      }
+
       const result = await buildPlayable({
         ...cfg,
         inputPath,
         outputDir,
         channels,
+        variants: resolvedVariants,
         engine: typeof parsed.flags.engine === 'string' ? parsed.flags.engine : cfg.engine,
         orientation,
         packageName:

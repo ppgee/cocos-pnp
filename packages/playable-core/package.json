@@ -1,6 +1,6 @@
 {
   "name": "@ppgee/playable-core",
-  "version": "2.0.0-alpha.0",
+  "version": "2.0.0",
   "description": "Engine-agnostic multi-network Playable Ads packager, Base122/pako VFS builder, and offline full-asset optimizer",
   "type": "module",
   "main": "./dist/index.js",
@@ -62,7 +62,7 @@
   },
   "optionalDependencies": {
     "esbuild": "^0.28.2",
-    "sharp": "^0.34.0",
+    "sharp": "^0.35.5",
     "subset-font": "^2.9.0",
     "svgo": "^4.1.0"
   },

@@ -41,5 +41,27 @@
     "commitizen": "^4.2.5",
     "cz-conventional-changelog": "^3.3.0",
     "cz-customizable": "^6.9.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "ajv@>=7 <9": "^8.18.0",
+      "brace-expansion@^1": "^1.1.22",
+      "brace-expansion@^2": "^2.1.8",
+      "braces@^3": "^3.0.3",
+      "cross-spawn@^7": "^7.0.5",
+      "diff@^4": "^4.0.4",
+      "follow-redirects@^1": "^1.16.3",
+      "form-data@^4": "^4.0.6",
+      "lodash@^4": "^4.18.1",
+      "micromatch@^4": "^4.0.8",
+      "minimatch@^3": "^3.1.5",
+      "minimatch@^5": "^5.1.9",
+      "picomatch@^2": "^2.3.2",
+      "semver@^5": "^5.7.2",
+      "semver@^7": "^7.5.2",
+      "tmp@<0.2.7": "^0.2.7",
+      "word-wrap@^1": "^1.2.4",
+      "yaml@^1": "^1.10.3"
+    }
   }
 }
