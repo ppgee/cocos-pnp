@@ -34,7 +34,7 @@ async function verifyPackage(relDir, tmpPackDir) {
   const pkg = JSON.parse(await fs.readFile(pkgJsonPath, 'utf-8'));
 
   // 1. Metadata assertions
-  assert.ok(pkg.name?.startsWith('@cocos-pnp/'), `${relDir}: name must be scoped under @cocos-pnp/`);
+  assert.ok(pkg.name?.startsWith('@ppgee/'), `${relDir}: name must be scoped under @ppgee/`);
   assert.equal(pkg.type, 'module', `${pkg.name}: type must be "module"`);
   assert.equal(pkg.publishConfig?.access, 'public', `${pkg.name}: publishConfig.access must be "public"`);
   assert.ok(pkg.engines?.node, `${pkg.name}: engines.node must be declared`);

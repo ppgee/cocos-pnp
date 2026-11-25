@@ -9,7 +9,7 @@ import {
   type ChannelId,
   type LoadedArtifact,
   type ValidationReport
-} from '@cocos-pnp/playable-validator';
+} from '@ppgee/playable-validator';
 import { generateValidationHtmlReport } from './html-report.js';
 
 const MIME_MAP: Record<string, string> = {

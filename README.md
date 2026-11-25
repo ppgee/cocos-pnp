@@ -12,11 +12,11 @@ Write your playable once, build submission-ready `.html` / `.zip` packages for *
 
 1. **8 Major Ad Networks Aligned with 2026 Specs** (see [docs/channel-specs-2026.md](./docs/channel-specs-2026.md))
    - `AppLovin`, `Unity Ads / LevelPlay` (migrated from sunset ironSource DAPI), `Google Ads`, `Meta (Facebook)`, `TikTok / Pangle`, `Mintegral`, `Moloco`, and `Liftoff / Vungle`.
-2. **Static + Headless Chrome Runtime Validation (`@cocos-pnp/playable-validator`)**
+2. **Static + Headless Chrome Runtime Validation (`@ppgee/playable-validator`)**
    - Automatically reuses your locally installed Chrome/Chromium/Edge (no 300MB browser download required), with `--static-only` for zero-browser CI fast checks.
    - Audits size ceilings (including Meta's `index.html <= 2 MB` inside 5 MB ZIP & 100-file limit), Google's allowed extension whitelist, TikTok `config.json` & `playable-sdk.js`, Mintegral matching-folder layout & `gameReady`/`gameEnd`, Liftoff lowercase ASCII path naming, and inline Base64 overhead attribution.
    - Verifies runtime behavior in mocked network hosts: uncaught exceptions, console errors, blocked external requests, portrait + landscape dual-orientation rendering, pre-interaction audio playback, and CTA API invocation.
-3. **Engine-Agnostic Core + Pluggable `EngineAdapter` + Zero-Leak Runtime SDK (`@cocos-pnp/playable-core` + `@cocos-pnp/playable-sdk`)**
+3. **Engine-Agnostic Core + Pluggable `EngineAdapter` + Zero-Leak Runtime SDK (`@ppgee/playable-core` + `@ppgee/playable-sdk`)**
    - Shared 7-entry browser VFS shim (`SafeURL`, `fetch`, `XMLHttpRequest`, `WebAssembly.instantiateStreaming`, `Image.src`, `Audio/Media.src`, `FontFace`);
    - 6 built-in auto-detected engine adapters (`cocos-3x`, `cocos-2x`, `playcanvas`, `godot-4`, `unity-webgl`, and `generic-web` for Vite/PixiJS/Three.js/Phaser/AI H5), plus custom adapter plugin registration via `options.adapters`;
    - Native `playable.config.json` support with transparent fallback for legacy v1 `.adapterrc` files;

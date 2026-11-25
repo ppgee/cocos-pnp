@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { resolveChannel, type ChannelId } from '@cocos-pnp/playable-validator';
+import { resolveChannel, type ChannelId } from '@ppgee/playable-validator';
 import type { BuildPlayableOptions, CustomChannelInject, OrientationMode } from './types.js';
 
 export type PlayableConfigFile = Partial<Omit<BuildPlayableOptions, 'adapters'>>;

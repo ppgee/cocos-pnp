@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { detectBrowserExecutable, validatePlayable } from '@cocos-pnp/playable-validator';
+import { detectBrowserExecutable, validatePlayable } from '@ppgee/playable-validator';
 import { generateValidationHtmlReport } from './html-report.js';
 import { startPreviewServer } from './preview-server.js';
 
@@ -54,7 +54,7 @@ function runMcpSession(requests: Array<Record<string, unknown>>): Promise<Array<
   });
 }
 
-describe('@cocos-pnp/playable-cli MCP stdio server', () => {
+describe('@ppgee/playable-cli MCP stdio server', () => {
   it('handles initialize, tools/list, and tools/call (get_channel_specs + check_playable)', async () => {
     const responses = await runMcpSession([
       {
@@ -107,7 +107,7 @@ describe('@cocos-pnp/playable-cli MCP stdio server', () => {
   });
 });
 
-describe('@cocos-pnp/playable-cli local interactive preview workbench', () => {
+describe('@ppgee/playable-cli local interactive preview workbench', () => {
   it('serves workbench UI, /api/info static reports, and sandboxed HTML with injected channel mock bridge', async () => {
     const handle = await startPreviewServer({
       inputPath: VALID_FIXTURE,
@@ -149,7 +149,7 @@ describe('@cocos-pnp/playable-cli local interactive preview workbench', () => {
   });
 });
 
-describe('@cocos-pnp/playable-cli self-contained HTML audit report', () => {
+describe('@ppgee/playable-cli self-contained HTML audit report', () => {
   it('generates offline HTML report with embedded portrait & landscape runtime screenshots', async () => {
     const hasBrowser = Boolean(detectBrowserExecutable());
     const report = await validatePlayable({

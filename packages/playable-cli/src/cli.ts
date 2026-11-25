@@ -12,14 +12,14 @@ import {
   type AssetOptimizeOptions,
   type OrientationMode,
   type PayloadEncoding
-} from '@cocos-pnp/playable-core';
+} from '@ppgee/playable-core';
 import {
   ALL_CHANNEL_IDS,
   CHANNEL_SPECS,
   resolveChannels,
   validatePlayable,
   VALIDATOR_VERSION
-} from '@cocos-pnp/playable-validator';
+} from '@ppgee/playable-validator';
 import {
   formatBuildResult,
   formatChannelSpecs,
@@ -70,7 +70,7 @@ Build Options:
   --svg-precision <0-5>      SVG path coordinate precision for SVGO (default: 2)
   --drop-console             Strip console.* calls during JS minification/tree-shaking
   --ffmpeg-path <path>       Explicit ffmpeg executable path
-  --no-sdk                   Disable automatic @cocos-pnp/playable-sdk bridge injection
+  --no-sdk                   Disable automatic @ppgee/playable-sdk bridge injection
   --no-compress              Disable pako deflate compression for single-HTML bundles
   --encoding <mode>          base64 (default) | base122 (~14% smaller lossless payload) | auto
   --check                    Run compliance validation on every built artifact

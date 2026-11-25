@@ -71,26 +71,26 @@ jobs:
             echo "dry_run=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Publish @cocos-pnp/* v2 packages
+      - name: Publish @ppgee/* v2 packages
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           PUBLISH_FLAGS="--access public --tag ${{ steps.meta.outputs.dist_tag }} --no-git-checks"
           if [ "${{ steps.meta.outputs.dry_run }}" = "true" ]; then
             echo "Running dry-run publish..."
-            pnpm --filter '@cocos-pnp/playable-sdk' publish $PUBLISH_FLAGS --dry-run
-            pnpm --filter '@cocos-pnp/playable-validator' publish $PUBLISH_FLAGS --dry-run
-            pnpm --filter '@cocos-pnp/playable-core' publish $PUBLISH_FLAGS --dry-run
-            pnpm --filter '@cocos-pnp/playable-cli' publish $PUBLISH_FLAGS --dry-run
+            pnpm --filter '@ppgee/playable-sdk' publish $PUBLISH_FLAGS --dry-run
+            pnpm --filter '@ppgee/playable-validator' publish $PUBLISH_FLAGS --dry-run
+            pnpm --filter '@ppgee/playable-core' publish $PUBLISH_FLAGS --dry-run
+            pnpm --filter '@ppgee/playable-cli' publish $PUBLISH_FLAGS --dry-run
           else
             if [ -z "$NODE_AUTH_TOKEN" ]; then
               echo "::error::NPM_TOKEN secret is not configured."
               exit 1
             fi
-            pnpm --filter '@cocos-pnp/playable-sdk' publish $PUBLISH_FLAGS --provenance
-            pnpm --filter '@cocos-pnp/playable-validator' publish $PUBLISH_FLAGS --provenance
-            pnpm --filter '@cocos-pnp/playable-core' publish $PUBLISH_FLAGS --provenance
-            pnpm --filter '@cocos-pnp/playable-cli' publish $PUBLISH_FLAGS --provenance
+            pnpm --filter '@ppgee/playable-sdk' publish $PUBLISH_FLAGS --provenance
+            pnpm --filter '@ppgee/playable-validator' publish $PUBLISH_FLAGS --provenance
+            pnpm --filter '@ppgee/playable-core' publish $PUBLISH_FLAGS --provenance
+            pnpm --filter '@ppgee/playable-cli' publish $PUBLISH_FLAGS --provenance
           fi
 
       - name: Create GitHub Release (tag pushes only)

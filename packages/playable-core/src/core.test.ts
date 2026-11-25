@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 import { promisify } from 'node:util';
-import { detectBrowserExecutable } from '@cocos-pnp/playable-validator';
+import { detectBrowserExecutable } from '@ppgee/playable-validator';
 import {
   buildPlayable,
   decodeBase122,
@@ -45,7 +45,7 @@ after(async () => {
   }
 });
 
-describe('@cocos-pnp/playable-core engine-agnostic multi-channel build + validate', () => {
+describe('@ppgee/playable-core engine-agnostic multi-channel build + validate', () => {
   it('builds ONE channel-agnostic Web game (with dynamic new Image().src + new Audio() + fetch) into ALL 8 networks and passes 8/8 checks', async () => {
     const srcDir = path.join(tmpDir, 'generic-game');
     const outDir = path.join(tmpDir, 'out-all-8');

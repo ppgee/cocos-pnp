@@ -3,7 +3,7 @@ import {
   resolveChannels,
   validatePlayable,
   type ChannelSpec
-} from '@cocos-pnp/playable-validator';
+} from '@ppgee/playable-validator';
 import { buildSingleHtml, emitChannelArtifact } from './channel-emitter.js';
 import {
   BUDGET_PRESETS,

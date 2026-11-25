@@ -1,5 +1,5 @@
-import type { BridgeGeneratorOptions } from '@cocos-pnp/playable-sdk';
-import type { ChannelId, ValidationReport } from '@cocos-pnp/playable-validator';
+import type { BridgeGeneratorOptions } from '@ppgee/playable-sdk';
+import type { ChannelId, ValidationReport } from '@ppgee/playable-validator';
 import type { EngineAdapter } from './adapters/types.js';
 import type { AssetOptimizeOptions, OptimizationSummary } from './optimizer/asset-optimizer.js';
 import type { PayloadEncoding } from './vfs/payload.js';
@@ -38,7 +38,7 @@ export interface BuildPlayableOptions {
    * Automatically enables optimization and escalates compression presets from clean originals until emitted artifacts fit under budget.
    */
   targetSize?: number | string | 'auto';
-  /** Whether to inject @cocos-pnp/playable-sdk channel bridge automatically (default: true) */
+  /** Whether to inject @ppgee/playable-sdk channel bridge automatically (default: true) */
   injectSdkBridge?: boolean;
   /** Store URLs for MRAID channels (AppLovin / Unity) */
   storeUrls?: BridgeGeneratorOptions;
@@ -48,7 +48,7 @@ export interface BuildPlayableOptions {
   adapterOptions?: Record<string, unknown>;
   /** @deprecated Pass via adapterOptions.disableSplash or keep for convenience */
   disableSplash?: boolean;
-  /** Run @cocos-pnp/playable-validator on every generated output artifact (default: false) */
+  /** Run @ppgee/playable-validator on every generated output artifact (default: false) */
   validate?: boolean;
   /** When validate=true, skip headless browser runtime checks */
   staticOnly?: boolean;

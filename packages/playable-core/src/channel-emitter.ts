@@ -2,8 +2,8 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { load as loadHtml } from 'cheerio';
 import JSZip from 'jszip';
-import { generateChannelBridgeScript } from '@cocos-pnp/playable-sdk';
-import type { ChannelId, ChannelSpec } from '@cocos-pnp/playable-validator';
+import { generateChannelBridgeScript } from '@ppgee/playable-sdk';
+import type { ChannelId, ChannelSpec } from '@ppgee/playable-validator';
 import {
   prepareGoogleZipFiles,
   SKIP_EXTENSIONS,
@@ -151,7 +151,7 @@ function applyChannelHtmlTransforms(
     $('head').prepend(custom.sdkScript);
   }
 
-  // Inject zero-dependency, channel-isolated @cocos-pnp/playable-sdk bridge
+  // Inject zero-dependency, channel-isolated @ppgee/playable-sdk bridge
   if (options.injectSdkBridge !== false) {
     const bridgeCode = generateChannelBridgeScript(spec.id, options.storeUrls);
     $('head').append(`<script data-id="playable-sdk-bridge">${bridgeCode}</script>`);

@@ -149,14 +149,12 @@ importers:
         specifier: ^3.17.4
         version: 3.17.4
 
-  packages/playable-ads-adapter/dist/playable-ads-adapter: {}
-
   packages/playable-cli:
     dependencies:
-      '@cocos-pnp/playable-core':
+      '@ppgee/playable-core':
         specifier: workspace:*
         version: link:../playable-core
-      '@cocos-pnp/playable-validator':
+      '@ppgee/playable-validator':
         specifier: workspace:*
         version: link:../playable-validator
     devDependencies:
@@ -169,10 +167,10 @@ importers:
 
   packages/playable-core:
     dependencies:
-      '@cocos-pnp/playable-sdk':
+      '@ppgee/playable-sdk':
         specifier: workspace:*
         version: link:../playable-sdk
-      '@cocos-pnp/playable-validator':
+      '@ppgee/playable-validator':
         specifier: workspace:*
         version: link:../playable-validator
       cheerio:

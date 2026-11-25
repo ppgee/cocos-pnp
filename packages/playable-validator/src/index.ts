@@ -97,7 +97,7 @@ export async function validatePlayable(options: ValidateOptions): Promise<Valida
   }
 
   return {
-    tool: '@cocos-pnp/playable-validator',
+    tool: '@ppgee/playable-validator',
     version: VALIDATOR_VERSION,
     timestamp: new Date().toISOString(),
     inputPath: artifact.inputPath,

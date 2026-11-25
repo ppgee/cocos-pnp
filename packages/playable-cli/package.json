@@ -1,5 +1,5 @@
 {
-  "name": "@cocos-pnp/playable-cli",
+  "name": "@ppgee/playable-cli",
   "version": "2.0.0-alpha.0",
   "description": "CLI, interactive preview workbench, offline HTML audit reporter, and MCP Server for HTML5 Playable Ads",
   "type": "module",
@@ -53,8 +53,8 @@
     "test": "pnpm build && node --test dist/**/*.test.js"
   },
   "dependencies": {
-    "@cocos-pnp/playable-core": "workspace:*",
-    "@cocos-pnp/playable-validator": "workspace:*"
+    "@ppgee/playable-core": "workspace:*",
+    "@ppgee/playable-validator": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

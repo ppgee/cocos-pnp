@@ -5,11 +5,11 @@
   "main": "index.js",
   "scripts": {
     "commit": "cz",
-    "build:v2": "pnpm --filter @cocos-pnp/playable-sdk build && pnpm --filter @cocos-pnp/playable-validator build && pnpm --filter @cocos-pnp/playable-core build && pnpm --filter @cocos-pnp/playable-cli build",
-    "test:v2": "pnpm run build:v2 && pnpm --filter @cocos-pnp/playable-sdk test && pnpm --filter @cocos-pnp/playable-validator test && pnpm --filter @cocos-pnp/playable-core test && pnpm --filter @cocos-pnp/playable-cli test",
+    "build:v2": "pnpm --filter @ppgee/playable-sdk build && pnpm --filter @ppgee/playable-validator build && pnpm --filter @ppgee/playable-core build && pnpm --filter @ppgee/playable-cli build",
+    "test:v2": "pnpm run build:v2 && pnpm --filter @ppgee/playable-sdk test && pnpm --filter @ppgee/playable-validator test && pnpm --filter @ppgee/playable-core test && pnpm --filter @ppgee/playable-cli test",
     "pack:check": "pnpm run build:v2 && node scripts/verify-packages.mjs",
-    "build:validator": "pnpm --filter @cocos-pnp/playable-validator build && pnpm --filter @cocos-pnp/playable-cli build",
-    "test:validator": "pnpm --filter @cocos-pnp/playable-validator test",
+    "build:validator": "pnpm --filter @ppgee/playable-validator build && pnpm --filter @ppgee/playable-cli build",
+    "test:validator": "pnpm --filter @ppgee/playable-validator test",
     "playable": "node packages/playable-cli/dist/cli.js",
     "test": "pnpm run test:v2"
   },

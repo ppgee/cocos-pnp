@@ -1,6 +1,6 @@
 ---
 name: playable-ads-workflow
-description: Build, package, and validate HTML5/Cocos Playable Ads for all 8 major ad networks (AppLovin, Unity LevelPlay, Google Ads, Meta, TikTok/Pangle, Mintegral, Moloco, Liftoff/Vungle) using @cocos-pnp/playable-cli and its MCP server.
+description: Build, package, and validate HTML5/Cocos Playable Ads for all 8 major ad networks (AppLovin, Unity LevelPlay, Google Ads, Meta, TikTok/Pangle, Mintegral, Moloco, Liftoff/Vungle) using @ppgee/playable-cli and its MCP server.
 ---
 
 # Playable Ads Build & Compliance Workflow

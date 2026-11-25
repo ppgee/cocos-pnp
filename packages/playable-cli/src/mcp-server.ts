@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
-import { buildPlayable, optimizeDirectory, parseByteSize, type PayloadEncoding } from '@cocos-pnp/playable-core';
+import { buildPlayable, optimizeDirectory, parseByteSize, type PayloadEncoding } from '@ppgee/playable-core';
 import {
   ALL_CHANNEL_IDS,
   analyzeSizeBreakdown,
@@ -10,7 +10,7 @@ import {
   resolveChannels,
   validatePlayable,
   VALIDATOR_VERSION
-} from '@cocos-pnp/playable-validator';
+} from '@ppgee/playable-validator';
 import { generateBuildHtmlReport, generateValidationHtmlReport } from './html-report.js';
 
 interface JsonRpcRequest {

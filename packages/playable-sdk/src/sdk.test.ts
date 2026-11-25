@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { generateChannelBridgeScript, type SdkChannelId } from './index.js';
 
-describe('@cocos-pnp/playable-sdk bridge generator', () => {
+describe('@ppgee/playable-sdk bridge generator', () => {
   it('emits zero mraid references for non-MRAID channels', () => {
     const forbiddenMraid: SdkChannelId[] = ['google', 'meta', 'tiktok', 'mintegral', 'moloco'];
     for (const ch of forbiddenMraid) {

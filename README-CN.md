@@ -12,11 +12,11 @@
 
 1. **8 大主流渠道 2026 规范同源对齐**（详见 [docs/channel-specs-2026.md](./docs/channel-specs-2026.md)）
    - `AppLovin`、`Unity Ads / LevelPlay`（已迁移废弃的 ironSource DAPI）、`Google Ads`、`Meta (Facebook)`、`TikTok / Pangle`、`Mintegral`、`Moloco`、`Liftoff / Vungle`。
-2. **静态 + 无头浏览器真跑双层体检（`@cocos-pnp/playable-validator`）**
+2. **静态 + 无头浏览器真跑双层体检（`@ppgee/playable-validator`）**
    - 自动复用本机已安装的 Chrome/Chromium（无需下载数百 MB 浏览器），也支持 `--static-only` 零浏览器快检；
    - 检测体积红线（含 Meta ZIP 内 `index.html <= 2MB` 与 100 文件限制）、Google 文件后缀白名单、TikTok `config.json`、Mintegral 同名目录与 `gameReady`/`gameEnd`、Liftoff 小写 ASCII 路径、Base64 ~33% 膨胀归因；
    - 运行时真实检测未捕获异常、Console 报错、非白名单外链拦截、竖屏/横屏双视口黑屏、交互前自动播音与目标渠道 CTA 回调触发。
-3. **引擎无关内核 + 可插拔 `EngineAdapter` + 零残留统一 SDK（`@cocos-pnp/playable-core` + `@cocos-pnp/playable-sdk`）**
+3. **引擎无关内核 + 可插拔 `EngineAdapter` + 零残留统一 SDK（`@ppgee/playable-core` + `@ppgee/playable-sdk`）**
    - 底层浏览器 VFS 一次性拦截 **7 大原生资源加载入口**（`SafeURL`、`fetch`、`XMLHttpRequest`、`WebAssembly.instantiateStreaming`、`Image.src`、`Audio/Media.src`、`FontFace`）；
    - 内置 **6 大引擎适配器**自动识别（`cocos-3x`、`cocos-2x`、`playcanvas`、`godot-4`、`unity-webgl`、`generic-web` 通吃 Vite/PixiJS/Three.js/Phaser/AI H5），并支持传入自定义 `EngineAdapter` 零改内核扩展；
    - 支持 `playable.config.json` 与自动兼容读取 v1 老版 `.adapterrc` 配置；

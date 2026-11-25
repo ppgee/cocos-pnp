@@ -21,7 +21,7 @@ pnpm playable build ./build/web-mobile -o ./playable-dist --channel all --check
 ```
 
 - **占位符完全兼容**：代码里已有的 `'{{__adv_channels_adapter__}}'` 继续生效（同时支持新版 `'{{__playable_channel__}}'`）。
-- **逐步替换手写渠道判断**：新项目建议改用统一 `window.playable` API（由 `@cocos-pnp/playable-sdk` 自动按渠道零残留注入）：
+- **逐步替换手写渠道判断**：新项目建议改用统一 `window.playable` API（由 `@ppgee/playable-sdk` 自动按渠道零残留注入）：
   - `window.playable.init({ onStart, onPause, onResume, onResize })`
   - `window.playable.ready()`
   - `window.playable.gameEnd()`

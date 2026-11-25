@@ -1,5 +1,5 @@
-import type { BuildPlayableResult, OptimizeDirectoryResult } from '@cocos-pnp/playable-core';
-import type { ChannelSpec, Diagnostic, ValidationReport } from '@cocos-pnp/playable-validator';
+import type { BuildPlayableResult, OptimizeDirectoryResult } from '@ppgee/playable-core';
+import type { ChannelSpec, Diagnostic, ValidationReport } from '@ppgee/playable-validator';
 
 const useColor = !process.env.NO_COLOR && process.stdout.isTTY !== false;
 

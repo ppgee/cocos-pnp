@@ -1,6 +1,6 @@
 # 2026 主流试玩广告平台（Playable Ads）技术规范参考
 
-本文档是 `@cocos-pnp/playable-validator` 与后续 `@cocos-pnp/playable-core` 共用的 8 大核心出海买量渠道规范基线（校准时间：2026-11）。
+本文档是 `@ppgee/playable-validator` 与后续 `@ppgee/playable-core` 共用的 8 大核心出海买量渠道规范基线（校准时间：2026-11）。
 
 ---
 
