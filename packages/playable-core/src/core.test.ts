@@ -642,12 +642,23 @@ document.getElementById('cta').addEventListener('click', function () {
       assert.ok(moovIdx > 0 && mdatIdx > 0 && moovIdx < mdatIdx, 'Transcoded MP4 must place moov before mdat (+faststart)');
     }
 
-    // 4. Test buildPlayable auto-budget escalation (tight 350KB budget forces escalation past Pass 1)
+    // 4. Test buildPlayable auto-budget escalation deterministically across OSes/encoders:
+    // Measure Pass 1 (balanced) size first, then set a tighter targetSize (75% of Pass 1)
+    // so Pass 1 is guaranteed to exceed budget and force Pass 2+ escalation.
+    const pass1Probe = await buildPlayable({
+      inputPath: srcDir,
+      outputDir: path.join(tmpDir, 'out-media-pass1'),
+      channels: ['applovin'],
+      optimize: { stripVideoAudio: true }
+    });
+    const pass1Bytes = pass1Probe.artifacts[0].bytes;
+    const tighterTargetBytes = Math.max(40_000, Math.round(pass1Bytes * 0.75));
+
     const buildRes = await buildPlayable({
       inputPath: srcDir,
       outputDir: outBuildDir,
       channels: ['applovin', 'google'],
-      targetSize: '350KB',
+      targetSize: tighterTargetBytes,
       optimize: { stripVideoAudio: true },
       validate: true,
       staticOnly: true
@@ -655,11 +666,14 @@ document.getElementById('cta').addEventListener('click', function () {
 
     assert.equal(buildRes.allValid, true);
     assert.ok(buildRes.optimization?.budget, 'Budget report should be attached');
-    assert.ok(buildRes.optimization.budget.passesRun >= 2, `Expected multi-pass escalation, ran ${buildRes.optimization.budget.passesRun} pass(es)`);
+    assert.ok(
+      buildRes.optimization.budget.passesRun >= 2,
+      `Expected multi-pass escalation (pass1=${pass1Bytes}B, target=${tighterTargetBytes}B), ran ${buildRes.optimization.budget.passesRun} pass(es)`
+    );
     assert.equal(
       buildRes.optimization.budget.met,
       true,
-      `Expected final artifact <= 350KB, got ${buildRes.optimization.budget.finalBytes} bytes (preset: ${buildRes.optimization.budget.appliedPreset})`
+      `Expected final artifact <= ${tighterTargetBytes}B, got ${buildRes.optimization.budget.finalBytes} bytes (preset: ${buildRes.optimization.budget.appliedPreset})`
     );
   });
 
