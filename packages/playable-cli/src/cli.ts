@@ -8,6 +8,8 @@ import {
   DEFAULT_ENGINE_ADAPTERS,
   loadPlayableConfig,
   optimizeDirectory,
+  parseByteSize,
+  type AssetOptimizeOptions,
   type OrientationMode
 } from '@cocos-pnp/playable-core';
 import {
@@ -34,7 +36,7 @@ Usage:
   playable build [input] [options]              Package any Web/Game Engine build for ad networks
   playable check <path> [options]               Validate a .html, .zip, or build directory
   playable preview <path> [options]             Launch interactive 8-network local preview workbench
-  playable optimize <dir> [options]             Offline PNG/JPEG/WebP compression (zero API keys)
+  playable optimize <dir> [options]             Offline image/audio/video/text compression + auto size budget
   playable specs [channel] [--json]             Show 2026 ad network specifications (8 channels)
   playable engines [--json]                     List built-in engine adapters
   playable init [dir]                           Generate a playable.config.json starter file
@@ -50,9 +52,22 @@ Build Options:
   --name <pkgName>           Base name (used for Mintegral matching folder/HTML naming)
   --ios-url <url>            iOS App Store URL for MRAID channels
   --android-url <url>        Google Play URL for MRAID channels
-  --optimize                 Enable offline local image compression (sharp) before packaging
-  --quality <1-100>          Image compression quality when --optimize is enabled (default: 75)
-  --max-size <px>            Max image width/height in px when --optimize is enabled
+  --optimize                 Enable offline compression (sharp images + ffmpeg audio/video + JSON/SVG/CSS)
+  --target-size <size|auto>  Auto-escalate compression until final packages fit budget (e.g. "5MB", "2MB", "auto")
+  --quality <1-100>          Image compression quality (default: 75)
+  --max-size <px>            Max image width/height in px
+  --audio-bitrate <kbps>     Audio transcoding bitrate in kbps (default: 64)
+  --audio-sample-rate <hz>   Audio sample rate in Hz (default: 24000)
+  --audio-stereo             Keep stereo audio instead of downmixing to mono
+  --video-crf <18-42>        Video CRF quality factor (higher = smaller, default: 28)
+  --video-max-width <px>     Max video width in px (default: 720, H.264 faststart moov-first)
+  --video-fps <fps>          Target video FPS cap (default: 24)
+  --strip-video-audio        Strip audio tracks from videos (great for muted endcards/backgrounds)
+  --font-chars <chars>       Extra characters guaranteed to stay when subsetting TTF/OTF/WOFF/WOFF2 fonts
+  --vectorize-icons          Vectorize small flat PNG/WebP UI icons to SVGO-optimized SVG when strictly smaller
+  --svg-precision <0-5>      SVG path coordinate precision for SVGO (default: 2)
+  --drop-console             Strip console.* calls during JS minification/tree-shaking
+  --ffmpeg-path <path>       Explicit ffmpeg executable path
   --no-sdk                   Disable automatic @cocos-pnp/playable-sdk bridge injection
   --no-compress              Disable pako deflate compression for single-HTML bundles
   --check                    Run compliance validation on every built artifact
@@ -65,8 +80,22 @@ Preview Options:
 
 Optimize Options:
   -o, --out <dir>            Output directory (default: <dir>-optimized)
-  --quality <1-100>          Compression quality (default: 75)
-  --max-size <px>            Optional max width/height in pixels
+  --target-size <size>       Auto-escalate presets until directory fits target size (e.g. "4MB", "1.8MB")
+  --quality <1-100>          Image compression quality (default: 75)
+  --max-size <px>            Optional max image width/height in pixels
+  --audio-bitrate <kbps>     Audio bitrate in kbps (default: 64)
+  --audio-sample-rate <hz>   Audio sample rate in Hz (default: 24000)
+  --audio-stereo             Keep stereo audio instead of mono
+  --video-crf <18-42>        Video CRF (default: 28)
+  --video-max-width <px>     Max video width in px (default: 720)
+  --video-fps <fps>          Video FPS cap (default: 24)
+  --strip-video-audio        Remove audio track from video files
+  --font-chars <chars>       Extra characters preserved during font subsetting
+  --vectorize-icons          Convert small low-color PNG/WebP icons to SVG when strictly smaller
+  --svg-precision <0-5>      SVG float precision (default: 2)
+  --drop-console             Strip console.* calls during JS minification
+  --no-images / --no-audio / --no-video / --no-fonts / --no-svg / --no-code / --no-tree-shake / --no-minify-text
+  --ffmpeg-path <path>       Explicit ffmpeg executable path
   --dry-run                  Measure savings without writing files
   --json                     Output machine-readable JSON
 
@@ -94,10 +123,80 @@ const VALUE_FLAGS = new Set([
   '-p', '--port',
   '--config', '--orientation', '--engine', '--name',
   '--ios-url', '--android-url',
-  '--quality', '--max-size',
+  '--quality', '--max-size', '--target-size',
+  '--audio-bitrate', '--audio-sample-rate',
+  '--video-crf', '--video-max-width', '--video-fps', '--video-audio-bitrate',
+  '--font-chars', '--svg-precision',
+  '--ffmpeg-path',
   '--cta-selector', '--browser-path',
   '--settle-ms', '--top'
 ]);
+
+const BOOLEAN_FLAGS = new Set([
+  '--static-only',
+  '--json',
+  '--check',
+  '--no-sdk',
+  '--no-compress',
+  '--optimize',
+  '--dry-run',
+  '--force',
+  '--audio-stereo',
+  '--strip-video-audio',
+  '--vectorize-icons',
+  '--drop-console',
+  '--no-images',
+  '--no-audio',
+  '--no-video',
+  '--no-fonts',
+  '--no-svg',
+  '--no-code',
+  '--no-tree-shake',
+  '--no-minify-text'
+]);
+
+function parseOptionalNumber(val: string | boolean | undefined): number | undefined {
+  if (typeof val !== 'string') return undefined;
+  const n = Number(val);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+function buildOptimizeOptionsFromFlags(flags: Record<string, string | boolean>): AssetOptimizeOptions {
+  const opts: AssetOptimizeOptions = {};
+  const quality = parseOptionalNumber(flags.quality);
+  if (quality !== undefined) opts.quality = quality;
+  const maxDimension = parseOptionalNumber(flags['max-size']);
+  if (maxDimension !== undefined) opts.maxDimension = maxDimension;
+  const audioBitrateKbps = parseOptionalNumber(flags['audio-bitrate']);
+  if (audioBitrateKbps !== undefined) opts.audioBitrateKbps = audioBitrateKbps;
+  const audioSampleRate = parseOptionalNumber(flags['audio-sample-rate']);
+  if (audioSampleRate !== undefined) opts.audioSampleRate = audioSampleRate;
+  if (flags['audio-stereo']) opts.audioChannels = 2;
+  const videoCrf = parseOptionalNumber(flags['video-crf']);
+  if (videoCrf !== undefined) opts.videoCrf = videoCrf;
+  const videoMaxWidth = parseOptionalNumber(flags['video-max-width']);
+  if (videoMaxWidth !== undefined) opts.videoMaxWidth = videoMaxWidth;
+  const videoFps = parseOptionalNumber(flags['video-fps']);
+  if (videoFps !== undefined) opts.videoFps = videoFps;
+  const videoAudioBitrateKbps = parseOptionalNumber(flags['video-audio-bitrate']);
+  if (videoAudioBitrateKbps !== undefined) opts.videoAudioBitrateKbps = videoAudioBitrateKbps;
+  if (flags['strip-video-audio']) opts.stripVideoAudio = true;
+  if (typeof flags['font-chars'] === 'string') opts.fontSubsetChars = flags['font-chars'];
+  if (flags['vectorize-icons']) opts.vectorizeIcons = true;
+  const svgPrecision = parseOptionalNumber(flags['svg-precision']);
+  if (svgPrecision !== undefined) opts.svgFloatPrecision = svgPrecision;
+  if (flags['drop-console']) opts.dropConsole = true;
+  if (flags['no-images']) opts.optimizeImages = false;
+  if (flags['no-audio']) opts.optimizeAudio = false;
+  if (flags['no-video']) opts.optimizeVideo = false;
+  if (flags['no-fonts']) opts.optimizeFonts = false;
+  if (flags['no-svg']) opts.optimizeSvg = false;
+  if (flags['no-code']) opts.minifyCode = false;
+  if (flags['no-tree-shake']) opts.treeShakeModules = false;
+  if (flags['no-minify-text']) opts.minifyTextAssets = false;
+  if (typeof flags['ffmpeg-path'] === 'string') opts.ffmpegPath = flags['ffmpeg-path'];
+  return opts;
+}
 
 function parseArgv(argv: string[]): ParsedArgs {
   const positionals: string[] = [];
@@ -109,16 +208,7 @@ function parseArgv(argv: string[]): ParsedArgs {
       flags.help = true;
     } else if (token === '-v' || token === '--version') {
       flags.version = true;
-    } else if (
-      token === '--static-only' ||
-      token === '--json' ||
-      token === '--check' ||
-      token === '--no-sdk' ||
-      token === '--no-compress' ||
-      token === '--optimize' ||
-      token === '--dry-run' ||
-      token === '--force'
-    ) {
+    } else if (BOOLEAN_FLAGS.has(token)) {
       flags[token.slice(2)] = true;
     } else if (VALUE_FLAGS.has(token)) {
       const next = argv[i + 1];
@@ -207,19 +297,19 @@ export async function runCli(argv: string[]): Promise<number> {
   if (parsed.command === 'optimize') {
     const inputDir = parsed.positionals[0];
     if (!inputDir) {
-      console.error('Error: Missing input directory. Example: playable optimize ./dist -o ./dist-opt --quality 75');
+      console.error('Error: Missing input directory. Example: playable optimize ./dist -o ./dist-opt --target-size 4MB');
       return 2;
     }
     try {
-      const quality = typeof parsed.flags.quality === 'string' ? Number(parsed.flags.quality) : undefined;
-      const maxDimension =
-        typeof parsed.flags['max-size'] === 'string' ? Number(parsed.flags['max-size']) : undefined;
+      const optOpts = buildOptimizeOptionsFromFlags(parsed.flags);
+      if (typeof parsed.flags['target-size'] === 'string') {
+        optOpts.targetSizeBytes = parseByteSize(parsed.flags['target-size']);
+      }
       const result = await optimizeDirectory({
+        ...optOpts,
         inputDir,
         outputDir: typeof parsed.flags.out === 'string' ? parsed.flags.out : undefined,
-        dryRun: Boolean(parsed.flags['dry-run']),
-        quality: Number.isFinite(quality) ? quality : undefined,
-        maxDimension: Number.isFinite(maxDimension) ? maxDimension : undefined
+        dryRun: Boolean(parsed.flags['dry-run'])
       });
       if (parsed.flags.json) {
         console.log(JSON.stringify(result, null, 2));
@@ -318,15 +408,19 @@ export async function runCli(argv: string[]): Promise<number> {
           : cfg.orientation || 'auto'
       ) as OrientationMode;
 
-      const quality = typeof parsed.flags.quality === 'string' ? Number(parsed.flags.quality) : undefined;
-      const maxDimension =
-        typeof parsed.flags['max-size'] === 'string' ? Number(parsed.flags['max-size']) : undefined;
-      const optimizeFlag = parsed.flags.optimize
-        ? {
-            quality: Number.isFinite(quality) ? quality : undefined,
-            maxDimension: Number.isFinite(maxDimension) ? maxDimension : undefined
-          }
-        : cfg.optimize;
+      const cliOptOpts = buildOptimizeOptionsFromFlags(parsed.flags);
+      const hasCliOptOverrides = Object.keys(cliOptOpts).length > 0;
+      const targetSize =
+        typeof parsed.flags['target-size'] === 'string'
+          ? parsed.flags['target-size']
+          : cfg.targetSize;
+      const optimizeFlag =
+        parsed.flags.optimize || hasCliOptOverrides || targetSize !== undefined
+          ? {
+              ...(typeof cfg.optimize === 'object' ? cfg.optimize : {}),
+              ...cliOptOpts
+            }
+          : cfg.optimize;
 
       const result = await buildPlayable({
         ...cfg,
@@ -339,6 +433,7 @@ export async function runCli(argv: string[]): Promise<number> {
           typeof parsed.flags.name === 'string' ? parsed.flags.name : cfg.packageName,
         compress: parsed.flags['no-compress'] ? false : cfg.compress,
         optimize: optimizeFlag,
+        targetSize,
         injectSdkBridge: parsed.flags['no-sdk'] ? false : cfg.injectSdkBridge,
         storeUrls: {
           ...cfg.storeUrls,

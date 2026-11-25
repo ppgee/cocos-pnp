@@ -28,8 +28,13 @@ export interface BuildPlayableOptions {
   packageName?: string;
   /** Enable pako deflate compression for single-HTML bundles when beneficial (default: true) */
   compress?: boolean;
-  /** Enable zero-API-key offline local image optimization (sharp PNG quantization + MozJPEG) before packaging */
+  /** Enable zero-API-key offline local asset optimization (sharp images + ffmpeg audio/video + JSON/SVG/CSS minification) */
   optimize?: boolean | AssetOptimizeOptions;
+  /**
+   * Optional target final package size budget (e.g. "5MB", "2MB", 4500000, or "auto" to fit the tightest target channel limit).
+   * Automatically enables optimization and escalates compression presets from clean originals until emitted artifacts fit under budget.
+   */
+  targetSize?: number | string | 'auto';
   /** Whether to inject @cocos-pnp/playable-sdk channel bridge automatically (default: true) */
   injectSdkBridge?: boolean;
   /** Store URLs for MRAID channels (AppLovin / Unity) */

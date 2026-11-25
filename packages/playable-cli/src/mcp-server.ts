@@ -1,5 +1,5 @@
 import readline from 'node:readline';
-import { buildPlayable, optimizeDirectory } from '@cocos-pnp/playable-core';
+import { buildPlayable, optimizeDirectory, parseByteSize } from '@cocos-pnp/playable-core';
 import {
   ALL_CHANNEL_IDS,
   analyzeSizeBreakdown,
@@ -81,7 +81,27 @@ const MCP_TOOLS = [
         },
         optimize: {
           type: 'boolean',
-          description: 'Enable offline local image optimization (PNG quantization + MozJPEG via sharp) before packaging.'
+          description: 'Enable offline local optimization (sharp images + ffmpeg audio/video + JSON/SVG/CSS minification) before packaging.'
+        },
+        targetSize: {
+          type: 'string',
+          description: 'Optional final package size budget (e.g. "5MB", "2MB", or "auto" for tightest channel limit). Auto-escalates compression presets until emitted artifacts fit under budget.'
+        },
+        stripVideoAudio: {
+          type: 'boolean',
+          description: 'Strip audio track from video assets during optimization.'
+        },
+        vectorizeIcons: {
+          type: 'boolean',
+          description: 'Vectorize small low-color PNG/WebP UI icons into SVGO-optimized SVG when strictly smaller.'
+        },
+        fontSubsetChars: {
+          type: 'string',
+          description: 'Extra characters guaranteed to stay when subsetting TTF/OTF/WOFF/WOFF2 fonts.'
+        },
+        dropConsole: {
+          type: 'boolean',
+          description: 'Strip console.* calls during JS minification/tree-shaking.'
         },
         staticOnly: {
           type: 'boolean',
@@ -93,15 +113,27 @@ const MCP_TOOLS = [
   {
     name: 'optimize_playable_assets',
     description:
-      'Compress PNG/JPEG/WebP images in a playable directory offline (zero external API keys) using PNG palette quantization and MozJPEG.',
+      'Full offline asset optimizer: images (sharp), audio/video (ffmpeg + MP4 faststart), font subsetting (subset-font HarfBuzz WASM), SVG optimization + optional raster-to-SVG icon vectorization (svgo), JS/CSS tree-shaking & minification (esbuild), and JSON minification with optional target size budget auto-escalation.',
     inputSchema: {
       type: 'object',
       required: ['inputDir'],
       properties: {
         inputDir: { type: 'string', description: 'Source directory containing playable assets.' },
         outputDir: { type: 'string', description: 'Optional output directory (ignored when dryRun=true).' },
-        quality: { type: 'number', description: 'Compression quality 1-100 (default: 75).' },
-        maxDimension: { type: 'number', description: 'Optional maximum width/height in pixels.' },
+        targetSize: { type: 'string', description: 'Optional target total directory size budget (e.g. "4MB", "1.8MB").' },
+        quality: { type: 'number', description: 'Image compression quality 1-100 (default: 75).' },
+        maxDimension: { type: 'number', description: 'Optional maximum image width/height in pixels.' },
+        audioBitrateKbps: { type: 'number', description: 'Audio transcoding bitrate in kbps (default: 64).' },
+        audioSampleRate: { type: 'number', description: 'Audio sample rate in Hz (default: 24000).' },
+        videoCrf: { type: 'number', description: 'Video CRF quality factor 18-42 (higher = smaller, default: 28).' },
+        videoMaxWidth: { type: 'number', description: 'Max video width in pixels (default: 720).' },
+        videoFps: { type: 'number', description: 'Target video FPS cap (default: 24).' },
+        stripVideoAudio: { type: 'boolean', description: 'Strip audio track from video files.' },
+        fontSubsetChars: { type: 'string', description: 'Extra characters preserved during font subsetting.' },
+        vectorizeIcons: { type: 'boolean', description: 'Vectorize small flat PNG/WebP UI icons to SVG when strictly smaller.' },
+        svgFloatPrecision: { type: 'number', description: 'SVGO coordinate float precision 0-5 (default: 2).' },
+        dropConsole: { type: 'boolean', description: 'Strip console.* calls during JS minification.' },
+        treeShakeModules: { type: 'boolean', description: 'Bundle and tree-shake local ES modules via esbuild (default: true).' },
         dryRun: { type: 'boolean', description: 'Estimate byte savings without writing files.' }
       }
     }
@@ -184,6 +216,16 @@ async function handleToolCall(name: string, args: Record<string, unknown>): Prom
       if (!inputPath || !outputDir) {
         throw new Error('inputPath and outputDir are required.');
       }
+      const targetSize =
+        typeof args.targetSize === 'string' || typeof args.targetSize === 'number'
+          ? args.targetSize
+          : undefined;
+      const optPayload: Record<string, unknown> = {};
+      if (args.stripVideoAudio) optPayload.stripVideoAudio = true;
+      if (args.vectorizeIcons) optPayload.vectorizeIcons = true;
+      if (typeof args.fontSubsetChars === 'string') optPayload.fontSubsetChars = args.fontSubsetChars;
+      if (args.dropConsole) optPayload.dropConsole = true;
+      const hasOptPayload = Object.keys(optPayload).length > 0;
       const result = await buildPlayable({
         inputPath,
         outputDir,
@@ -199,7 +241,10 @@ async function handleToolCall(name: string, args: Record<string, unknown>): Prom
           androidUrl: typeof args.androidUrl === 'string' ? args.androidUrl : undefined
         },
         validate: Boolean(args.validate),
-        optimize: Boolean(args.optimize),
+        optimize: hasOptPayload
+          ? optPayload
+          : Boolean(args.optimize) || targetSize !== undefined,
+        targetSize,
         staticOnly: Boolean(args.staticOnly)
       });
       return {
@@ -212,11 +257,27 @@ async function handleToolCall(name: string, args: Record<string, unknown>): Prom
       if (!inputDir) {
         throw new Error('inputDir is required.');
       }
+      const targetSizeBytes =
+        typeof args.targetSize === 'string' || typeof args.targetSize === 'number'
+          ? parseByteSize(args.targetSize)
+          : undefined;
       const result = await optimizeDirectory({
         inputDir,
         outputDir: typeof args.outputDir === 'string' ? args.outputDir : undefined,
+        targetSizeBytes,
         quality: typeof args.quality === 'number' ? args.quality : undefined,
         maxDimension: typeof args.maxDimension === 'number' ? args.maxDimension : undefined,
+        audioBitrateKbps: typeof args.audioBitrateKbps === 'number' ? args.audioBitrateKbps : undefined,
+        audioSampleRate: typeof args.audioSampleRate === 'number' ? args.audioSampleRate : undefined,
+        videoCrf: typeof args.videoCrf === 'number' ? args.videoCrf : undefined,
+        videoMaxWidth: typeof args.videoMaxWidth === 'number' ? args.videoMaxWidth : undefined,
+        videoFps: typeof args.videoFps === 'number' ? args.videoFps : undefined,
+        stripVideoAudio: Boolean(args.stripVideoAudio),
+        fontSubsetChars: typeof args.fontSubsetChars === 'string' ? args.fontSubsetChars : undefined,
+        vectorizeIcons: Boolean(args.vectorizeIcons),
+        svgFloatPrecision: typeof args.svgFloatPrecision === 'number' ? args.svgFloatPrecision : undefined,
+        dropConsole: Boolean(args.dropConsole),
+        treeShakeModules: typeof args.treeShakeModules === 'boolean' ? args.treeShakeModules : undefined,
         dryRun: Boolean(args.dryRun)
       });
       return {

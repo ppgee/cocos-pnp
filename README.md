@@ -35,12 +35,12 @@ Write your playable once, build submission-ready `.html` / `.zip` packages for *
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **AppLovin** (`applovin`) | Single HTML | <= 5 MB | Required v2.0 | `mraid.open()` | Zero external requests; dual orientation |
 | **Unity / LevelPlay** (`unity`) | Single HTML | <= 5 MB | Required v3.0 | `mraid.open()` | Legacy ironSource DAPI deprecated; `ready` + `viewableChange` gating; dual orientation |
-| **Google Ads** (`google`) | ZIP | <= 5 MB | Forbidden | `ExitApi.exit()` | <= 512 files; `ad.orientation` + `ad.size` + `exitapi.js`; strict extension whitelist |
+| **Google Ads** (`google`) | ZIP | <= 5 MB | Forbidden | `ExitApi.exit()` | <= 512 files; `ad.orientation` **or** `ad.size` (never both) + `exitapi.js`; strict extension whitelist |
 | **Meta** (`meta`, `facebook`) | ZIP / Single HTML | ZIP <= 5 MB & `index.html` <= 2 MB | Forbidden | `FbPlayableAd.onCTAClick()` | <= 100 files; zero-arg CTA; no raw JS redirects |
 | **TikTok / Pangle** (`tiktok`, `pangle`) | ZIP | <= 5 MB | Forbidden | `window.openAppStore()` | Root `index.html` + `config.json`; `playable-sdk.js` required |
-| **Mintegral** (`mintegral`, `mtg`) | ZIP / Single HTML | <= 5 MB | Forbidden | `window.install()` | Classic `<name>.zip -> <name>/<name>.html`; `gameReady()` & `gameEnd()` required |
+| **Mintegral** (`mintegral`, `mtg`) | ZIP / Single HTML | <= 5 MB | Forbidden | `window.install()` | Classic `<name>.zip -> <name>/<name>.html` (`[a-zA-Z0-9_]` only); `gameReady()` & `gameEnd()` required |
 | **Moloco** (`moloco`) | Single HTML | <= 5 MB | Forbidden | `FbPlayableAd.onCTAClick()` | Rejects ZIP; zero-arg CTA; dual orientation |
-| **Liftoff / Vungle** (`liftoff`, `vungle`) | ZIP / Single HTML | <= 5 MB | Optional | `parent.postMessage('download', '*')` | Root `index.html`/`ad.html`; lowercase ASCII paths; `complete` lifecycle |
+| **Liftoff / Vungle** (`liftoff`, `vungle`) | ZIP / Single HTML | <= 5 MB | Optional | `mraid.open()` + `postMessage('download')` | Root `index.html`/`ad.html`; lowercase ASCII paths; no `<iframe>`; `complete` lifecycle |
 
 ---
 
@@ -53,14 +53,14 @@ Requirements: Node.js `>= 20` (recommended `22+`) and `pnpm >= 9`. For headless 
 pnpm install
 pnpm run build:v2
 
-# 2. Build the included playable demo for all 8 networks (optional --optimize offline compression) and validate in headless Chrome
-pnpm playable build examples/mini-playable -o ./playable-dist --channel all --optimize --check
+# 2. Build the included playable demo for all 8 networks (with --target-size auto budget compression) and validate in headless Chrome
+pnpm playable build examples/mini-playable -o ./playable-dist --channel all --target-size auto --check
 
 # 3. Launch the interactive 8-network local preview workbench (portrait/landscape/mute/viewable/CTA monitor)
 pnpm playable preview ./playable-dist/AppLovin.html --channel applovin
 
-# 4. Run offline image compression standalone (zero API keys, PNG quantization + MozJPEG)
-pnpm playable optimize ./your-dist --dry-run
+# 4. Run offline full-asset optimization (sharp images + ffmpeg audio/video with MP4 faststart + HarfBuzz font subsetting + SVGO / icon vectorization + esbuild JS tree-shaking & minification)
+pnpm playable optimize ./your-dist --target-size 4MB --vectorize-icons --dry-run
 
 # 5. Validate any existing .html, .zip, or build directory
 pnpm playable check ./playable-dist/Google.zip --channel google
@@ -111,7 +111,7 @@ ctaButton.addEventListener('click', () => {
 }
 ```
 
-Exposed tools: `get_channel_specs`, `build_playable`, `check_playable`, and `inspect_playable_size`.
+Exposed tools: `get_channel_specs`, `build_playable`, `optimize_playable_assets`, `check_playable`, and `inspect_playable_size`.
 
 ---
 

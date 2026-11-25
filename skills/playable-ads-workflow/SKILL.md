@@ -30,7 +30,7 @@ Use this skill whenever creating, packaging, debugging, or validating an HTML5 o
    - Via CLI: `pnpm playable build <inputDir> -o <outputDir> --channel all --check --json`
 2. **Inspect failures**:
    - Read every `error` diagnostic (`code`, `message`, `suggestion`, `details`) from the JSON report.
-   - If `SIZE_LIMIT_EXCEEDED` or `SIZE_ENTRY_HTML_EXCEEDED`: call `inspect_playable_size` (or check `sizeBreakdown.topContributors`) and compress/trim the top contributors.
+   - If `SIZE_LIMIT_EXCEEDED` or `SIZE_ENTRY_HTML_EXCEEDED`: call `inspect_playable_size` (or check `sizeBreakdown.topContributors`), then re-run `build_playable` with `{ targetSize: "auto" }` (or call `optimize_playable_assets` with `targetSize` / `stripVideoAudio: true` / `vectorizeIcons: true` / `fontSubsetChars`) to automatically compress images (sharp), transcode audio/video (ffmpeg + MP4 faststart), subset fonts (HarfBuzz), optimize/vectorize SVGs (SVGO), and tree-shake/minify JS & CSS (esbuild).
    - If `RENDER_BLANK_SCREEN` or `RENDER_LANDSCAPE_BLANK_SCREEN`: inspect canvas sizing/resize logic and initialization order.
    - If `NET_EXTERNAL_REQUEST_RUNTIME` or `NET_EXTERNAL_URL_STATIC`: bundle the flagged resource locally.
    - If `AUDIO_PLAYED_BEFORE_INTERACTION`: move audio playback strictly inside user gesture handlers.

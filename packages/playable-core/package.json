@@ -28,7 +28,10 @@
     "pako": "^2.1.0"
   },
   "optionalDependencies": {
-    "sharp": "^0.34.0"
+    "esbuild": "^0.28.2",
+    "sharp": "^0.34.0",
+    "subset-font": "^2.9.0",
+    "svgo": "^4.1.0"
   },
   "devDependencies": {
     "@types/mime-types": "^2.1.4",

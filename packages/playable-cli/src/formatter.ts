@@ -124,18 +124,39 @@ export function formatChannelSpecs(specs: ChannelSpec[]): string {
   return lines.join('\n');
 }
 
+const ALL_OPTIMIZE_KINDS = ['image', 'audio', 'video', 'font', 'svg', 'code', 'text'] as const;
+
 export function formatBuildResult(result: BuildPlayableResult): string {
   const lines: string[] = [];
   lines.push('');
   lines.push(`${c.bold('Playable Multi-Channel Build')}  ${c.dim(`(engine: ${result.engine})`)}`);
   lines.push(c.dim(`Input:  ${result.inputPath}`));
   lines.push(c.dim(`Output: ${result.outputDir}`));
-  if (result.optimization?.available && result.optimization.processedCount > 0) {
+  if (result.optimization && result.optimization.processedCount > 0) {
+    const opt = result.optimization;
+    const kindParts: string[] = [];
+    for (const kind of ALL_OPTIMIZE_KINDS) {
+      const st = opt.byKind[kind];
+      if (st && st.processed > 0) {
+        kindParts.push(`${kind} ${st.optimized}/${st.processed} (-${formatBytes(st.savedBytes)})`);
+      }
+    }
     lines.push(
       c.green(
-        `Assets: Optimized ${result.optimization.optimizedCount}/${result.optimization.processedCount} image(s), saved ${formatBytes(result.optimization.savedBytes)} (-${result.optimization.savedPercent}%)`
+        `Assets: Optimized ${opt.optimizedCount}/${opt.processedCount} asset(s), saved ${formatBytes(opt.savedBytes)} (-${opt.savedPercent}%)` +
+          (kindParts.length > 0 ? ` [${kindParts.join(' | ')}]` : '')
       )
     );
+    if (opt.budget) {
+      const b = opt.budget;
+      const badge = b.met ? c.green('MET') : c.yellow('OVER');
+      lines.push(
+        `Budget: target ${formatBytes(b.targetBytes)} -> max artifact ${formatBytes(b.finalBytes)} [${badge}, pass ${b.passesRun} (${b.appliedPreset})]`
+      );
+    }
+    for (const w of opt.warnings) {
+      lines.push(c.yellow(`Warn:   ${w}`));
+    }
   }
   lines.push('');
 
@@ -172,22 +193,48 @@ export function formatOptimizeResult(result: OptimizeDirectoryResult): string {
   if (result.outputDir) {
     lines.push(c.dim(`Output: ${result.outputDir}`));
   }
-  if (!summary.available) {
-    lines.push(c.yellow(`Warning: ${summary.warning || 'sharp not available'}`));
-    lines.push('');
-    return lines.join('\n');
+  const activeTools = [
+    summary.tools.sharp ? 'sharp' : null,
+    summary.tools.ffmpeg ? 'ffmpeg' : null,
+    summary.tools.subsetFont ? 'subset-font' : null,
+    summary.tools.svgo ? 'svgo' : null,
+    summary.tools.esbuild ? 'esbuild' : null
+  ].filter(Boolean);
+  if (activeTools.length > 0) {
+    lines.push(c.dim(`Tools:  ${activeTools.join(', ')}`));
+  }
+  for (const w of summary.warnings) {
+    lines.push(c.yellow(`Warn:   ${w}`));
   }
   lines.push(
-    `Summary: ${summary.optimizedCount}/${summary.processedCount} image(s) reduced | ` +
+    `Summary: ${summary.optimizedCount}/${summary.processedCount} asset(s) reduced | ` +
       `${formatBytes(summary.originalBytes)} -> ${formatBytes(summary.optimizedBytes)} ` +
       c.green(`(saved ${formatBytes(summary.savedBytes)}, -${summary.savedPercent}%)`)
   );
+  const kindParts: string[] = [];
+  for (const kind of ALL_OPTIMIZE_KINDS) {
+    const st = summary.byKind[kind];
+    if (st && st.processed > 0) {
+      kindParts.push(`${kind}: ${st.optimized}/${st.processed} (-${formatBytes(st.savedBytes)})`);
+    }
+  }
+  if (kindParts.length > 0) {
+    lines.push(c.dim(`Kinds:  ${kindParts.join(' | ')}`));
+  }
+  if (summary.budget) {
+    const b = summary.budget;
+    const badge = b.met ? c.green('MET') : c.yellow('OVER');
+    lines.push(
+      `Budget: target ${formatBytes(b.targetBytes)} -> final ${formatBytes(b.finalBytes)} [${badge}, pass ${b.passesRun} (${b.appliedPreset})]`
+    );
+  }
   if (summary.items.length > 0) {
     lines.push('');
     for (const item of summary.items) {
       const badge = item.applied ? c.green('[OPT] ') : c.dim('[SKIP]');
+      const kindTag = c.cyan(`[${item.kind.padEnd(5)}]`);
       lines.push(
-        `  ${badge} ${item.path}  ${formatBytes(item.originalBytes)} -> ${formatBytes(item.optimizedBytes)}` +
+        `  ${badge} ${kindTag} ${item.path}  ${formatBytes(item.originalBytes)} -> ${formatBytes(item.optimizedBytes)}` +
           (item.applied ? c.green(` (-${formatBytes(item.savedBytes)})`) : c.dim(item.reason ? ` (${item.reason})` : ''))
       );
     }

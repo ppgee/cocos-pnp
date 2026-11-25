@@ -35,12 +35,12 @@
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **AppLovin** (`applovin`) | 单 HTML | <= 5 MB | 必选 v2.0 | `mraid.open()` | 零外链，横竖屏双视口 |
 | **Unity / LevelPlay** (`unity`) | 单 HTML | <= 5 MB | 必选 v3.0 | `mraid.open()` | 弃用旧 ironSource DAPI；`ready` + `viewableChange` 门控；双视口 |
-| **Google Ads** (`google`) | ZIP | <= 5 MB | 禁止 | `ExitApi.exit()` | <= 512 文件；`ad.orientation` + `ad.size` + `exitapi.js`；严格后缀白名单 |
+| **Google Ads** (`google`) | ZIP | <= 5 MB | 禁止 | `ExitApi.exit()` | <= 512 文件；`ad.orientation` **或** `ad.size`（不可同时输出）+ `exitapi.js`；严格后缀白名单 |
 | **Meta** (`meta`, `facebook`) | ZIP / 单 HTML | ZIP <= 5 MB 且 `index.html` <= 2 MB | 禁止 | `FbPlayableAd.onCTAClick()` | <= 100 文件；无参 CTA；禁止原生 JS 跳转 |
 | **TikTok / Pangle** (`tiktok`, `pangle`) | ZIP | <= 5 MB | 禁止 | `window.openAppStore()` | 根目录 `index.html` + `config.json`；需引 `playable-sdk.js` |
-| **Mintegral** (`mintegral`, `mtg`) | ZIP / 单 HTML | <= 5 MB | 禁止 | `window.install()` | 同名结构 `<name>.zip -> <name>/<name>.html`；必调 `gameReady()` / `gameEnd()` |
+| **Mintegral** (`mintegral`, `mtg`) | ZIP / 单 HTML | <= 5 MB | 禁止 | `window.install()` | 同名结构 `<name>.zip -> <name>/<name>.html`（仅 `[a-zA-Z0-9_]`）；必调 `gameReady()` / `gameEnd()` |
 | **Moloco** (`moloco`) | 单 HTML | <= 5 MB | 禁止 | `FbPlayableAd.onCTAClick()` | 拒收 ZIP；无参 CTA；横竖屏双视口 |
-| **Liftoff / Vungle** (`liftoff`, `vungle`) | ZIP / 单 HTML | <= 5 MB | 可选 | `parent.postMessage('download', '*')` | 根目录 `index.html`/`ad.html`；全小写 ASCII 路径；`complete` 生命周期 |
+| **Liftoff / Vungle** (`liftoff`, `vungle`) | ZIP / 单 HTML | <= 5 MB | 可选 | `mraid.open()` + `postMessage('download')` | 根目录 `index.html`/`ad.html`；全小写 ASCII 路径；禁止 `<iframe>`；`complete` 生命周期 |
 
 ---
 
@@ -53,14 +53,14 @@
 pnpm install
 pnpm run build:v2
 
-# 2. 用内置可玩示例一键打包全部 8 渠道（可选 --optimize 离线压缩图片），并自动执行无头 Chrome 体检
-pnpm playable build examples/mini-playable -o ./playable-dist --channel all --optimize --check
+# 2. 用内置可玩示例一键打包全部 8 渠道（支持 --target-size auto 自动按最严渠道红线逐级压包），并自动执行无头 Chrome 体检
+pnpm playable build examples/mini-playable -o ./playable-dist --channel all --target-size auto --check
 
 # 3. 启动本地交互式 8 渠道预览调试台（竖屏/横屏/平板切换、静音与切后台模拟、实时 CTA 监视）
 pnpm playable preview ./playable-dist/AppLovin.html --channel applovin
 
-# 4. 独立离线压缩图片资产（零 API Key，PNG 量化 + MozJPEG）
-pnpm playable optimize ./your-dist --dry-run
+# 4. 独立离线全资产瘦身（sharp 图片 + 本机 ffmpeg 音视频与 MP4 faststart + HarfBuzz 字体子集化 + SVGO / 图标矢量化 + esbuild JS 树摇压缩，支持目标体积自动降档）
+pnpm playable optimize ./your-dist --target-size 4MB --vectorize-icons --dry-run
 
 # 5. 单独体检任意已有 .html / .zip / 构建目录
 pnpm playable check ./playable-dist/Google.zip --channel google
@@ -115,7 +115,8 @@ ctaButton.addEventListener('click', () => {
 
 可用 MCP 工具：
 - `get_channel_specs`：查询 8 渠道 2026 规范红线
-- `build_playable`：一键打包 Web / Cocos 3.x 目录并可选自动验包
+- `build_playable`：一键打包全引擎目录，支持 `targetSize`（如 `"5MB"` / `"auto"`）自动体积达标压包与自动验包
+- `optimize_playable_assets`：离线全资产瘦身（sharp 图片量化、本机 ffmpeg 音视频转码与 MP4 faststart、HarfBuzz 字体子集化、SVGO 与可选小图标 SVG 矢量化、esbuild JS/CSS 树摇压缩），支持目标体积逐级降档
 - `check_playable`：执行静态 + 无头浏览器真跑体检，返回结构化错误码与修复建议
 - `inspect_playable_size`：输出体积拆解与 Base64 膨胀归因
 
