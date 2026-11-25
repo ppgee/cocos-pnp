@@ -93,9 +93,19 @@ jobs:
             pnpm --filter '@ppgee/playable-cli' publish $PUBLISH_FLAGS --provenance
           fi
 
+      - name: Build legacy Cocos Creator 2.x & 3.x plugin zips
+        if: startsWith(github.ref, 'refs/tags/v2.') && steps.meta.outputs.dry_run == 'false'
+        run: |
+          pnpm --filter playable-adapter-core build
+          chmod +x ./scripts/package-playable.sh
+          ./scripts/package-playable.sh
+
       - name: Create GitHub Release (tag pushes only)
         if: startsWith(github.ref, 'refs/tags/v2.') && steps.meta.outputs.dry_run == 'false'
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, '-') }}
+          files: |
+            packages/playable-ads-adapter/dist/playable-2x.zip
+            packages/playable-ads-adapter/dist/playable-3x.zip
